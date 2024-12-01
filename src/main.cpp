@@ -24,6 +24,7 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
+#include <iostream>
 
 using json = nlohmann::json;
 
@@ -69,9 +70,9 @@ std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
+Logger logger("MAIN   ");
 
 void state_commands(json msg, Timer_data* data);
-void printLog(logLevel logtype, std::string message);
 
 int main(){
     int sensor_status;
@@ -99,10 +100,10 @@ int main(){
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
-        std::cout << "INIT FAILED" << std::endl;
+        logger.log(logERROR,"INIT FAILED");
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-    std::cout << "INIT SUCCESS" << std::endl;
+    logger.log(logINFO,"INIT SUCCESS");
 
     Sensor sensor = Sensor();
 
@@ -159,6 +160,8 @@ void timer_motors_callback(uv_timer_t* handle) {
 }
 
 void timer_com_callback(uv_timer_t* handle){
+    std::ostringstream logMessage;
+
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     std::pair <Topic, json> msg;
 
@@ -169,8 +172,10 @@ void timer_com_callback(uv_timer_t* handle){
             state_commands(msg.second, data);
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
             data->nucleo->send_arm(msg.second["command"]);
-        else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG))
-            std::cout << "config message: " << msg.second.dump() << std::endl;
+        else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
+            logMessage << "config message: " << msg.second.dump();
+            logger.log(logINFO, logMessage.str());
+        }
     }
     data->nucleo->update_buffer();
     data->nucleo->get_heartbeat();
@@ -193,23 +198,24 @@ void timer_debug_callback(uv_timer_t* handle){
         data->mqtt_client->send_debug(json_debug);
         
     if(!data->nucleo->is_connected())
-        std::cout<< "NUCLEO disconnected" << std::endl;
+        logger.log(logINFO,"NUCLEO disconnected");
 }
 
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
     float current_ref=0;
+    std::ostringstream logMessage;
     try{
         cmd = state_mapper[msg.begin().key()];
         switch(cmd){
             case ARM_ROV:
                 rov_armed = !rov_armed;
                 if(rov_armed){
-                    std::cout << "[MAIN][INFO] ROV ARMED" << std::endl;
+                    logger.log(logINFO, "ROV ARMED");
                     data->sensor->set_pressure_baseline();
                 }
                 else
-                    std::cout << "[MAIN][INFO] ROV DISARMED" << std::endl;
+                    logger.log(logINFO, "ROV DISARMED");
                 break;
             case CHANGE_CONTROLLER_STATUS:
                 controller_state = !controller_state;
@@ -241,10 +247,7 @@ void state_commands(json msg, Timer_data* data){
                 break;
         }
     } catch (const json::exception& e) {
-        std::cout << "JSON error parsing state_commands: " << e.what() << std::endl;
+        logMessage << "JSON error parsing state_commands: " << e.what();
+        logger.log(logERROR, logMessage.str());
     }
-}
-
-void printLog(logLevel logtype, std::string message){
-    Logger::printLog("MAIN   ", logtype, message);
 }
