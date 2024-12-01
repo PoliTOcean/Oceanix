@@ -3,8 +3,9 @@
 
 #include <iostream>
 #include "WIT61P.h"
+#include "logger.hpp"
 
-class Wt61 {
+class Wt61 : Logger{
 public:
     /**
      * @brief Construct a new imu Wt61 object
@@ -67,6 +68,7 @@ public:
      */
     float* get_gyro();
 
+
 private:
     int status;         ///< status of the sensor
     float temperature;  ///< internal temperature in Celsius
@@ -75,6 +77,8 @@ private:
     float yaw;          ///< yaw angle in DEG
     float acc[3];       ///< accelleration (x, y, z) in m/s^2
     float gyro[3];      ///< gyroscope (x, y, z) in DEG/s^2
+
+    virtual void printLog(logLevel logtype, std::string message);    
 };
 
 #endif // WT61_H

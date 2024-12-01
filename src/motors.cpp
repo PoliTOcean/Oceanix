@@ -97,7 +97,7 @@ float Motors::limit_thrust(float thrust, float thrust_max){
     if(fabsf(thrust)>thrust_max){
         int sign = fabsf(thrust)/thrust;
         thrust = thrust_max * sign;
-        std::cout << "[MOTORS][WARNING] motor thrust limit surpassed, limited to the max" << std::endl;
+        printLog(logWARNING, "motor thrust limit surpassed, limited to the max");
     }
     return thrust;
 }
@@ -117,6 +117,16 @@ void Motors::update_debug(json& debug){
 void Motors::offset_thrust_max(float offset){
     thrust_max_xy += offset;
     thrust_max_z += offset;
-    std::cout << "[MOTORS][INFO] new motor thrust max for xy: " << thrust_max_xy << std::endl;
-    std::cout << "[MOTORS][INFO] new motor thrust max for z: " << thrust_max_z << std::endl;
+    std::ostringstream logMessage;
+
+    logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
+    printLog(logINFO, logMessage.str());
+
+    logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
+    printLog(logINFO, logMessage.str());
+
+}
+
+void Motors::printLog(logLevel logtype, std::string message){
+    Logger::printLog("MOTORS ", logtype, message);
 }

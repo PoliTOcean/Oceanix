@@ -6,6 +6,7 @@
 #include "motor.hpp"
 #include "motorID.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 const int MIN_INPUT_READING = -32678;    // Minimum input reading value from the joystick
 const int MAX_INPUT_READING = 32678;     // Maximum input reading value from the joystick
@@ -13,7 +14,7 @@ const float PI = 3.141592653589793f;
 
 using json = nlohmann::json;
 
-class Motors
+class Motors : Logger
 {
 private:
     std::array<Motor, static_cast<int>(MotorID::NUM_MOTORS)> motors;    ///< motor array
@@ -70,6 +71,7 @@ public:
      */
     void offset_thrust_max(float offset);
 
+
 private:
     /**
     * @brief map the input interval to the output interval
@@ -102,6 +104,7 @@ private:
      * @return float the value of the thrust
      */
     float limit_thrust(float thrust, float thrust_max);
+    virtual void printLog(logLevel logtype, std::string message);
 };
 
 #endif

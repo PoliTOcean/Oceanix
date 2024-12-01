@@ -1,7 +1,7 @@
 #include "controller.hpp"
 
 Controller::Controller(Sensor sensor, json jsonConfig, bool verbose) 
-    : sensor(sensor), 
+    : sensor(sensor),
     state(CONTROL_OFF),
     reference_roll(0),
     reference_pitch(0),
@@ -16,6 +16,8 @@ Controller::Controller(Sensor sensor, json jsonConfig, bool verbose)
                                     jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
+    std::ostringstream message;
+    
     float total_power=0;
     force_z=0;
     force_roll=0;
@@ -35,8 +37,10 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     
     if(controller_active==true && controller_active_old==false){
         reference_z=sensor.get_depth();
-        if(c_verbose)
-            std::cout << "[CONTROLLER][INFO] control Z active at depth " << reference_z << std::endl;
+        if(c_verbose){
+            message  << "control Z active at depth " << reference_z;
+            printLog(logINFO, "Invalid reference type");
+        }
     }
 
     if(state == CONTROL_OFF)
@@ -60,35 +64,49 @@ void Controller::activate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state |= ref_type;
     else
-        std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+        printLog(logERROR, "Invalid reference type");
 }
 
 void Controller::disactivate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state &= ~ref_type;
     else
-        std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+        printLog(logERROR, "Invalid reference type");
 }
 
 void Controller::change_reference(uint8_t ref_type, float ref) {
+    
+    std::ostringstream message;
+    logLevel message_level;
+
     switch(ref_type) {
         case CONTROL_Z:
             reference_z = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_z changed to: " << reference_z << std::endl;
+            if(c_verbose){
+                message << "reference_z changed to: " << reference_z << std::endl;
+                printLog(logINFO, message.str());
+            }
             break;
+
         case CONTROL_ROLL:
             reference_roll = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_roll changed to: " << reference_roll << std::endl;
+
+            if(c_verbose){
+                message << "reference_roll changed to: " << reference_roll << std::endl;
+                printLog(logINFO, message.str());
+            }
             break;
+
         case CONTROL_PITCH:
             reference_pitch = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_pitch changed to: " << reference_pitch << std::endl;
+            if(c_verbose){
+                message << "reference_pitch changed to: " << reference_pitch << std::endl;
+                printLog(logINFO, message.str());
+            }
             break;
+
         default:
-            std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+            printLog(logERROR, "Invalid reference type");
             break;
     }
 }
@@ -100,7 +118,7 @@ float Controller::get_reference(uint8_t ref_type) {
         return reference_roll;
     else if(ref_type == CONTROL_PITCH)
         return reference_pitch;
-    std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+    printLog(logERROR, "Invalid reference type");
     return 0;
 }
 
@@ -117,4 +135,8 @@ void Controller::update_debug(json& debug){
     debug["depth"] = floatToStringWithDecimals(sensor.get_depth(), 3);
     debug["roll"] = floatToStringWithDecimals(sensor.get_roll(), 3);
     debug["pitch"] = floatToStringWithDecimals(sensor.get_pitch(), 3);
+}
+
+void Controller::printLog(logLevel logtype, std::string message){
+    Logger::printLog("CONTROL", logtype, message);
 }

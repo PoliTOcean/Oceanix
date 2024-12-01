@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include "driver_ms5837_basic.h"
+#include "logger.hpp"
+#include <sstream> //for using std::ostringstream
+
 /**
  * @brief Bar02 class representing a pressure sensor.
  */
@@ -46,6 +49,9 @@ private:
     float pressure_baseline; ///< Pressure baseline.
     float temperature;  ///< Temperature in Celsius.
     float depth;        ///< Depth in meters.
+    virtual void printLog(logLevel logtype, std::string message);
+
+
 };
 
 #endif // BAR02_H
