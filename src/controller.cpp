@@ -13,7 +13,8 @@ Controller::Controller(Sensor sensor, json jsonConfig, bool verbose)
                                     jsonConfig["denFPitch2"], jsonConfig["denFPitch3"], jsonConfig["numFPitch2"], jsonConfig["numFPitch3"], jsonConfig["denCPitch2"], 
                                     jsonConfig["denCPitch3"], jsonConfig["numCPitch2"], jsonConfig["numCPitch3"], jsonConfig["cPITCH_inf"])),
     control_roll(ControlSystemROLL(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"], 
-                                    jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])){}
+                                    jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])),
+    logger(Logger("CONTROL")){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
     std::ostringstream message;
@@ -39,7 +40,7 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
         reference_z=sensor.get_depth();
         if(c_verbose){
             message  << "control Z active at depth " << reference_z;
-            printLog(logINFO, "Invalid reference type");
+            logger.log(logINFO, "Invalid reference type");
         }
     }
 
@@ -64,14 +65,14 @@ void Controller::activate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state |= ref_type;
     else
-        printLog(logERROR, "Invalid reference type");
+        logger.log(logERROR, "Invalid reference type");
 }
 
 void Controller::disactivate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state &= ~ref_type;
     else
-        printLog(logERROR, "Invalid reference type");
+        logger.log(logERROR, "Invalid reference type");
 }
 
 void Controller::change_reference(uint8_t ref_type, float ref) {
@@ -84,7 +85,7 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
             reference_z = ref;
             if(c_verbose){
                 message << "reference_z changed to: " << reference_z << std::endl;
-                printLog(logINFO, message.str());
+                logger.log(logINFO, message.str());
             }
             break;
 
@@ -93,7 +94,7 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
 
             if(c_verbose){
                 message << "reference_roll changed to: " << reference_roll << std::endl;
-                printLog(logINFO, message.str());
+                logger.log(logINFO, message.str());
             }
             break;
 
@@ -101,12 +102,12 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
             reference_pitch = ref;
             if(c_verbose){
                 message << "reference_pitch changed to: " << reference_pitch << std::endl;
-                printLog(logINFO, message.str());
+                logger.log(logINFO, message.str());
             }
             break;
 
         default:
-            printLog(logERROR, "Invalid reference type");
+            logger.log(logERROR, "Invalid reference type");
             break;
     }
 }
@@ -118,7 +119,7 @@ float Controller::get_reference(uint8_t ref_type) {
         return reference_roll;
     else if(ref_type == CONTROL_PITCH)
         return reference_pitch;
-    printLog(logERROR, "Invalid reference type");
+    logger.log(logERROR, "Invalid reference type");
     return 0;
 }
 
@@ -135,8 +136,4 @@ void Controller::update_debug(json& debug){
     debug["depth"] = floatToStringWithDecimals(sensor.get_depth(), 3);
     debug["roll"] = floatToStringWithDecimals(sensor.get_roll(), 3);
     debug["pitch"] = floatToStringWithDecimals(sensor.get_pitch(), 3);
-}
-
-void Controller::printLog(logLevel logtype, std::string message){
-    Logger::printLog("CONTROL", logtype, message);
 }

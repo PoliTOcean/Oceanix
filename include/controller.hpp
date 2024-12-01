@@ -23,7 +23,7 @@ const uint8_t CONTROL_ALL =     0x07;    //111
  * @class Controller
  * @brief Controls the depth, pitch and roll. When active calculates the thrust for the 4 UP motors
  */
-class Controller: Logger {
+class Controller {
 private:
     uint8_t state;                      /// controller's current state
     bool controller_active;         /// controller internal state  
@@ -39,7 +39,7 @@ private:
     ControlSystemZ control_z;           /// Pointer to ControlSystemZ object
     ControlSystemPITCH control_pitch;   /// Pointer to ControlSystemPitch object
     ControlSystemROLL control_roll;     /// Pointer to ControlSystemRoll object
-    virtual void printLog(logLevel logtype, std::string message);
+    Logger logger;
 
 
 public:
