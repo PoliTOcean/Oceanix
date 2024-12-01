@@ -60,7 +60,7 @@ bool MQTTClient::mqtt_connect() {
     
     catch (const mqtt::exception& exc) {
         logMessage << "[MQTT - ERROR] Error connecting and subscribing to MQTT Broker" << exc;
-        logger.log(logINFO, logMessage);
+        logger.log(logINFO, logMessage.str());
         return false;
     }
 	return true;    
@@ -96,7 +96,7 @@ bool MQTTClient::send_msg(std::string msg, Topic topic) {
         cli.publish(topic_map[topic], msg);
         if(m_verbose){
             logMessage << "MQTT send msg: " << msg << "  to topic: " << topic_map[topic] << std::endl;
-            logger.log(logINFO, logMessage);
+            logger.log(logINFO, logMessage.str());
         }
         return true;
     }
@@ -116,7 +116,7 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
             msgp->second = json::parse(m_msg->get_payload());
             if(m_verbose){
                 logMessage << "received msg: " << m_msg->get_payload() << "  from topic: " << m_msg->get_topic() << std::endl;
-                logger.log(logINFO, logMessage);
+                logger.log(logINFO, logMessage.str());
             }
         }
         else{
