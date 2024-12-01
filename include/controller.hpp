@@ -49,7 +49,7 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    Controller(Sensor sensor, json jsonConfig, bool verbose);
+    Controller(Sensor sensor, json jsonConfig, logLevel minimumLoglevel);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui

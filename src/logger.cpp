@@ -1,6 +1,8 @@
 #include "logger.hpp"
 
-Logger::Logger(std::string unitName) : unitName(unitName) {}
+Logger::Logger(std::string unitName, logLevel minimumLogLevel) 
+    : unitName(unitName), 
+    minimumLogLevel(minimumLogLevel) {}
 
 std::string Logger::logLevelToString(logLevel level) {
     switch (level) {
@@ -17,6 +19,9 @@ std::string Logger::generateLogString(logLevel logtype, std::string message){
 }
 
 void Logger::log(logLevel logtype, std::string message){
-    //clog is like cout, key difference is that you can redirect the output of clog to a different destination
-    std::clog << generateLogString(logtype, message) << std::endl;
+    //Don't log anything is this logmessage loglevel is lower than the minimum one
+    if(logtype >= minimumLogLevel){
+        //clog is like cout, key difference is that you can redirect the output of clog to a different destination
+        std::clog << generateLogString(logtype, message) << std::endl;
+    }
 }

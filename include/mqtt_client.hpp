@@ -16,7 +16,7 @@ enum class Topic { AXES, COMMANDS, ARM, CONFIG, DEBUG };
 
 class MQTTClient{
     public:
-        MQTTClient(std::string server_address, std::string client_id, int QOS, bool verbose);
+        MQTTClient(std::string server_address, std::string client_id, int QOS, logLevel minimumLoglevel);
 
         bool is_connected();
         bool mqtt_connect();

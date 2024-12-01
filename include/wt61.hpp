@@ -11,7 +11,7 @@ public:
      * @brief Construct a new imu Wt61 object
      * 
      */
-    Wt61();
+    Wt61(logLevel minimumLoglevel);
 
     /**
      * @brief call for updating the measure

@@ -41,7 +41,7 @@ public:
      * 
      * @param config the json containig all the configuration parameters
      */
-    Motors(json config);
+    Motors(json config, logLevel minimumLoglevel);
 
     /**
     * @brief calculate thrust of all the motors

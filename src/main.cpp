@@ -70,7 +70,7 @@ std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
-Logger logger("MAIN   ");
+Logger logger("MAIN   ", LOG_ALL);
 
 void state_commands(json msg, Timer_data* data);
 
@@ -89,7 +89,7 @@ int main(){
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
     state_mapper["NONE"] = NONE;
 
-    Config config = Config(config_path);
+    Config config = Config(config_path, LOG_ALL);
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
 
@@ -109,7 +109,7 @@ int main(){
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
 
-    Motors motors = Motors(config.get_config(ConfigType::MOTORS));
+    Motors motors = Motors(config.get_config(ConfigType::MOTORS), LOG_ALL);
 
     Timer_data* timer_data = new Timer_data();
     timer_data->sensor = &sensor;

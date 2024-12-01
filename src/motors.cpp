@@ -1,6 +1,6 @@
 #include "motors.hpp"
 
-Motors::Motors(json config)
+Motors::Motors(json config, logLevel minimumLoglevel)
     : thrust_max_xy(config["thrust_max_xy"]), thrust_max_z(config["thrust_max_z"]),
     motors{ 
         Motor(MotorID::FSX, config["FSX_coeff"], config["FSX_pwm_zero"], config["pwm_slew_rate_max"]),
@@ -12,7 +12,7 @@ Motors::Motors(json config)
         Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"])
     },
-    logger(Logger("MOTORS ")) {}
+    logger(Logger("MOTORS ", minimumLoglevel)) {}
 
 float* Motors::calculate_thrust(json axes){
     float z = (float)axes["Z"];

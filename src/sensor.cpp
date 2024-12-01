@@ -1,8 +1,8 @@
 #include "sensor.hpp"
 
 Sensor::Sensor() 
-    : imu(Wt61()), 
-    barometer(Bar02()) {}
+    : imu(Wt61(LOG_ALL)), 
+    barometer(Bar02(LOG_ALL)) {}
 
 // Function to read sensor data from both IMU and barometer
 void Sensor::read_sensor() {

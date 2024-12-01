@@ -14,7 +14,7 @@ enum class ConfigType { ALL, GENERAL, MOTORS, CONTROLLER };
 
 class Config {
     public:
-        Config(std::string config_file_path);
+        Config(std::string config_file_path, logLevel minimumLogLevel);
         
         json get_config(ConfigType config_type);
         void print_config();

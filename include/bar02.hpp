@@ -14,7 +14,7 @@ public:
     /**
      * @brief Constructor for Bar02 class.
      */
-    Bar02();
+    Bar02(logLevel minimumLogLevel);
 
     /**
      * @brief Reads data from the sensor.
