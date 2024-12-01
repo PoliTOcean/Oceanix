@@ -23,6 +23,7 @@
 #include "nucleo.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 using json = nlohmann::json;
 
@@ -70,6 +71,7 @@ uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
 
 void state_commands(json msg, Timer_data* data);
+void printLog(logLevel logtype, std::string message);
 
 int main(){
     int sensor_status;
@@ -241,4 +243,8 @@ void state_commands(json msg, Timer_data* data){
     } catch (const json::exception& e) {
         std::cout << "JSON error parsing state_commands: " << e.what() << std::endl;
     }
+}
+
+void printLog(logLevel logtype, std::string message){
+    Logger::printLog("MAIN   ", logtype, message);
 }

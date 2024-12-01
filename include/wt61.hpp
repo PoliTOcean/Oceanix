@@ -5,7 +5,7 @@
 #include "WIT61P.h"
 #include "logger.hpp"
 
-class Wt61 : Logger{
+class Wt61{
 public:
     /**
      * @brief Construct a new imu Wt61 object
@@ -78,7 +78,7 @@ private:
     float acc[3];       ///< accelleration (x, y, z) in m/s^2
     float gyro[3];      ///< gyroscope (x, y, z) in DEG/s^2
 
-    virtual void printLog(logLevel logtype, std::string message);    
+    Logger logger;
 };
 
 #endif // WT61_H

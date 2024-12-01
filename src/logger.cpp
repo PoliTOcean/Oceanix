@@ -1,10 +1,6 @@
 #include "logger.hpp"
 
-
-
-Logger::Logger(){
-
-}
+Logger::Logger(std::string unitName) : unitName(unitName) {}
 
 std::string Logger::logLevelToString(logLevel level) {
     switch (level) {
@@ -16,11 +12,11 @@ std::string Logger::logLevelToString(logLevel level) {
     }
 }
 
-std::string Logger::generateLogString(std::string className, logLevel logtype, std::string message){
-        return "["+ className + "]" + logLevelToString(logtype) + message;
+std::string Logger::generateLogString(logLevel logtype, std::string message){
+        return "["+ unitName + "]" + logLevelToString(logtype) + message;
 }
 
-void Logger::printLog(std::string className, logLevel logtype, std::string message){
+void Logger::log(logLevel logtype, std::string message){
     //clog is like cout, key difference is that you can redirect the output of clog to a different destination
-    std::clog << generateLogString(className, logtype, message) << std::endl;
+    std::clog << generateLogString(logtype, message) << std::endl;
 }

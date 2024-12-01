@@ -8,7 +8,7 @@ std::map <ConfigType, std::string> config_map {
 };
 
 
-Config::Config(std::string config_file_path) {
+Config::Config(std::string config_file_path) : logger(Logger("CONFIG ")) {
     m_config_file_path = config_file_path;
     
     load_base_config();
@@ -20,20 +20,20 @@ void Config::load_base_config() {
     std::ifstream json_config_file(m_config_file_path);
 
     if (json_config_file.is_open()) {
-        printLog(logINFO, "Reading config file");
+        logger.log(logINFO, "Reading config file");
         
         json_config_file >> m_json_config;
         json_config_file.close();
     }
     else
-        printLog(logERROR, "Error opening config file!");
+        logger.log(logERROR, "Error opening config file!");
 }
 
 void Config::write_base_config() {
     std::ofstream json_config_file(m_config_file_path);
 
     if (json_config_file.is_open()) {
-        printLog(logINFO, "Writing config file");
+        logger.log(logINFO, "Writing config file");
 
 
         json_config_file << m_json_config;
@@ -41,22 +41,18 @@ void Config::write_base_config() {
         load_base_config();
     }
     else
-        printLog(logERROR, "Error opening config file!");
+        logger.log(logERROR, "Error opening config file!");
 }
 
 void Config::print_config() {
     std::ostringstream logMessage;
     logMessage << "Print configuration json (indented): " << '\n'
               << m_json_config.dump(1, ' ', true) << std::endl;
-    printLog(logINFO, logMessage.str());
+    logger.log(logINFO, logMessage.str());
 }
 
 json Config::get_config(ConfigType config_type) {
     if (config_map[config_type] == config_map[ConfigType::ALL]) 
         return m_json_config;
     return m_json_config[config_map[config_type]];
-}
-
-void Config::printLog(logLevel logtype, std::string message){
-    Logger::printLog("CONFIG ", logtype, message);
 }

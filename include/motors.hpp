@@ -14,7 +14,7 @@ const float PI = 3.141592653589793f;
 
 using json = nlohmann::json;
 
-class Motors : Logger
+class Motors
 {
 private:
     std::array<Motor, static_cast<int>(MotorID::NUM_MOTORS)> motors;    ///< motor array
@@ -104,7 +104,7 @@ private:
      * @return float the value of the thrust
      */
     float limit_thrust(float thrust, float thrust_max);
-    virtual void printLog(logLevel logtype, std::string message);
+    Logger logger;
 };
 
 #endif

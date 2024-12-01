@@ -49,9 +49,7 @@ private:
     float pressure_baseline; ///< Pressure baseline.
     float temperature;  ///< Temperature in Celsius.
     float depth;        ///< Depth in meters.
-    virtual void printLog(logLevel logtype, std::string message);
-
-
+    Logger logger;      ///< Logger    
 };
 
 #endif // BAR02_H

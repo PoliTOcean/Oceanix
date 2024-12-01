@@ -17,7 +17,8 @@ std::map <std::string, Topic> inverse_topic_map {
 };
 
 MQTTClient::MQTTClient(std::string server_address, std::string client_id, int QOS, bool verbose):
-    cli(server_address, client_id) {
+    cli(server_address, client_id),
+    logger(Logger("MQTThst")) {
     m_server_address = server_address;
     m_client_id = client_id;
     m_QOS = QOS;
@@ -38,7 +39,7 @@ bool MQTTClient::mqtt_connect() {
     try {
         cli.start_consuming();
 
-        printLog(logINFO, "Connecting to the MQTT server...");
+        logger.log(logINFO, "Connecting to the MQTT server...");
         //auto tok = cli.connect(m_conn_opts);
         auto tok = cli.connect();
 
@@ -54,12 +55,12 @@ bool MQTTClient::mqtt_connect() {
             cli.subscribe(topic_map[Topic::CONFIG], m_QOS)->wait();
             //cli.subscribe(topic_map[Topic::DEBUG], m_QOS)->wait();
         }
-        printLog(logINFO, "Connection established");
+        logger.log(logINFO, "Connection established");
     }
     
     catch (const mqtt::exception& exc) {
         logMessage << "[MQTT - ERROR] Error connecting and subscribing to MQTT Broker" << exc;
-        printLog(logINFO, logMessage);
+        logger.log(logINFO, logMessage);
         return false;
     }
 	return true;    
@@ -67,7 +68,7 @@ bool MQTTClient::mqtt_connect() {
 
 void MQTTClient::mqtt_disconnect() {
     if (cli.is_connected()) {
-        printLog(logINFO, "Shutting down and disconnecting from the MQTT server");
+        logger.log(logINFO, "Shutting down and disconnecting from the MQTT server");
         cli.unsubscribe(topic_map[Topic::AXES])->wait();
         cli.unsubscribe(topic_map[Topic::COMMANDS])->wait();
         cli.unsubscribe(topic_map[Topic::ARM])->wait();
@@ -78,12 +79,12 @@ void MQTTClient::mqtt_disconnect() {
 		cli.disconnect()->wait();
 	}
     else
-        printLog(logINFO, "Client is already disconnected");
+        logger.log(logINFO, "Client is already disconnected");
 }
 
 bool MQTTClient::mqtt_reconnect() {
     mqtt_disconnect();
-    printLog(logINFO, "Reconnecting MQTT Client...");
+    logger.log(logINFO, "Reconnecting MQTT Client...");
 
     return mqtt_connect();
 }                                                                                            
@@ -95,12 +96,12 @@ bool MQTTClient::send_msg(std::string msg, Topic topic) {
         cli.publish(topic_map[topic], msg);
         if(m_verbose){
             logMessage << "MQTT send msg: " << msg << "  to topic: " << topic_map[topic] << std::endl;
-            printLog(logINFO, logMessage);
+            logger.log(logINFO, logMessage);
         }
         return true;
     }
     else {
-        printLog(logWARNING, "Client is not connected");
+        logger.log(logWARNING, "Client is not connected");
         return false;
     }
 }
@@ -115,11 +116,11 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
             msgp->second = json::parse(m_msg->get_payload());
             if(m_verbose){
                 logMessage << "received msg: " << m_msg->get_payload() << "  from topic: " << m_msg->get_topic() << std::endl;
-                printLog(logINFO, logMessage);
+                logger.log(logINFO, logMessage);
             }
         }
         else{
-            printLog(logWARNING, "Message parsing error");
+            logger.log(logWARNING, "Message parsing error");
             return false;
         }
         return true;
@@ -132,8 +133,4 @@ bool MQTTClient::send_debug(json debug_json) { return send_msg(debug_json.dump()
 
 bool MQTTClient::is_msg_type(Topic topic2, Topic topic1) { 
     return topic_map[topic1] == topic_map[topic2];
-}
-
-void MQTTClient::printLog(logLevel logtype, std::string message){
-    Logger::printLog("MQTThst", logtype, message);
 }

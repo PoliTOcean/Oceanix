@@ -1,18 +1,18 @@
 #include "bar02.hpp"
 
-Bar02::Bar02() : status(0), temperature(0.0), depth(0.0), pressure_baseline(1000) {
+Bar02::Bar02() : status(0), temperature(0.0), depth(0.0), pressure_baseline(1000), logger(Logger("BAR02  ")) {
     status = ms5837_basic_init(MS5837_TYPE_02BA01);
     if (status != 0)
-        printLog(logERROR, "barometer init fail");
+        logger.log(logERROR, "barometer init fail");
     else
-        printLog(logINFO, "init done");
+        logger.log(logINFO, "init done");
 }
 
 void Bar02::read_sensor() {
     float pressure_mbar;
     status = ms5837_basic_read(&temperature, &pressure_mbar);
     if (status != 0){
-        printLog(logERROR, "barometer read fail");
+        logger.log(logERROR, "barometer read fail");
         return;
     }
     else
@@ -51,9 +51,5 @@ void Bar02::set_pressure_baseline() {
     
     pressure_baseline = sum / (float)times;
     logMessage << "Pressure baseline set to: " << pressure_baseline << " mbar";
-    printLog(logINFO, logMessage.str());
-}
-
-void Bar02::printLog(logLevel logtype, std::string message){
-    Logger::printLog("BAR02  ", logtype, message);
+    logger.log(logINFO, logMessage.str());
 }

@@ -12,7 +12,7 @@ using json = nlohmann::json;
 
 enum class ConfigType { ALL, GENERAL, MOTORS, CONTROLLER };
 
-class Config : Logger{
+class Config {
     public:
         Config(std::string config_file_path);
         
@@ -26,7 +26,7 @@ class Config : Logger{
     private:
         json m_json_config; 
         std::string m_config_file_path;
-        virtual void printLog(logLevel logtype, std::string message);
+        Logger logger;
 
 };
 

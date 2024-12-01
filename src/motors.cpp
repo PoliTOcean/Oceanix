@@ -11,7 +11,8 @@ Motors::Motors(json config)
         Motor(MotorID::UPFDX, config["UPFDX_coeff"], config["UPFDX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"])
-    } {}
+    },
+    logger(Logger("MOTORS ")) {}
 
 float* Motors::calculate_thrust(json axes){
     float z = (float)axes["Z"];
@@ -97,7 +98,7 @@ float Motors::limit_thrust(float thrust, float thrust_max){
     if(fabsf(thrust)>thrust_max){
         int sign = fabsf(thrust)/thrust;
         thrust = thrust_max * sign;
-        printLog(logWARNING, "motor thrust limit surpassed, limited to the max");
+        logger.log(logWARNING, "motor thrust limit surpassed, limited to the max");
     }
     return thrust;
 }
@@ -120,13 +121,9 @@ void Motors::offset_thrust_max(float offset){
     std::ostringstream logMessage;
 
     logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
-    printLog(logINFO, logMessage.str());
+    logger.log(logINFO, logMessage.str());
 
     logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
-    printLog(logINFO, logMessage.str());
+    logger.log(logINFO, logMessage.str());
 
-}
-
-void Motors::printLog(logLevel logtype, std::string message){
-    Logger::printLog("MOTORS ", logtype, message);
 }

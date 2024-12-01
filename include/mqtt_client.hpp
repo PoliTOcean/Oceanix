@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 enum class Topic { AXES, COMMANDS, ARM, CONFIG, DEBUG };
 
-class MQTTClient : Logger{
+class MQTTClient{
     public:
         MQTTClient(std::string server_address, std::string client_id, int QOS, bool verbose);
 
@@ -37,7 +37,7 @@ class MQTTClient : Logger{
 
         msg_pt m_msg;
 
-        virtual void printLog(logLevel logtype, std::string message);
+        Logger logger;
 };
 
 #endif // MQTTCLIENT_H
