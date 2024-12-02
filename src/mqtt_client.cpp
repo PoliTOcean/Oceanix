@@ -58,8 +58,8 @@ bool MQTTClient::mqtt_connect() {
     }
     
     catch (const mqtt::exception& exc) {
-        logMessage << "[MQTT - ERROR] Error connecting and subscribing to MQTT Broker" << exc;
-        logger.log(logINFO, logMessage.str());
+        logMessage << "Error connecting and subscribing to MQTT Broker: " << exc;
+        logger.log(logERROR, logMessage.str());
         return false;
     }
 	return true;    
