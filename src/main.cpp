@@ -82,6 +82,7 @@ int main(){
 
     //Now it defaults to all, but the config should be read from a file in the future
     Logger::configLogType(LOG_TYPE_COUT | LOG_TYPE_FILE | LOG_TYPE_MQTT);
+    Logger::setLogFileDir("/log");
 
     state_mapper["ARM_ROV"] = ARM_ROV;
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
@@ -138,6 +139,8 @@ int main(){
     controller.activate(CONTROL_OFF);
     
     uv_run(loop, UV_RUN_DEFAULT);
+
+    Logger::closeLogFile(); //Not sure this should be placed here
 
     return 0;
 }

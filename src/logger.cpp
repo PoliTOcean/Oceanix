@@ -1,13 +1,23 @@
 #include "logger.hpp"
 
+//Static fields declaration
+uint8_t Logger::logType;
+std::string Logger::logFileDir = "/log"; //Default
+std::string Logger::logFileFullPath;
+std::ofstream Logger::logFile;
+
 Logger::Logger(std::string unitName, logLevel minimumLogLevel) 
     : unitName(unitName), 
     minimumLogLevel(minimumLogLevel) {}
 
-uint8_t Logger::logType = 0;
 void Logger::configLogType(uint8_t logType){
     Logger::logType = logType;
 }
+
+void Logger::setLogFileDir(std::string logFileDir){
+    Logger::logFileDir = logFileDir;
+}
+
 
 std::string Logger::logLevelToString(logLevel loglevel) {
     switch (loglevel) {
@@ -27,14 +37,18 @@ void Logger::log(logLevel loglevel, std::string message){
     //Don't log anything is this logmessage loglevel is lower than the minimum one
     if(loglevel >= minimumLogLevel){
         
+        std::string logString = generateLogString(loglevel, message) + "\n";
+
         if(Logger::logType & LOG_TYPE_COUT){
-            //clog is like cout, key difference is that you can redirect the output of clog to a different destination
-            std::clog << generateLogString(loglevel, message) << std::endl;
+            std::cout << logString;
         }
 
         if(Logger::logType & LOG_TYPE_FILE){
-            //TO DO
-            ;
+            if(!Logger::logFile.is_open()){
+                //The logFile stream isn't associated with an existing file
+                Logger::createLogFile();
+            }
+            Logger::logFile << logString;
         }
 
         if(Logger::logType & LOG_TYPE_MQTT){
@@ -42,4 +56,26 @@ void Logger::log(logLevel loglevel, std::string message){
             ;
         }
     }
+}
+
+void Logger::createLogFile(){
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer[80];
+
+    time (&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    strftime(buffer,sizeof(buffer),"%d-%m-%Y_%H:%M:%S",timeinfo);
+    std::string timestamp_string(buffer);
+
+    std::cout << timestamp_string;    
+
+    Logger::logFileFullPath = Logger::logFileDir + "/log_" + timestamp_string;
+
+    Logger::logFile.open(Logger::logFileFullPath);
+}
+
+void Logger::closeLogFile(){
+    Logger::logFile.close();
 }
