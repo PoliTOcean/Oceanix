@@ -17,13 +17,13 @@
 
     class Logger {
         private:
-            std::string unitName;
-            logLevel minimumLogLevel;
+            std::string unitName;       //Name of the unit that logs (example: "CONTROL")
+            logLevel minimumLogLevel;   //log messages with logLevel lower than this won't be logged
 
-            static uint8_t logType;
-            static std::string logFileDir;
-            static std::string logFileFullPath;
-            static std::ofstream logFile;
+            static uint8_t logType;             //To specify the combination of logging channels to use (COUT, FILE, MQTT)
+            static std::string logFileDir;      //Defaults to "log/" (done in logger.cpp)
+            static std::string logFileFullPath; //Will append to logFileDir the filename
+            static std::ofstream logFile;       
 
             std::string logLevelToString(logLevel level);
             std::string generateLogString(logLevel logtype, std::string message);        
@@ -31,10 +31,10 @@
             void createLogFile();
 
         public:
-            Logger(std::string unitName, logLevel minimumLogLevel);            
+            Logger(std::string unitName, logLevel minimumLogLevel);    
             void log(logLevel logtype, std::string message);
-            static void configLogType(uint8_t logType);
-            static void setLogFileDir(std::string logFileDir);
+            static void configLogType(uint8_t logType);         //To initialize Logger::logType
+            static void setLogFileDir(std::string logFileDir);  //To initialize Logger::logFileDir
             static void closeLogFile();
     };
 
