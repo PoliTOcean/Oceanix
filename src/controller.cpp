@@ -1,6 +1,6 @@
 #include "controller.hpp"
 
-Controller::Controller(Sensor sensor, json jsonConfig, bool verbose) 
+Controller::Controller(Sensor& sensor, json jsonConfig, bool verbose) 
     : sensor(sensor), 
     state(CONTROL_OFF),
     reference_roll(0),
@@ -114,7 +114,4 @@ void Controller::update_debug(json& debug){
     debug["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     debug["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
     debug["reference_pitch"] = floatToStringWithDecimals(reference_pitch, 3);
-    debug["depth"] = floatToStringWithDecimals(sensor.get_depth(), 3);
-    debug["roll"] = floatToStringWithDecimals(sensor.get_roll(), 3);
-    debug["pitch"] = floatToStringWithDecimals(sensor.get_pitch(), 3);
 }
