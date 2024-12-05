@@ -83,5 +83,7 @@ void Sensor::update_debug(json& debug){
     debug["depth"] = floatToStringWithDecimals(get_depth(), 3);
     debug["roll"] = floatToStringWithDecimals(get_roll(), 3);
     debug["pitch"] = floatToStringWithDecimals(get_pitch(), 3);
-    debug["yaw"] = floatToStringWithDecimals(get_pitch(), 3);
+    debug["yaw"] = floatToStringWithDecimals(get_yaw(), 3);
+    debug["internal_temperature"] = floatToStringWithDecimals(get_internal_temperature(), 3);
+    debug["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
 }

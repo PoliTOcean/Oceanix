@@ -34,7 +34,7 @@ private:
     double force_roll;              /// calculated force roll
     double force_pitch;             /// calculated force pitch
     bool c_verbose;                   /// verbose mode
-    Sensor sensor;                  /// sensor class
+    Sensor& sensor;                  /// sensor class
     ControlSystemZ control_z;           /// Pointer to ControlSystemZ object
     ControlSystemPITCH control_pitch;   /// Pointer to ControlSystemPitch object
     ControlSystemROLL control_roll;     /// Pointer to ControlSystemRoll object
@@ -46,7 +46,7 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    Controller(Sensor sensor, json jsonConfig, bool verbose);
+    Controller(Sensor& sensor, json jsonConfig, bool verbose);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui
