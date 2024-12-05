@@ -1,26 +1,43 @@
 #include "control_allocation.hpp"
 
-double lookup_table(double T)  // Convert Thrust into PWM with an interpolation
-{
-    if(T>MAX_kgf)
-    {
-        T=MAX_kgf;
-    }
-    if(T<MIN_kgf)
-    {
-        T=MIN_kgf;
-    }
-    if (T < -EPS)
-    {
-        return T*T*THETA_1_1+T*THETA_1_2+THETA_1_3;
-    } else if (T > EPS) 
-    {
-        return T*T*THETA_2_1+T*THETA_2_2+THETA_2_3;
-    } else 
-    {
-        return T*THETA_C_1+THETA_C_2;
-    }
+// Interpolation Algorithm
+uint16_t linearInterpolation(float x, float x0, float x1, float y0, float y1) {
+    if (x0==x1)
+        return y0;
+    return y0 + ((y1 - y0) * (x - x0) / (x1 - x0));
+}
 
+// Function of Interpolation
+uint16_t lookup_table(double T)
+{
+        // i (x_interpolate) e interpolati (y_interpolated) 
+        float x_interpolate = 0;
+        float y_interpolated = 0; 
+
+        // Saturation of Kgf's values
+            // Force_12V_Kgf>Sat_max
+        if (T > Array_Force_12V_Kgf[MAX_ROWS-1]){
+            x_interpolate=Array_Force_12V_Kgf[MAX_ROWS-1];
+            y_interpolated=Array_PWM_Relative_12V_Kgf[MAX_ROWS-1];
+        } 
+            //Force_12V_Kgf<Sat_min
+        else if(T < Array_Force_12V_Kgf[0]){    
+            x_interpolate=Array_Force_12V_Kgf[0];
+            y_interpolated=Array_PWM_Relative_12V_Kgf[0];
+        }
+            // Normal Case
+        else{
+            x_interpolate=T;
+                // Find the interaval of values and apply interpolation algorithm
+                for (int i = 0; i < MAX_ROWS-1; i++) {
+                    if (x_interpolate >= Array_Force_12V_Kgf[i] && x_interpolate <= Array_Force_12V_Kgf[i + 1]) {
+                        y_interpolated = linearInterpolation(x_interpolate, Array_Force_12V_Kgf[i], Array_Force_12V_Kgf[i + 1], Array_PWM_Relative_12V_Kgf[i], Array_PWM_Relative_12V_Kgf[i + 1]);
+                        break;
+                        }
+                }
+        } 
+
+        return y_interpolated;
 }
 
 
@@ -39,12 +56,6 @@ OutputValues compute_thrust(double Fz, double Fr, double Fp)  // Compute the PWM
     result.T6=result.T6/9.8;
     result.T7=result.T7/9.8;
     result.T8=result.T8/9.8;
-
-    // Lookup table for the conversion into PWM signals
-    // result.T5=lookup_table(result.T5);
-    // result.T6=lookup_table(result.T6);
-    // result.T7=lookup_table(result.T7);
-    // result.T8=lookup_table(result.T8);
 
     return result;
 }
