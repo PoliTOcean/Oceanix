@@ -18,20 +18,20 @@ class Motors
 private:
     std::array<Motor, static_cast<int>(MotorID::NUM_MOTORS)> motors;    ///< motor array
     float motor_thrust[static_cast<int>(MotorID::NUM_MOTORS)];          ///< motor thrust (same order as motor array)
-    uint16_t pwm[static_cast<int>(MotorID::NUM_MOTORS)];                     ///< pwm of the motors
+    uint16_t pwm[static_cast<int>(MotorID::NUM_MOTORS)];                ///< pwm of the motors
     float thrust_max_xy;                                                ///< thrust max limit for the motors controlling x and y
     float thrust_max_z;                                                 ///< thrust max limit for the UP motors
 
-    //for reverse multiply for -1 the corresponding row
+    //must have same order as motorID
     const double fixed_mixing_matrix[8][6] = {
-        {cos(PI / 4), -sin(PI / 4), 0, 0, 0, 0.5}, //FSX
-        {-cos(PI / 4), -sin(PI / 4), 0, 0, 0, -0.5},//FDX
-        {-sin(PI / 4), -cos(PI / 4), 0, 0, 0, 0.5},//RSX
-        {sin(PI / 4), -cos(PI / 4), 0, 0, 0, -0.5},//RDX
-        {0, 0, 1, -1, 1, 0},//UPFSX
-        {0, 0, 1, 1, 1, 0},//UPFDX      
-        {0, 0, 1, -1, -1, 0},//UPRSX    
-        {0, 0, 1, -1, 1, 0}//UPRDX      
+        {-cos(PI / 4), sin(PI / 4), 0, 0, 0, -0.5},//FDX
+        {cos(PI / 4), sin(PI / 4), 0, 0, 0, 0.5}, //FSX
+        {-sin(PI / 4), -cos(PI / 4), 0, 0, 0, 0.5},//RDX
+        {sin(PI / 4), -cos(PI / 4), 0, 0, 0, -0.5},//RSX
+        {0, 0, 1, 1, 1, 0},//UPFDX
+        {0, 0, 1, -1, 1, 0},//UPFSX    
+        {0, 0, 1, -1, 1, 0},//UPRDX     
+        {0, 0, 1, -1, -1, 0}//UPRSX       
     };                                                                  ///< matrix for thrust calculation
 
 public:
