@@ -97,7 +97,7 @@ int main(){
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
 
-    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["verbose_mqtt"]);
+    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, LOG_ALL);
 	while(!mqtt_client.mqtt_connect())
         sleep(1);
 
@@ -113,7 +113,7 @@ int main(){
 
     Sensor sensor = Sensor();
 
-    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
+    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), LOG_ALL);
 
     Motors motors = Motors(config.get_config(ConfigType::MOTORS), LOG_ALL);
 
