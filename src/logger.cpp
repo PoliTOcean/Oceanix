@@ -1,10 +1,12 @@
 #include "logger.hpp"
+#include "mqtt_client.hpp"
 
 //Static fields declaration
 uint8_t Logger::logType;
 std::string Logger::logFileDir = "/log"; //Default
 std::string Logger::logFileFullPath;
 std::ofstream Logger::logFile;
+MQTTClient *Logger::mqtt_client = NULL;
 
 Logger::Logger(std::string unitName, logLevel minimumLogLevel) 
     : unitName(unitName), 
@@ -18,6 +20,9 @@ void Logger::setLogFileDir(std::string logFileDir){
     Logger::logFileDir = logFileDir;
 }
 
+void Logger::setMQTTClient(MQTTClient *mqtt_client){
+    Logger::mqtt_client = mqtt_client;
+}
 
 std::string Logger::logLevelToString(logLevel loglevel) {
     switch (loglevel) {
@@ -34,7 +39,7 @@ std::string Logger::generateLogString(logLevel loglevel, std::string message){
 }
 
 void Logger::log(logLevel loglevel, std::string message){
-    //Don't log anything is this logmessage loglevel is lower than the minimum one
+    //Don't log anything if this logmessage loglevel is lower than the minimum one
     if(loglevel >= minimumLogLevel){
         
         std::string logString = generateLogString(loglevel, message) + "\n";
@@ -53,7 +58,9 @@ void Logger::log(logLevel loglevel, std::string message){
 
         if(Logger::logType & LOG_TYPE_MQTT){
             //TO DO
-            ;
+            if(Logger::mqtt_client != NULL){
+                Logger::mqtt_client->send_msg(logString, Topic::LOG);
+            }
         }
     }
 }

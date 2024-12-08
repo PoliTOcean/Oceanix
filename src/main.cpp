@@ -101,6 +101,8 @@ int main(){
 	while(!mqtt_client.mqtt_connect())
         sleep(1);
 
+    Logger::setMQTTClient(&mqtt_client);
+
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();

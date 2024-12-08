@@ -6,6 +6,8 @@ std::map <Topic, std::string> topic_map {
     {Topic::ARM, "arm_commands/"},
     {Topic::CONFIG, "config/"},
     {Topic::DEBUG, "debug/"},
+    {Topic::LOG, "log/"},
+
 };
 
 std::map <std::string, Topic> inverse_topic_map {
@@ -14,6 +16,7 @@ std::map <std::string, Topic> inverse_topic_map {
     {"arm_commands/", Topic::ARM},
     {"config/", Topic::CONFIG},
     {"debug/", Topic::DEBUG},
+    {"log/", Topic::LOG},
 };
 
 MQTTClient::MQTTClient(std::string server_address, std::string client_id, int QOS, logLevel minimumLoglevel):
@@ -53,6 +56,7 @@ bool MQTTClient::mqtt_connect() {
             cli.subscribe(topic_map[Topic::ARM], m_QOS)->wait();
             cli.subscribe(topic_map[Topic::CONFIG], m_QOS)->wait();
             //cli.subscribe(topic_map[Topic::DEBUG], m_QOS)->wait();
+            cli.subscribe(topic_map[Topic::LOG], m_QOS)->wait();
         }
         logger.log(logINFO, "Connection established");
     }
@@ -73,6 +77,8 @@ void MQTTClient::mqtt_disconnect() {
         cli.unsubscribe(topic_map[Topic::ARM])->wait();
         cli.unsubscribe(topic_map[Topic::CONFIG])->wait();
         cli.unsubscribe(topic_map[Topic::DEBUG])->wait();
+        cli.unsubscribe(topic_map[Topic::LOG])->wait();
+
         
         cli.stop_consuming();
 		cli.disconnect()->wait();
