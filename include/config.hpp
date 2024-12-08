@@ -7,6 +7,7 @@
 #include "json.hpp"
 #include "config.hpp"
 #include "logger.hpp"
+#include "utils.hpp"
 
 using json = nlohmann::json;
 
