@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <uv.h>
 #include <json.hpp>
+#include <chrono>
 #include "sensor.hpp"
 #include "controller.hpp"
 #include "motors.hpp"
@@ -69,6 +70,8 @@ std::map <std::string, state_commands_map> state_mapper;
 uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
 
+int64_t last_micros = 0;
+
 void state_commands(json msg, Timer_data* data);
 
 int main(){
@@ -92,17 +95,17 @@ int main(){
 
     MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["verbose_mqtt"]);
 	while(!mqtt_client.mqtt_connect())
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
         std::cout << "INIT FAILED" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     std::cout << "INIT SUCCESS" << std::endl;
 
-    Sensor sensor = Sensor();
+    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"]); 
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
 
@@ -119,7 +122,7 @@ int main(){
 
     uv_timer_init(loop, &timer_motors);
     timer_motors.data = timer_data;
-    uv_timer_start(&timer_motors, timer_motors_callback, 200, 10); // 10 ms iniziali, 10 ms di intervallo
+    uv_timer_start(&timer_motors, timer_motors_callback, 200, 30); // 10 ms iniziali, 10 ms di intervallo
 
     uv_timer_init(loop, &timer_com);
     timer_com.data = timer_data;
@@ -143,9 +146,15 @@ void timer_motors_callback(uv_timer_t* handle) {
     Timer_data* data = static_cast<Timer_data*>(handle->data);
 
     if(rov_armed){
+        auto now = std::chrono::high_resolution_clock::now();
+        auto before = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
         motor_thrust = data->motors->calculate_thrust(json_axes);
         data->sensor->read_sensor();
         data->controller->calculate(motor_thrust);
+        now = std::chrono::high_resolution_clock::now();
+        auto micros = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+        //std::cout << "millis: " << (float)(micros-last_micros)/1000.0 << std::endl;
+        last_micros = micros;
     }
     else
         motor_thrust = data->motors->calculate_thrust(json_axes_off);
@@ -172,6 +181,10 @@ void timer_com_callback(uv_timer_t* handle){
     }
     data->nucleo->update_buffer();
     data->nucleo->get_heartbeat();
+    // auto now = std::chrono::high_resolution_clock::now();
+    // auto micros = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    // std::cout << "millis: " << (float)(micros-last_micros)/1000.0 << std::endl;
+    // last_micros = micros;
 }
 
 void timer_debug_callback(uv_timer_t* handle){

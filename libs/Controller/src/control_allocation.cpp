@@ -45,10 +45,10 @@ OutputValues compute_thrust(double Fz, double Fr, double Fp)  // Compute the PWM
     OutputValues result;
 
     // Computation of thrust forces
-    result.T5 = a51 * Fz + a52 * Fr + a53 * Fp;
-    result.T6 = a61 * Fz + a62 * Fr + a63 * Fp;
-    result.T7 = a71 * Fz + a72 * Fr + a73 * Fp;
-    result.T8 = a81 * Fz + a82 * Fr + a83 * Fp;
+    result.T5 = a53* Fz + a54 * Fr + a55 * Fp;
+    result.T6 = a63 * Fz + a64 * Fr + a65 * Fp;
+    result.T7 = a73 * Fz + a74 * Fr + a75 * Fp;
+    result.T8 = a83 * Fz + a84 * Fr + a85 * Fp;
 
     // Conversion into Kgf
     result.T5=result.T5/9.8;

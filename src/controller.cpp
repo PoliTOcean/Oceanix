@@ -6,14 +6,7 @@ Controller::Controller(Sensor& sensor, json jsonConfig, bool verbose)
     reference_roll(0),
     reference_pitch(0),
     c_verbose(verbose),
-    control_z(ControlSystemZ(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorBar"], jsonConfig["weight"], jsonConfig["buoyancy"], 
-                                    jsonConfig["denFHeave2"], jsonConfig["numFHeave1"], jsonConfig["numFHeave2"], jsonConfig["denCHeave2"], jsonConfig["denCHeave3"], 
-                                    jsonConfig["numCHeave2"], jsonConfig["numCHeave3"], jsonConfig["cZ_inf"])),
-    control_pitch(ControlSystemPITCH(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"],
-                                    jsonConfig["denFPitch2"], jsonConfig["denFPitch3"], jsonConfig["numFPitch2"], jsonConfig["numFPitch3"], jsonConfig["denCPitch2"], 
-                                    jsonConfig["denCPitch3"], jsonConfig["numCPitch2"], jsonConfig["numCPitch3"], jsonConfig["cPITCH_inf"])),
-    control_roll(ControlSystemROLL(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"], 
-                                    jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])){}
+    control_z(ControlSystem(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], std::vector<double>{jsonConfig["Kx0"], jsonConfig["Kx1"]}, jsonConfig["Ki"])){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
     float total_power=0;
@@ -26,7 +19,7 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     
     controller_active_old = controller_active;
 
-    if(total_power<0.01 && state!=CONTROL_OFF)
+    if(total_power<0.01 && state!=CONTROL_OFF && sensor.get_depth()>0.10)
         controller_active=true;
     else{
         controller_active=false;
@@ -42,11 +35,11 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     if(state == CONTROL_OFF)
         return;
     if(state & CONTROL_Z && controller_active)
-        force_z = control_z.calculateZ(reference_z*10, sensor.get_depth());   //figure out why *10
-    if(state & CONTROL_ROLL && controller_active)
-        force_roll = control_roll.calculateRoll(reference_roll*DEGtoRAD, sensor.get_roll()*DEGtoRAD);
-    if(state & CONTROL_PITCH && controller_active)
-        force_pitch = control_pitch.calculatePitch(reference_pitch*DEGtoRAD, sensor.get_pitch()*DEGtoRAD);
+        force_z = control_z.calculateU(reference_z, sensor.get_depth(), std::vector<double>{sensor.get_depth(), sensor.get_Zspeed()});
+    // if(state & CONTROL_ROLL && controller_active)
+    //     force_roll = control_roll.calculateRoll(reference_roll*DEGtoRAD, sensor.get_roll()*DEGtoRAD);
+    // if(state & CONTROL_PITCH && controller_active)
+    //     force_pitch = control_pitch.calculatePitch(reference_pitch*DEGtoRAD, sensor.get_pitch()*DEGtoRAD);
     
     OutputValues thrust = compute_thrust(force_z, force_roll, force_pitch);
 

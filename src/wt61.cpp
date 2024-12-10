@@ -20,15 +20,15 @@ void Wt61::read_sensor() {
 
     //if no connection read are zeros, so exclude them and keep the previous
     if (roll_new != 0)
-        pitch = roll_new*-1;  //swap pitch roll
+        pitch = roll_new;  //swap pitch roll
     if (yaw_new != 0)
         yaw = yaw_new*-1;
     if (pitch_new != 0)
         roll = pitch_new;
 
-    acc[0] = WT61P_get_AY(); //swap x, y
-    acc[1] = WT61P_get_AX();
-    acc[2] = WT61P_get_AZ()*-1; //invert z
+    acc[0] = WT61P_get_AY()*9.81; //swap x, y
+    acc[1] = WT61P_get_AX()*9.81;
+    acc[2] = WT61P_get_AZ()*-9.81; //invert z
 
     gyro[0] = WT61P_get_GY();
     gyro[1] = WT61P_get_GX();
