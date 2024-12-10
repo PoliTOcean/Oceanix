@@ -24,7 +24,7 @@ float* Motors::calculate_thrust(json axes){
     yaw = normalize_quadratic(yaw, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
     z = normalize(z, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
 
-    float joystick_input[6] = {y, x, z, 0, 0, yaw};
+    float joystick_input[6] = {x, y, z, 0, 0, yaw};
 
     // Perform matrix multiplication
     for (int i = 0; i < 8; ++i) {

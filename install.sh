@@ -7,6 +7,9 @@ command_exists() {
 
 #SUDO = "sudo"
 
+mkdir -p tmp
+cd tmp
+
 # Check for SUDO
 if ! command_exists sudo; then
     echo "SUDO is not installed. Running commands without SUDO."
@@ -100,11 +103,7 @@ else
     echo "Eclipse Paho MQTT libraries are already installed."
 fi
 
-# Clone the repository (if not already cloned)
-# if [ ! -d "Oceanix" ]; then
-#     echo "Cloning the repository..."
-#     git clone https://github.com/your-repo/Oceanix.git
-# fi
+cd ..
 
 # Create a build directory
 mkdir -p build

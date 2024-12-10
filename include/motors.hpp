@@ -24,10 +24,10 @@ private:
 
     //must have same order as motorID
     const double fixed_mixing_matrix[8][6] = {
-        {-cos(PI / 4), sin(PI / 4), 0, 0, 0, -0.5},//FDX
-        {cos(PI / 4), sin(PI / 4), 0, 0, 0, 0.5}, //FSX
-        {-sin(PI / 4), -cos(PI / 4), 0, 0, 0, 0.5},//RDX
-        {sin(PI / 4), -cos(PI / 4), 0, 0, 0, -0.5},//RSX
+        {sin(PI / 4), -cos(PI / 4), 0, 0, 0, -0.5},//FDX
+        {sin(PI / 4), cos(PI / 4), 0, 0, 0, 0.5}, //FSX
+        {-cos(PI / 4), -sin(PI / 4), 0, 0, 0, 0.5},//RDX
+        {-cos(PI / 4), sin(PI / 4), 0, 0, 0, -0.5},//RSX
         {0, 0, 1, 1, 1, 0},//UPFDX
         {0, 0, 1, -1, 1, 0},//UPFSX    
         {0, 0, 1, -1, 1, 0},//UPRDX     
