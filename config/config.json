@@ -6,7 +6,7 @@
         "debug_general" : true,
         "debug_interval" : 100,
         "controller_profile" : 1,
-        "mqtt_server_addr" : "10.0.0.254",
+        "mqtt_server_addr" : "127.0.0.1",
         "mqtt_client_id" : "oceanix",
         "verbose_nucleo" : false,
         "verbose_mqtt" : false,

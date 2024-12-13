@@ -103,11 +103,21 @@ else
     echo "Eclipse Paho MQTT libraries are already installed."
 fi
 
+# Check for mosquitto
+if ! command_exists mosquitto; then
+    echo "mosquitto is not installed. Installing mosquitto..."
+    sudo apt-get update
+    sudo apt install mosquitto mosquitto-clients -y
+    sudo cp ../.devcontainer/mosquitto /etc/init.d
+    sudo service mosquitto start
+else
+    echo "mosquitto is already installed."
+fi
+
 cd ..
 
 # Create a build directory
 mkdir -p build
-#cd build
 
 # Run CMake
 echo "Running CMake..."
