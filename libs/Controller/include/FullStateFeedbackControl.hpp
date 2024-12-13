@@ -7,7 +7,7 @@ class ControlSystem
     public:
 
         //Constructor
-        ControlSystem(double minForce, double maxForce, std::vector<double> Kx, double Ki);
+        ControlSystem(double minForce, double maxForce, double minErrrorInt, double maxErrorInt, std::vector<double> Kx, double Ki);
 
         
         //Returns the output of the controller given a reference signal and the actual measured state of the system

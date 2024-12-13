@@ -3,13 +3,13 @@
 #include <vector>
 
 // Constructor
-ControlSystem::ControlSystem(double minForce, double maxForce, std::vector<double> Kx, double Ki):
+ControlSystem::ControlSystem(double minForce, double maxForce, double minErrrorInt, double maxErrorInt, std::vector<double> Kx, double Ki):
 
 
     minForce(minForce),
     maxForce(maxForce),
-    maxErrorIntegral(140), 
-    minErrorIntegral(-120), 
+    maxErrorIntegral(maxErrorInt), //140
+    minErrorIntegral(minErrrorInt), //-120
     Kx(Kx),
     Ki(Ki)
 {

@@ -6,13 +6,18 @@ Controller::Controller(Sensor& sensor, json jsonConfig, bool verbose)
     reference_roll(0),
     reference_pitch(0),
     c_verbose(verbose),
-    control_z(ControlSystem(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], std::vector<double>{jsonConfig["Kx0"], jsonConfig["Kx1"]}, jsonConfig["Ki"])){}
+    control_z(ControlSystem(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"])),
+    control_pitch(ControlSystem(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"])),
+    control_roll(ControlSystem(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"]))
+    {}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
     float total_power=0;
     force_z=0;
     force_roll=0;
     force_pitch=0;
+    float* gyro;
+    gyro = sensor.get_gyro();
 
     for(int i=4; i<8; i++)
         total_power += motor_thrust[i];
@@ -36,10 +41,10 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
         return;
     if(state & CONTROL_Z && controller_active)
         force_z = control_z.calculateU(reference_z, sensor.get_depth(), std::vector<double>{sensor.get_depth(), sensor.get_Zspeed()});
-    // if(state & CONTROL_ROLL && controller_active)
-    //     force_roll = control_roll.calculateRoll(reference_roll*DEGtoRAD, sensor.get_roll()*DEGtoRAD);
-    // if(state & CONTROL_PITCH && controller_active)
-    //     force_pitch = control_pitch.calculatePitch(reference_pitch*DEGtoRAD, sensor.get_pitch()*DEGtoRAD);
+    if(state & CONTROL_ROLL && controller_active)
+        force_roll = control_roll.calculateU(0, sensor.get_roll()*DEGtoRAD, std::vector<double>{sensor.get_roll()*DEGtoRAD, gyro[0]*DEGtoRAD});
+    if(state & CONTROL_PITCH && controller_active)
+        force_pitch = control_pitch.calculateU(0, sensor.get_pitch()*DEGtoRAD, std::vector<double>{sensor.get_pitch()*DEGtoRAD, gyro[1]*DEGtoRAD});
     
     OutputValues thrust = compute_thrust(force_z, force_roll, force_pitch);
 

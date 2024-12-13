@@ -34,6 +34,8 @@ private:
     bool c_verbose;                   /// verbose mode
     Sensor& sensor;                  /// sensor class
     ControlSystem control_z;           /// Pointer to ControlSystemZ object
+    ControlSystem control_pitch;           /// Pointer to ControlSystemZ object
+    ControlSystem control_roll;           /// Pointer to ControlSystemZ object
 
 public:
     /**
