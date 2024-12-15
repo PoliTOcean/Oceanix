@@ -15,7 +15,7 @@
 
 
     class MQTTClient;
-    enum logLevel {logINFO, logDEBUG, logWARNING, logERROR};
+    enum logLevel {logDEBUG, logINFO, logWARNING, logERROR};
 
     class Logger {
         private:
