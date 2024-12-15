@@ -8,9 +8,17 @@
         "controller_profile" : 1,
         "mqtt_server_addr" : "10.0.0.254",
         "mqtt_client_id" : "oceanix",
-        "verbose_nucleo" : false,
-        "verbose_mqtt" : true,
-        "verbose_controller" : false
+        "bar02_loglevel" : 0,
+        "controller_loglevel" : 0,
+        "main_loglevel" : 0,
+        "motors_loglevel" : 0,
+        "mqtt_loglevel" : 0,
+        "nucleo_loglevel" : 0,
+        "imu_loglevel" : 0,
+        "logTypeCOUT": true,
+        "logTypeFILE": true,
+        "logTypeMQTT": true,
+        "logFileDir": "log/"
     },
     "Motors" : {
         "FSX_coeff": 1,

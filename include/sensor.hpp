@@ -23,7 +23,7 @@ public:
      * @brief Construct a new Sensor object containing IMU and barometer
      * 
      */
-    Sensor();
+    Sensor(logLevel imuLogLevel, logLevel bar02LogLevel);
 
     /**
      * @brief read all sensors, should be called at 100 Hz

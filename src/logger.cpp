@@ -2,7 +2,10 @@
 #include "mqtt_client.hpp"
 
 //Static fields declaration
-uint8_t Logger::logType;
+bool Logger::logTypeCout = false;
+bool Logger::logTypeFile = false;
+bool Logger::logTypeMQTT = false;
+
 std::string Logger::logFileDir = "/log"; //Default
 std::string Logger::logFileFullPath;
 std::ofstream Logger::logFile;
@@ -12,8 +15,16 @@ Logger::Logger(std::string unitName, logLevel minimumLogLevel)
     : unitName(unitName), 
     minimumLogLevel(minimumLogLevel) {}
 
-void Logger::configLogType(uint8_t logType){
-    Logger::logType = logType;
+void Logger::configLogTypeCout(bool value){
+    Logger::logTypeCout = value;
+}
+
+void Logger::configLogTypeFile(bool value){
+    Logger::logTypeFile = value;
+}
+
+void Logger::configLogTypeMQTT(bool value){
+    Logger::logTypeMQTT = value;
 }
 
 void Logger::setLogFileDir(std::string logFileDir){
@@ -44,11 +55,11 @@ void Logger::log(logLevel loglevel, std::string message){
         
         std::string logString = generateLogString(loglevel, message) + "\n";
 
-        if(Logger::logType & LOG_TYPE_COUT){
+        if(Logger::logTypeCout){
             std::cout << logString;
         }
 
-        if(Logger::logType & LOG_TYPE_FILE){
+        if(Logger::logTypeFile){
             if(!Logger::logFile.is_open()){
                 //The logFile stream isn't associated with an existing file
                 Logger::createLogFile();
@@ -56,7 +67,7 @@ void Logger::log(logLevel loglevel, std::string message){
             Logger::logFile << logString;
         }
 
-        if(Logger::logType & LOG_TYPE_MQTT){
+        if(Logger::logTypeMQTT){
             //TO DO
             if(Logger::mqtt_client != NULL){
                 Logger::mqtt_client->send_msg(logString, Topic::LOG);

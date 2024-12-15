@@ -70,7 +70,7 @@ std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
-Logger logger("MAIN   ", LOG_ALL);
+Logger *logger;
 
 void state_commands(json msg, Timer_data* data);
 
@@ -81,9 +81,7 @@ int main(){
     uv_timer_t timer_debug;
 
     //Now it defaults to all, but the config should be read from a file in the future
-    Logger::configLogType(LOG_TYPE_COUT | LOG_TYPE_FILE | LOG_TYPE_MQTT);
-    Logger::setLogFileDir("/log");
-
+    
     state_mapper["ARM_ROV"] = ARM_ROV;
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
     state_mapper["PITCH_REFERENCE_UPDATE"] = PITCH_REFERENCE_UPDATE;
@@ -97,25 +95,31 @@ int main(){
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
 
-    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, LOG_ALL);
+    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["mqtt_loglevel"]);
 	while(!mqtt_client.mqtt_connect())
         sleep(1);
 
+    Logger::configLogTypeCout(general_config["logTypeCOUT"]);
+    Logger::configLogTypeFile(general_config["logTypeFILE"]);
+    Logger::configLogTypeMQTT(general_config["logTypeMQTT"]);
+    Logger::setLogFileDir(general_config["logFileDir"]);
     Logger::setMQTTClient(&mqtt_client);
 
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
+    logger = new Logger("MAIN   ", general_config["main_loglevel"]);
+
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true); //the new loglevel system hasnt been implemented into Nucleo class yet
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
-        logger.log(logERROR,"INIT FAILED");
+        logger->log(logERROR,"INIT FAILED");
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-    logger.log(logINFO,"INIT SUCCESS");
+    logger->log(logINFO,"INIT SUCCESS");
 
-    Sensor sensor = Sensor();
+    Sensor sensor = Sensor(general_config["imu_loglevel"], general_config["bar02_loglevel"]);
 
-    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), LOG_ALL);
+    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
 
-    Motors motors = Motors(config.get_config(ConfigType::MOTORS), LOG_ALL);
+    Motors motors = Motors(config.get_config(ConfigType::MOTORS), general_config["motors_loglevel"]);
 
     Timer_data* timer_data = new Timer_data();
     timer_data->sensor = &sensor;
@@ -182,7 +186,7 @@ void timer_com_callback(uv_timer_t* handle){
             data->nucleo->send_arm(msg.second["command"]);
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
             logMessage << "config message: " << msg.second.dump();
-            logger.log(logINFO, logMessage.str());
+            logger->log(logINFO, logMessage.str());
         }
     }
     data->nucleo->update_buffer();
@@ -206,7 +210,7 @@ void timer_debug_callback(uv_timer_t* handle){
         data->mqtt_client->send_debug(json_debug);
         
     if(!data->nucleo->is_connected())
-        logger.log(logINFO,"NUCLEO disconnected");
+        logger->log(logINFO,"NUCLEO disconnected");
 }
 
 void state_commands(json msg, Timer_data* data){
@@ -219,11 +223,11 @@ void state_commands(json msg, Timer_data* data){
             case ARM_ROV:
                 rov_armed = !rov_armed;
                 if(rov_armed){
-                    logger.log(logINFO, "ROV ARMED");
+                    logger->log(logINFO, "ROV ARMED");
                     data->sensor->set_pressure_baseline();
                 }
                 else
-                    logger.log(logINFO, "ROV DISARMED");
+                    logger->log(logINFO, "ROV DISARMED");
                 break;
             case CHANGE_CONTROLLER_STATUS:
                 controller_state = !controller_state;
@@ -256,6 +260,6 @@ void state_commands(json msg, Timer_data* data){
         }
     } catch (const json::exception& e) {
         logMessage << "JSON error parsing state_commands: " << e.what();
-        logger.log(logERROR, logMessage.str());
+        logger->log(logERROR, logMessage.str());
     }
 }
