@@ -1,8 +1,10 @@
 #include "sensor.hpp"
 
-Sensor::Sensor() 
+Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta) 
     : imu(Wt61()), 
-    barometer(Bar02()) {}
+    barometer(Bar02()),
+    alpha(Zspeed_alpha),
+    beta(Zspeed_beta) {}
 
 // Function to read sensor data from both IMU and barometer
 void Sensor::read_sensor() {
@@ -48,7 +50,15 @@ float Sensor::get_external_temperature() {
 
 // Function to get depth (from the barometer)
 float Sensor::get_depth() {
-    return barometer.get_depth();
+    float depth = barometer.get_depth();
+    float x = 0.134;
+    float y = -0.105;
+    float offset = 0;
+    
+    offset += sin(get_pitch()*DEGtoRAD) * x;
+    offset -= sin(get_roll()*DEGtoRAD) * y;
+    
+    return depth + offset;
 }
 
 // Function to get roll from the IMU sensor
@@ -76,6 +86,32 @@ float* Sensor::get_gyro() {
     return imu.get_gyro();
 }
 
+float Sensor::lowPassFilter(float current_value, float prev_filtered_value) {
+    return beta * current_value + (1 - beta) * prev_filtered_value;
+}
+
+float Sensor::get_Zspeed() {
+    float accel_z = get_acc()[2] + 9.80;
+
+    prev_depth=filtered_depth;
+    prev_speed=fused_speed;
+
+    // Step 1: Apply low-pass filter to acceleration and depth
+    filtered_accel = lowPassFilter(accel_z, filtered_accel);
+    filtered_depth = lowPassFilter(get_depth(), filtered_depth);
+
+    // Step 2: Speed estimate from depth differentiation
+    float speed_from_depth = (filtered_depth - prev_depth) / dt;
+
+    // Step 3: Speed estimate from acceleration integration
+    float speed_from_accel = prev_speed + filtered_accel * dt;
+
+    // Step 4: Fuse the two estimates using a complementary filter
+    fused_speed = alpha * speed_from_accel + (1 - alpha) * speed_from_depth;
+
+    return fused_speed;
+}
+
 void Sensor::update_debug(json& debug){
     read_sensor();
     debug["imu_state"] = (imu.get_status() == 0) ? "OK" : "OFF";
@@ -86,4 +122,6 @@ void Sensor::update_debug(json& debug){
     debug["yaw"] = floatToStringWithDecimals(get_yaw(), 3);
     debug["internal_temperature"] = floatToStringWithDecimals(get_internal_temperature(), 3);
     debug["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
+    debug["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
+    debug["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
 }

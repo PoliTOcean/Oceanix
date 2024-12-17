@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <uv.h>
 #include <json.hpp>
+#include <chrono>
 #include "sensor.hpp"
 #include "controller.hpp"
 #include "motors.hpp"
@@ -36,6 +37,7 @@ struct Timer_data {
     Controller* controller;
     Nucleo* nucleo;
     MQTTClient* mqtt_client;
+    Config* config;
 };
 
 const std::string config_path = "../config/config.json";
@@ -62,6 +64,7 @@ typedef enum {
     PITCH_REFERENCE_OFFSET,
     ROLL_REFERENCE_OFFSET,
     THRUST_MAX_OFFSET,
+    REQUEST_CONFIG,
     NONE
 } state_commands_map;
 std::map <std::string, state_commands_map> state_mapper;
@@ -84,6 +87,7 @@ int main(){
     state_mapper["PITCH_REFERENCE_OFFSET"] = PITCH_REFERENCE_OFFSET;
     state_mapper["ROLL_REFERENCE_OFFSET"] = ROLL_REFERENCE_OFFSET;
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
+    state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["NONE"] = NONE;
 
     Config config = Config(config_path);
@@ -92,17 +96,17 @@ int main(){
 
     MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["verbose_mqtt"]);
 	while(!mqtt_client.mqtt_connect())
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
         std::cout << "INIT FAILED" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     std::cout << "INIT SUCCESS" << std::endl;
 
-    Sensor sensor = Sensor();
+    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"]); 
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
 
@@ -114,12 +118,13 @@ int main(){
     timer_data->controller = &controller;
     timer_data->nucleo = &nucleo;
     timer_data->mqtt_client = &mqtt_client;
+    timer_data->config = &config;
 
     uv_loop_t* loop = uv_default_loop();
 
     uv_timer_init(loop, &timer_motors);
     timer_motors.data = timer_data;
-    uv_timer_start(&timer_motors, timer_motors_callback, 200, 10); // 10 ms iniziali, 10 ms di intervallo
+    uv_timer_start(&timer_motors, timer_motors_callback, 200, general_config["motor_interval"]); // 10 ms iniziali, 10 ms di intervallo
 
     uv_timer_init(loop, &timer_com);
     timer_com.data = timer_data;
@@ -167,8 +172,13 @@ void timer_com_callback(uv_timer_t* handle){
             state_commands(msg.second, data);
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
             data->nucleo->send_arm(msg.second["command"]);
-        else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG))
-            std::cout << "config message: " << msg.second.dump() << std::endl;
+        else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
+            //std::cout << "config message: " << msg.second.dump(2) << std::endl;
+            data->config->change_config(msg.second);
+            data->config->write_base_config();
+            general_config = data->config->get_config(ConfigType::GENERAL);
+            data->controller->update_parameters(data->config->get_config(ConfigType::CONTROLLER));
+        }
     }
     data->nucleo->update_buffer();
     data->nucleo->get_heartbeat();
@@ -178,14 +188,10 @@ void timer_debug_callback(uv_timer_t* handle){
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     json json_debug;
 
-    if(general_config["debug_motor"])
-        data->motors->update_debug(json_debug);
-    if(general_config["debug_controller"])
-        data->controller->update_debug(json_debug);
-    if(general_config["debug_general"]){
-        json_debug["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-        data->sensor->update_debug(json_debug);
-    }
+    data->motors->update_debug(json_debug);
+    data->controller->update_debug(json_debug);
+    json_debug["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+    data->sensor->update_debug(json_debug);
 
     if(!json_debug.empty())
         data->mqtt_client->send_debug(json_debug);
@@ -197,6 +203,7 @@ void timer_debug_callback(uv_timer_t* handle){
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
     float current_ref=0;
+    json conf;
     try{
         cmd = state_mapper[msg.begin().key()];
         switch(cmd){
@@ -234,6 +241,10 @@ void state_commands(json msg, Timer_data* data){
                 break;
             case THRUST_MAX_OFFSET:
                 data->motors->offset_thrust_max(msg["THRUST_MAX_OFFSET"]);
+                break;
+            case REQUEST_CONFIG:
+                conf = data->config->get_config(ConfigType::ALL);
+                data->mqtt_client->send_msg(conf.dump(), Topic::CONFIG);
                 break;
             case NONE:
                 break;

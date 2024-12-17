@@ -32,6 +32,9 @@ def send_axes_x():
 def send_axes_z():
     send_message(TOPIC_AXES, {"X": 0, "Y": 0, "Z": 10000, "YAW": 0})
 
+def send_request_config():
+    send_message(TOPIC_STATE_COMMANDS, {"REQUEST_CONFIG": 0})
+
 # GUI setup
 root = tk.Tk()
 root.title("MQTT Command Sender")
@@ -41,6 +44,7 @@ tk.Button(root, text="ARM ROV", command=send_arm_rov).grid(row=0, column=0, padx
 tk.Button(root, text="Set Axes to (0, 0, 0, 0)", command=send_axes_zero).grid(row=1, column=0, padx=10, pady=10)
 tk.Button(root, text="Set Axes to (10000, 0, 0, 0)", command=send_axes_x).grid(row=2, column=0, padx=10, pady=10)
 tk.Button(root, text="Set Axes to (0, 0, 10000, 0)", command=send_axes_z).grid(row=3, column=0, padx=10, pady=10)
+tk.Button(root, text="Request config", command=send_request_config).grid(row=4, column=0, padx=10, pady=10)
 
 # Start the GUI loop
 root.mainloop()

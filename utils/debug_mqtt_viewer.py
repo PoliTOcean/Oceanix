@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import paho.mqtt.client as mqtt
 import json
+import threading
 
 # MQTT settings
 MQTT_BROKER = "10.0.0.254"
@@ -35,6 +36,7 @@ def on_message(client, userdata, msg):
         
         # Update other values
         depth_var.set(data.get("depth", "N/A"))
+        Zspeed_var.set(data.get("Zspeed", "N/A"))
         pitch_var.set(data.get("pitch", "N/A"))
         roll_var.set(data.get("roll", "N/A"))
         yaw_var.set(data.get("yaw", "N/A"))
@@ -90,6 +92,7 @@ pwm_vars = {
     "UPRSX": tk.StringVar()
 }
 depth_var = tk.StringVar()
+Zspeed_var = tk.StringVar()
 pitch_var = tk.StringVar()
 roll_var = tk.StringVar()
 yaw_var = tk.StringVar()
@@ -108,6 +111,7 @@ labels = [
     ("IMU State", imu_state_var),
     ("ROV Armed", rov_armed_var),
     ("Depth", depth_var),
+    ("Zspeed", Zspeed_var),
     ("Pitch", pitch_var),
     ("Roll", roll_var),
     ("Yaw", yaw_var),
@@ -152,7 +156,6 @@ for i, (label, var) in enumerate(motor_labels):
     tk.Label(root, textvariable=var).grid(row=i, column=3, padx=10, pady=5)
 
 # Start MQTT loop in a separate thread
-import threading
 def mqtt_loop():
     client.loop_forever()
 
