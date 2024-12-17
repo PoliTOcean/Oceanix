@@ -52,7 +52,7 @@
 uint8_t iic_init(char *name, int *fd)
 {
     /* open the device */
-    *fd = open(name, O_RDWR);
+    *fd = open(name, O_RDWR | O_NONBLOCK);
     
     /* check the fd */
     if ((*fd) < 0)
