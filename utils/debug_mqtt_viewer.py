@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import paho.mqtt.client as mqtt
 import json
+import threading
 
 # MQTT settings
 MQTT_BROKER = "10.0.0.254"
@@ -155,7 +156,6 @@ for i, (label, var) in enumerate(motor_labels):
     tk.Label(root, textvariable=var).grid(row=i, column=3, padx=10, pady=5)
 
 # Start MQTT loop in a separate thread
-import threading
 def mqtt_loop():
     client.loop_forever()
 
