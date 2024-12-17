@@ -14,11 +14,13 @@ Config::Config(std::string config_file_path) {
     load_base_config();
 }
 
-void Config::change_config(std::string msg_string) { 
-    if (!checkJsonFormat(msg_string, m_json_config))
-        std::cout << "[CONFIG - WARNING] Config json not parseble or wrong keys/key types!" << std::endl;
-    else
-        m_json_config = json::parse(msg_string); 
+void Config::change_config(json msg_config) { 
+    if (!checkJsonFormat(msg_config, m_json_config))
+        std::cout << "[CONFIG - WARNING] Config json with wrong keys/key types!" << std::endl;
+    else{
+        std::cout << "[CONFIG - INFO] Config json updated!" << std::endl;
+        m_json_config = msg_config;
+    }
 }
     
 void Config::load_base_config() {
@@ -40,9 +42,8 @@ void Config::write_base_config() {
     if (json_config_file.is_open()) {
         std::cout << "[CONFIG - INFO] Writing config file" << std::endl;
         
-        json_config_file << m_json_config;
+        json_config_file << std::setw(4) << m_json_config;
         json_config_file.close();
-        load_base_config();
     }
     else
         std::cout << "[CONFIG - ERROR] Error opening config file!" << std::endl;
@@ -53,7 +54,7 @@ void Config::print_config() {
               << m_json_config.dump(1, ' ', true) << std::endl;
 }
 
-json Config::get_config(ConfigType config_type) {
+json& Config::get_config(ConfigType config_type) {
     if (config_map[config_type] == config_map[ConfigType::ALL]) 
         return m_json_config;
     return m_json_config[config_map[config_type]];

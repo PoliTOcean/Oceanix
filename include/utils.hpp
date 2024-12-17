@@ -13,6 +13,6 @@ using json = nlohmann::json;
 std::string motorID_to_string(MotorID id);
 std::string floatToStringWithDecimals(float value, int n);
 bool isJsonParseable(const std::string& str);
-bool checkJsonFormat(const std::string msg, json ref_json);
+bool checkJsonFormat(const json& msg_json, const json& ref_json);
 
 #endif

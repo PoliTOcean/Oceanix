@@ -52,3 +52,12 @@ double ControlSystem::calculateU(double reference, double y_measurement, std::ve
     
     return Force;
 }
+
+void ControlSystem::update_paramters(double minForce, double maxForce, double minErrrorInt, double maxErrorInt, std::vector<double> Kx, double Ki){
+    this->minForce = minForce;
+    this->maxForce = maxForce;
+    this->maxErrorIntegral = maxErrorInt;
+    this->minErrorIntegral = minErrrorInt;
+    this->Kx = Kx;
+    this->Ki = Ki;
+}

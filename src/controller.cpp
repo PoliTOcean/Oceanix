@@ -24,7 +24,7 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     
     controller_active_old = controller_active;
 
-    if(total_power<0.01 && state!=CONTROL_OFF && sensor.get_depth()>0.10)
+    if(abs(total_power)<0.01 && state!=CONTROL_OFF && sensor.get_depth()>0.05)
         controller_active=true;
     else{
         controller_active=false;
@@ -89,6 +89,13 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
             std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
             break;
     }
+}
+
+void Controller::update_parameters(const json& jsonConfig){
+
+    control_z.update_paramters(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"]);
+    control_pitch.update_paramters(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"]);
+    control_roll.update_paramters(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"]);
 }
 
 float Controller::get_reference(uint8_t ref_type) {

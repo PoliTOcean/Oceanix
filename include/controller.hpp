@@ -83,9 +83,16 @@ public:
     float get_reference(uint8_t ref_type);
 
     /**
+     * @brief Update internal parameters from config
+     */
+    void update_parameters(const json& jsonConfig);
+
+
+    /**
      * @brief Get the debug json
      * 
      * @param debug json doc for adding the informations
+     * @param jsonConfig Pointer to the json object with the configuration.
      */
     void update_debug(json& debug);
 };
