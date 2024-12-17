@@ -51,8 +51,8 @@ float Sensor::get_external_temperature() {
 // Function to get depth (from the barometer)
 float Sensor::get_depth() {
     float depth = barometer.get_depth();
-    float x = 0.15;
-    float y = -0.10;
+    float x = 0.134;
+    float y = -0.105;
     float offset = 0;
     
     offset += sin(get_pitch()*DEGtoRAD) * x;
