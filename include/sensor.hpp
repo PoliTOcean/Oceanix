@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
 #include <json.hpp>
 #include "wt61.hpp"
 #include "bar02.hpp"
@@ -26,7 +27,7 @@ public:
      * @brief Construct a new Sensor object containing IMU and barometer
      * 
      */
-    Sensor(float Zspeed_alpha, float Zspeed_beta);
+    Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode = false);
 
     /**
      * @brief read all sensors, should be called at 100 Hz
@@ -114,7 +115,7 @@ public:
      */
     void update_debug(json& debug);
 
-//private:
+private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)
 
@@ -127,6 +128,13 @@ public:
     float beta;    // Low-pass filter coefficient (adjust as needed)
     float dt = 0.03;  //30 millis
 
-};
+    bool test_mode;
 
+    float simulate_temperature();
+    float simulate_depth();
+    float simulate_angle();
+    float simulate_acceleration();
+    float simulate_gyro();
+
+};
 #endif // SENSOR_H

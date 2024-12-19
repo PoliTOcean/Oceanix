@@ -74,8 +74,17 @@ uint8_t controller_state=CONTROL_OFF;
 
 void state_commands(json msg, Timer_data* data);
 
-int main(){
-    int sensor_status;
+int main(int argc, char* argv[]){
+    bool test_mode = false;
+    // Check if 'test' argument is passed
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "test") {
+            test_mode = true;
+            std::cout << "\n\n####### TEST MODE #######\n\n" << std::endl;
+            break;
+        }
+    }
+
     uv_timer_t timer_motors;
     uv_timer_t timer_com;
     uv_timer_t timer_debug;
@@ -98,7 +107,7 @@ int main(){
 	while(!mqtt_client.mqtt_connect())
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"]);
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"], test_mode);
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
         std::cout << "INIT FAILED" << std::endl;
@@ -106,7 +115,7 @@ int main(){
     }
     std::cout << "INIT SUCCESS" << std::endl;
 
-    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"]); 
+    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], test_mode); 
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
 
