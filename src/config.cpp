@@ -66,7 +66,7 @@ std::string Config::find_config_file(std::string config_file_path) {
         "./config.json",                 // Current directory
         "../config/config.json",         // Relative path
         "config/config.json",
-        "/Oceanix/config/config.json",
+        "Oceanix/config/config.json",
         std::getenv("OCEANIX_CONFIG_PATH") ? std::getenv("OCEANIX_CONFIG_PATH") : ""     // Environment variable (if set)
     };
 
