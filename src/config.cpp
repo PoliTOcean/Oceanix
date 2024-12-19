@@ -9,7 +9,7 @@ std::map <ConfigType, std::string> config_map {
 
 
 Config::Config(std::string config_file_path) {
-    m_config_file_path = config_file_path;
+    m_config_file_path = find_config_file(config_file_path);
     
     load_base_config();
 }
@@ -58,4 +58,26 @@ json& Config::get_config(ConfigType config_type) {
     if (config_map[config_type] == config_map[ConfigType::ALL]) 
         return m_json_config;
     return m_json_config[config_map[config_type]];
+}
+
+std::string Config::find_config_file(std::string config_file_path) {
+    std::string paths[] = {
+        config_file_path,                // Current path
+        "./config.json",                 // Current directory
+        "../config/config.json",         // Relative path
+        "config/config.json",
+        "/Oceanix/config/config.json",
+        std::getenv("OCEANIX_CONFIG_PATH") ? std::getenv("OCEANIX_CONFIG_PATH") : ""     // Environment variable (if set)
+    };
+
+    for (const auto& path : paths) {
+        if (!path.empty()) { // Check if environment variable is set
+            std::ifstream file(path);
+            if (file.good()) {
+                return path;
+            }
+        }
+    }
+    // If no file is found, return an empty string or handle the error as needed
+    return config_file_path;
 }

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <cstdlib>
 #include "json.hpp"
 #include "config.hpp"
 #include "utils.hpp"
@@ -25,6 +27,8 @@ class Config {
     private:
         json m_json_config; 
         std::string m_config_file_path;
+
+        std::string find_config_file(std::string config_file_path);
 
 };
 
