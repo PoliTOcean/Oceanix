@@ -28,7 +28,7 @@ def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debu
     mqtt_client = mqtt.Client()
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.connect(broker, 1883, 60)
+    result = mqtt_client.connect(broker, 1883, 60)
 
     mqtt_thread = threading.Thread(target=mqtt_client.loop_forever)
     mqtt_thread.daemon = True
@@ -38,6 +38,7 @@ def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debu
     mqtt_client.subscribe(topic_commands)
     mqtt_client.subscribe(topic_axes)
     mqtt_client.subscribe(topic_debug)
+    return result
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:

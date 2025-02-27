@@ -52,8 +52,9 @@ class DebugMQTTViewerPage(tk.Frame):
         ] + [(key, var) for key, var in self.controller_state_vars.items()]
 
         for i, (label, var) in enumerate(labels):
-            tk.Label(left_frame, text=label).grid(row=i, column=0, padx=10, pady=5, sticky="w")
-            tk.Label(left_frame, textvariable=var).grid(row=i, column=1, padx=10, pady=5)
+            tk.Label(left_frame, text=label, width=15, anchor="w").grid(row=i, column=0, padx=10, pady=5, sticky="w")
+            tk.Label(left_frame, textvariable=var, width=6, 
+                anchor="e", font='TkFixedFont').grid(row=i, column=1, padx=10, pady=5)
 
         # Right column for motor thrust bars
         right_frame = tk.Frame(self)

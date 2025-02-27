@@ -41,7 +41,10 @@ class MQTTConfigPage(tk.Frame):
 
         save_button = tk.Button(self, text="Save and Connect", command=self.save_and_connect)
         save_button.grid(row=5, column=0, columnspan=2, pady=10)
-        self.save_and_connect()
+        
+        self.connect_output_label = tk.Label(self, text="")
+        self.connect_output_label.grid(row=6, column=0, columnspan=2, pady=10)
+        #self.save_and_connect()
 
     def save_and_connect(self):
         broker = self.broker_entry.get()
@@ -50,4 +53,10 @@ class MQTTConfigPage(tk.Frame):
         topic_axes = self.topic_axes_entry.get()
         topic_debug = self.topic_debug_entry.get()
 
-        initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug)
+        try:
+            res = initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug)
+        except TimeoutError:
+            self.connect_output_label.config(text="Failed to connect to MQTT broker", fg="red")
+            
+        if res == 0:
+            self.connect_output_label.config(text="Connected successfully to MQTT broker", fg="green")
