@@ -1,5 +1,6 @@
 # update_configuration_page.py
 import tkinter as tk
+from tkinter import ttk
 from mqtt_handler import register_callback, mqtt_send_message, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_CONFIG
 
 class UpdateConfigurationPage(tk.Frame):
@@ -8,83 +9,116 @@ class UpdateConfigurationPage(tk.Frame):
         self.controller = controller
         self.current_config = {}
         self.entry_widgets = {}
-        self.editable_keys = [
-            "minErrorIntZ", "maxErrorIntZ",
-            "minErrorIntPitch", "maxErrorIntPitch",
-            "minErrorIntRoll", "maxErrorIntRoll",
-            "Kx0_Z", "Kx1_Z", "Ki_Z",
-            "Kx0_Pitch", "Kx1_Pitch", "Ki_Pitch",
-            "Kx0_Roll", "Kx1_Roll", "Ki_Roll",
-            "pwm_slew_rate_max", "thrust_max_xy", "thrust_max_z", "Zspeed_beta"
-        ]
+        self.labels = {}
+        self.key_sections = {}  # Tracks which section each parameter belongs to
 
-        for i, param in enumerate(self.editable_keys):
-            label = tk.Label(self, text=param)
-            label.grid(row=i, column=0, sticky='w')
+        # Create a canvas and scrollbar for scrollable interface
+        self.canvas = tk.Canvas(self, borderwidth=0)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
 
-            entry = tk.Entry(self)
-            entry.grid(row=i, column=1, padx=5, pady=2)
-            
-            self.entry_widgets[param] = entry
+        # Configure the canvas
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        button_frame = tk.Frame(self)
-        button_frame.grid(row=len(self.editable_keys), columnspan=2, pady=10)
+        # Layout the canvas and scrollbar
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
 
-        load_button = tk.Button(button_frame, text="Load Config", command=self.request_configuration)
+        # Configure grid weights to make the canvas expand
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Create button frame inside the scrollable frame
+        self.button_frame = tk.Frame(self.scrollable_frame)
+        self.button_frame.grid(row=0, column=0, columnspan=2, pady=10, sticky="ew")
+
+        load_button = tk.Button(self.button_frame, text="Load Config", command=self.request_configuration)
         load_button.pack(side='left', padx=5)
 
-        send_button = tk.Button(button_frame, text="Send Configuration", command=self.send_updated_configuration)
+        send_button = tk.Button(self.button_frame, text="Send Configuration", command=self.send_updated_configuration)
         send_button.pack(side='left', padx=5)
-        
+
         # Register the callback to handle incoming MQTT messages
         register_callback(self.load_config_into_gui)
 
     def load_config_into_gui(self, config, topic):
-        global current_config
-        # Assuming the config is received as a JSON object with relevant keys
         if topic != MQTT_TOPIC_CONFIG:
             return
-        current_config = config
-        print("Loading configuration into GUI:", config)
-        for key, value in config.get("Controller", {}).items():
-            if key in self.entry_widgets:
-                self.entry_widgets[key].delete(0, tk.END)
-                self.entry_widgets[key].insert(0, str(value))
 
-        for key, value in config.get("Motors", {}).items():
-            if key in self.entry_widgets:
-                self.entry_widgets[key].delete(0, tk.END)
-                self.entry_widgets[key].insert(0, str(value))
-                
-        for key, value in config.get("General", {}).items():
-            if key in self.entry_widgets:
-                self.entry_widgets[key].delete(0, tk.END)
-                self.entry_widgets[key].insert(0, str(value))
+        self.current_config = config.copy()
+        self.key_sections.clear()
+
+        # Destroy existing widgets
+        for label in self.labels.values():
+            label.destroy()
+        for entry in self.entry_widgets.values():
+            entry.destroy()
+        self.labels.clear()
+        self.entry_widgets.clear()
+
+        # Collect all parameters from all sections
+        row_index = 1  # Start from row 1 to leave space for the button frame
+        for section in config:
+            if isinstance(config[section], dict):
+                # Add a section label
+                section_label = tk.Label(self.scrollable_frame, text=f"--- {section.upper()} ---", font=("Arial", 10, "bold"))
+                section_label.grid(row=row_index, column=0, columnspan=2, pady=(10, 5), sticky="w")
+                row_index += 1
+
+                for param in config[section]:
+                    # Track parameter's section
+                    self.key_sections[param] = section
+
+                    # Create label
+                    self.labels[param] = tk.Label(self.scrollable_frame, text=param)
+                    self.labels[param].grid(row=row_index, column=0, sticky='w', padx=10)
+
+                    # Create entry
+                    entry = tk.Entry(self.scrollable_frame)
+                    entry.grid(row=row_index, column=1, padx=5, pady=2, sticky='ew')
+                    self.entry_widgets[param] = entry
+
+                    # Update entry value
+                    entry.delete(0, tk.END)
+                    entry.insert(0, str(config[section][param]))
+
+                    row_index += 1
+
+        # Update the scroll region
+        self.scrollable_frame.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def send_updated_configuration(self):
-        global current_config
-        updated_config = current_config.copy()
+        updated_config = self.current_config.copy()
 
-        for key, entry in self.entry_widgets.items():
+        for param, entry in self.entry_widgets.items():
+            value = entry.get()
+            section = self.key_sections.get(param, "General")
+
+            # Convert value to appropriate type
             try:
-                value = entry.get()
                 if value.lower() in ['true', 'false']:
-                    updated_value = value.lower() == 'true'
-                elif value.isdigit():
-                    updated_value = int(value)
+                    converted_value = value.lower() == 'true'
+                elif '.' in value:
+                    converted_value = float(value)
                 else:
-                    updated_value = float(value)
+                    converted_value = int(value)
             except ValueError:
-                updated_value = value
-            
-            if key in updated_config["Controller"]:
-                updated_config["Controller"][key] = updated_value
-            elif key in updated_config["Motors"]:
-                updated_config["Motors"][key] = updated_value
-            elif key in updated_config["General"]:
-                updated_config["General"][key] = updated_value
+                converted_value = value  # Keep as string if conversion fails
 
-        print(f"Sending configuration: {updated_config}")
+            # Update the configuration
+            if section not in updated_config:
+                updated_config[section] = {}
+            updated_config[section][param] = converted_value
+
+        print(f"Sending updated configuration: {updated_config}")
         mqtt_send_message(MQTT_TOPIC_CONFIG, updated_config)
 
     def request_configuration(self):
