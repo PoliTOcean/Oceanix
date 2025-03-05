@@ -8,19 +8,21 @@ mqtt_client = None
 mqtt_callbacks = []
 
 # MQTT settings with default values
-MQTT_BROKER = "127.0.0.1"
+MQTT_BROKER = ["127.0.0.1", "10.0.0.254"]
 MQTT_TOPIC_CONFIG = "config/"
 MQTT_TOPIC_COMMANDS = "state_commands/"
 MQTT_TOPIC_AXES = "axes/"
 MQTT_TOPIC_DEBUG = "debug/"
+MQTT_TOPIC_ARM = "arm_commands/"
 
-def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug):
-    global mqtt_client, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_DEBUG
+def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug, topic_arm):
+    global mqtt_client, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_DEBUG, MQTT_TOPIC_ARM
     MQTT_BROKER = broker
     MQTT_TOPIC_CONFIG = topic_config
     MQTT_TOPIC_COMMANDS = topic_commands
     MQTT_TOPIC_AXES = topic_axes
     MQTT_TOPIC_DEBUG = topic_debug
+    MQTT_TOPIC_ARM = topic_arm
 
     if mqtt_client is not None:
         mqtt_client.disconnect()
@@ -28,15 +30,20 @@ def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debu
     mqtt_client = mqtt.Client()
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    result = mqtt_client.connect(broker, 1883, 60)
+    try:
+        result = mqtt_client.connect(broker[0], 1883, 60)
+    except:
+        print(f"Failed to connect to {broker[0]}, trying {broker[1]}")
+        result = mqtt_client.connect(broker[1], 1883, 60)
+        result += 10
 
     mqtt_thread = threading.Thread(target=mqtt_client.loop_forever)
     mqtt_thread.daemon = True
     mqtt_thread.start()
 
     mqtt_client.subscribe(topic_config)
-    mqtt_client.subscribe(topic_commands)
-    mqtt_client.subscribe(topic_axes)
+    # mqtt_client.subscribe(topic_commands)
+    # mqtt_client.subscribe(topic_axes)
     mqtt_client.subscribe(topic_debug)
     return result
 
