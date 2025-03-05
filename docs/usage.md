@@ -18,6 +18,5 @@ To start the program, follow these steps:
 Make sure you have all the necessary dependencies installed before running the program.
 
 If you are using Codespace use
-    ```sh
+
     source Oceanix_test_mode.sh
-    ```
