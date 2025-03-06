@@ -99,10 +99,8 @@ bool MQTTClient::send_msg(std::string msg, Topic topic) {
     
     if (cli.is_connected()) {
         cli.publish(topic_map[topic], msg);
-        if(m_verbose){
-            logMessage << "MQTT send msg: " << msg << "  to topic: " << topic_map[topic] << std::endl;
-            logger.log(logINFO, logMessage.str());
-        }
+        logMessage << "MQTT send msg: " << msg << "  to topic: " << topic_map[topic] << std::endl;
+        logger.log(logINFO, logMessage.str());
         return true;
     }
     else {
@@ -119,10 +117,8 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
         if (isJsonParseable(m_msg->get_payload())){
             msgp->first = inverse_topic_map[m_msg->get_topic()];
             msgp->second = json::parse(m_msg->get_payload());
-            if(m_verbose){
-                logMessage << "received msg: " << m_msg->get_payload() << "  from topic: " << m_msg->get_topic() << std::endl;
-                logger.log(logINFO, logMessage.str());
-            }
+            logMessage << "received msg: " << m_msg->get_payload() << "  from topic: " << m_msg->get_topic() << std::endl;
+            logger.log(logINFO, logMessage.str());
         }
         else{
             logger.log(logWARNING, "Message parsing error");

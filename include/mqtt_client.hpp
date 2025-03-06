@@ -32,7 +32,6 @@ class MQTTClient{
         std::any m_conn_opts;
         mqtt::async_client cli;
         int m_QOS;
-        bool m_verbose;
 
         msg_pt m_msg;
 
