@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <uv.h>
 #include <json.hpp>
+#include <chrono>
 #include "sensor.hpp"
 #include "controller.hpp"
 #include "motors.hpp"
@@ -38,6 +39,7 @@ struct Timer_data {
     Controller* controller;
     Nucleo* nucleo;
     MQTTClient* mqtt_client;
+    Config* config;
 };
 
 const std::string config_path = "../config/config.json";
@@ -64,6 +66,7 @@ typedef enum {
     PITCH_REFERENCE_OFFSET,
     ROLL_REFERENCE_OFFSET,
     THRUST_MAX_OFFSET,
+    REQUEST_CONFIG,
     NONE
 } state_commands_map;
 std::map <std::string, state_commands_map> state_mapper;
@@ -74,8 +77,17 @@ Logger *logger;
 
 void state_commands(json msg, Timer_data* data);
 
-int main(){
-    int sensor_status;
+int main(int argc, char* argv[]){
+    bool test_mode = false;
+    // Check if 'test' argument is passed
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "test") {
+            test_mode = true;
+            std::cout << "\n\n####### TEST MODE #######\n\n" << std::endl;
+            break;
+        }
+    }
+
     uv_timer_t timer_motors;
     uv_timer_t timer_com;
     uv_timer_t timer_debug;
@@ -89,6 +101,7 @@ int main(){
     state_mapper["PITCH_REFERENCE_OFFSET"] = PITCH_REFERENCE_OFFSET;
     state_mapper["ROLL_REFERENCE_OFFSET"] = ROLL_REFERENCE_OFFSET;
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
+    state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["NONE"] = NONE;
 
     Config config = Config(config_path, LOG_ALL);
@@ -97,7 +110,7 @@ int main(){
 
     MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["mqtt_loglevel"]);
 	while(!mqtt_client.mqtt_connect())
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     Logger::configLogTypeCout(general_config["logTypeCOUT"]);
     Logger::configLogTypeFile(general_config["logTypeFILE"]);
@@ -107,15 +120,15 @@ int main(){
 
     logger = new Logger("MAIN   ", general_config["main_loglevel"]);
 
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true); //the new loglevel system hasnt been implemented into Nucleo class yet
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true, test_mode); // true to mantain compatibility
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
         logger->log(logERROR,"INIT FAILED");
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
     logger->log(logINFO,"INIT SUCCESS");
 
-    Sensor sensor = Sensor(general_config["imu_loglevel"], general_config["bar02_loglevel"]);
+    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], test_mode, general_config["imu_loglevel"], general_config["bar02_loglevel"]); 
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
 
@@ -127,12 +140,13 @@ int main(){
     timer_data->controller = &controller;
     timer_data->nucleo = &nucleo;
     timer_data->mqtt_client = &mqtt_client;
+    timer_data->config = &config;
 
     uv_loop_t* loop = uv_default_loop();
 
     uv_timer_init(loop, &timer_motors);
     timer_motors.data = timer_data;
-    uv_timer_start(&timer_motors, timer_motors_callback, 200, 10); // 10 ms iniziali, 10 ms di intervallo
+    uv_timer_start(&timer_motors, timer_motors_callback, 200, general_config["motor_interval"]); // 10 ms iniziali, 10 ms di intervallo
 
     uv_timer_init(loop, &timer_com);
     timer_com.data = timer_data;
@@ -187,6 +201,11 @@ void timer_com_callback(uv_timer_t* handle){
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
             logMessage << "config message: " << msg.second.dump();
             logger->log(logINFO, logMessage.str());
+            //std::cout << "config message: " << msg.second.dump(2) << std::endl;
+            data->config->change_config(msg.second);
+            data->config->write_base_config();
+            general_config = data->config->get_config(ConfigType::GENERAL);
+            data->controller->update_parameters(data->config->get_config(ConfigType::CONTROLLER));
         }
     }
     data->nucleo->update_buffer();
@@ -197,14 +216,10 @@ void timer_debug_callback(uv_timer_t* handle){
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     json json_debug;
 
-    if(general_config["debug_motor"])
-        data->motors->update_debug(json_debug);
-    if(general_config["debug_controller"])
-        data->controller->update_debug(json_debug);
-    if(general_config["debug_general"]){
-        json_debug["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-        data->sensor->update_debug(json_debug);
-    }
+    data->motors->update_debug(json_debug);
+    data->controller->update_debug(json_debug);
+    json_debug["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+    data->sensor->update_debug(json_debug);
 
     if(!json_debug.empty())
         data->mqtt_client->send_debug(json_debug);
@@ -217,6 +232,7 @@ void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
     float current_ref=0;
     std::ostringstream logMessage;
+    json conf;
     try{
         cmd = state_mapper[msg.begin().key()];
         switch(cmd){
@@ -254,6 +270,10 @@ void state_commands(json msg, Timer_data* data){
                 break;
             case THRUST_MAX_OFFSET:
                 data->motors->offset_thrust_max(msg["THRUST_MAX_OFFSET"]);
+                break;
+            case REQUEST_CONFIG:
+                conf = data->config->get_config(ConfigType::ALL);
+                data->mqtt_client->send_msg(conf.dump(), Topic::CONFIG);
                 break;
             case NONE:
                 break;

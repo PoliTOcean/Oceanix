@@ -2,6 +2,7 @@
 #define NUCLEO_H
 
 #include <stdlib.h>
+#include <cstdlib> 
 #include <optional>
 #include "json.hpp"
 #include "nucleo_protocol.hpp"
@@ -14,7 +15,7 @@ using json = nlohmann::json;
 
 class Nucleo {
     public:
-        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, bool verbose = false);
+        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, bool verbose = false, bool test_mode = false);
 
         bool is_connected();
         COMM_STATUS init(uint8_t frequency);
@@ -28,6 +29,7 @@ class Nucleo {
     private:
         Protocol m_protocol;
         uint16_t m_arm_value[arm_package_size];
+        bool m_test_mode;
         std::map <std::string, int> m_arm_value_mapper;
 
         void m_init_mapper();

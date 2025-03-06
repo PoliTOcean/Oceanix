@@ -1,18 +1,13 @@
 #include "controller.hpp"
 
-Controller::Controller(Sensor sensor, json jsonConfig, logLevel minimumLoglevel) 
-    : sensor(sensor),
+Controller::Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel) 
+    : sensor(sensor), 
     state(CONTROL_OFF),
     reference_roll(0),
     reference_pitch(0),
-    control_z(ControlSystemZ(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorBar"], jsonConfig["weight"], jsonConfig["buoyancy"], 
-                                    jsonConfig["denFHeave2"], jsonConfig["numFHeave1"], jsonConfig["numFHeave2"], jsonConfig["denCHeave2"], jsonConfig["denCHeave3"], 
-                                    jsonConfig["numCHeave2"], jsonConfig["numCHeave3"], jsonConfig["cZ_inf"])),
-    control_pitch(ControlSystemPITCH(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"],
-                                    jsonConfig["denFPitch2"], jsonConfig["denFPitch3"], jsonConfig["numFPitch2"], jsonConfig["numFPitch3"], jsonConfig["denCPitch2"], 
-                                    jsonConfig["denCPitch3"], jsonConfig["numCPitch2"], jsonConfig["numCPitch3"], jsonConfig["cPITCH_inf"])),
-    control_roll(ControlSystemROLL(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"], 
-                                    jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])),
+    control_z(ControlSystem(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"])),
+    control_pitch(ControlSystem(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"])),
+    control_roll(ControlSystem(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"])),
     logger(Logger(CONTROLLER_LOG_NAME, minimumLoglevel)){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
@@ -22,13 +17,15 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     force_z=0;
     force_roll=0;
     force_pitch=0;
+    float* gyro;
+    gyro = sensor.get_gyro();
 
     for(int i=4; i<8; i++)
         total_power += motor_thrust[i];
     
     controller_active_old = controller_active;
 
-    if(total_power<0.01 && state!=CONTROL_OFF)
+    if(abs(total_power)<0.01 && state!=CONTROL_OFF && sensor.get_depth()>0.05)
         controller_active=true;
     else{
         controller_active=false;
@@ -46,11 +43,11 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     if(state == CONTROL_OFF)
         return;
     if(state & CONTROL_Z && controller_active)
-        force_z = control_z.calculateZ(reference_z*10, sensor.get_depth());   //figure out why *10
+        force_z = control_z.calculateU(reference_z, sensor.get_depth(), std::vector<double>{sensor.get_depth(), sensor.get_Zspeed()});
     if(state & CONTROL_ROLL && controller_active)
-        force_roll = control_roll.calculateRoll(reference_roll*DEGtoRAD, sensor.get_roll()*DEGtoRAD);
+        force_roll = control_roll.calculateU(0, sensor.get_roll()*DEGtoRAD, std::vector<double>{sensor.get_roll()*DEGtoRAD, gyro[0]*DEGtoRAD});
     if(state & CONTROL_PITCH && controller_active)
-        force_pitch = control_pitch.calculatePitch(reference_pitch*DEGtoRAD, sensor.get_pitch()*DEGtoRAD);
+        force_pitch = control_pitch.calculateU(0, sensor.get_pitch()*DEGtoRAD, std::vector<double>{sensor.get_pitch()*DEGtoRAD, gyro[1]*DEGtoRAD});
     
     OutputValues thrust = compute_thrust(force_z, force_roll, force_pitch);
 
@@ -111,6 +108,13 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
     }
 }
 
+void Controller::update_parameters(const json& jsonConfig){
+
+    control_z.update_paramters(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"]);
+    control_pitch.update_paramters(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"]);
+    control_roll.update_paramters(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"]);
+}
+
 float Controller::get_reference(uint8_t ref_type) {
     if(ref_type == CONTROL_Z)
         return reference_z;
@@ -132,7 +136,4 @@ void Controller::update_debug(json& debug){
     debug["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     debug["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
     debug["reference_pitch"] = floatToStringWithDecimals(reference_pitch, 3);
-    debug["depth"] = floatToStringWithDecimals(sensor.get_depth(), 3);
-    debug["roll"] = floatToStringWithDecimals(sensor.get_roll(), 3);
-    debug["pitch"] = floatToStringWithDecimals(sensor.get_pitch(), 3);
 }

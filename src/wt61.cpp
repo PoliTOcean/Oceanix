@@ -27,17 +27,17 @@ void Wt61::read_sensor() {
     if (roll_new != 0)
         pitch = roll_new;  //swap pitch roll
     if (yaw_new != 0)
-        yaw = yaw_new;
+        yaw = yaw_new*-1;
     if (pitch_new != 0)
         roll = pitch_new;
 
-    acc[0] = WT61P_get_AX();
-    acc[1] = WT61P_get_AY();
-    acc[2] = WT61P_get_AZ();
+    acc[0] = WT61P_get_AY()*9.81; //swap x, y
+    acc[1] = WT61P_get_AX()*9.81;
+    acc[2] = WT61P_get_AZ()*-9.81; //invert z
 
-    gyro[0] = WT61P_get_GX();
-    gyro[1] = WT61P_get_GY();
-    gyro[2] = WT61P_get_GZ();
+    gyro[0] = WT61P_get_GY();
+    gyro[1] = WT61P_get_GX();
+    gyro[2] = WT61P_get_GZ()*-1;
 
     temperature = WT61P_get_temp();
 }

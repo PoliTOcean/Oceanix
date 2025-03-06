@@ -175,5 +175,5 @@ float WT61P_get_GZ(){
 
 float WT61P_get_temp(){
 	WitReadReg(TEMP, 1);
-	return sReg[TEMP] / 100;
+	return sReg[TEMP] / 100.0f;
 }

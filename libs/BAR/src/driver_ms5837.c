@@ -629,6 +629,8 @@ uint8_t ms5837_set_pressure_osr(ms5837_handle_t *handle, ms5837_osr_t osr)
 uint8_t ms5837_read_temperature_pressure(ms5837_handle_t *handle, uint32_t *temperature_raw, float *temperature_c, 
                                          uint32_t *pressure_raw, float *pressure_mbar)
 {
+    handle->press_osr = MS5837_OSR_256; //hardcoded
+    handle->temp_osr = MS5837_OSR_256;  //hardcoded
     uint8_t buf[3];
     
     if (handle == NULL)                                                                        /* check handle */

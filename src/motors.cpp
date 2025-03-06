@@ -2,15 +2,15 @@
 
 Motors::Motors(json config, logLevel minimumLoglevel)
     : thrust_max_xy(config["thrust_max_xy"]), thrust_max_z(config["thrust_max_z"]),
-    motors{ 
-        Motor(MotorID::FSX, config["FSX_coeff"], config["FSX_pwm_zero"], config["pwm_slew_rate_max"]),
+    motors{         //same order as motorID
         Motor(MotorID::FDX, config["FDX_coeff"], config["FDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::RSX, config["RSX_coeff"], config["RSX_pwm_zero"], config["pwm_slew_rate_max"]),
+        Motor(MotorID::FSX, config["FSX_coeff"], config["FSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::RDX, config["RDX_coeff"], config["RDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPFSX, config["UPFSX_coeff"], config["UPFSX_pwm_zero"], config["pwm_slew_rate_max"]),
+        Motor(MotorID::RSX, config["RSX_coeff"], config["RSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPFDX, config["UPFDX_coeff"], config["UPFDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"])
+        Motor(MotorID::UPFSX, config["UPFSX_coeff"], config["UPFSX_pwm_zero"], config["pwm_slew_rate_max"]),
+        Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"]),
+        Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"])
     },
     logger(Logger(MOTORS_LOG_NAME, minimumLoglevel)) {}
 
@@ -25,9 +25,7 @@ float* Motors::calculate_thrust(json axes){
     yaw = normalize_quadratic(yaw, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
     z = normalize(z, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
 
-    //std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
-
-    float joystick_input[6] = {y, x, z, 0, 0, yaw};
+    float joystick_input[6] = {x, y, z, 0, 0, yaw};
 
     // Perform matrix multiplication
     for (int i = 0; i < 8; ++i) {

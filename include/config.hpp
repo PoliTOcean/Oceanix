@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <cstdlib>
 #include "json.hpp"
 #include "config.hpp"
 #include "logger.hpp"
@@ -17,17 +19,18 @@ class Config {
     public:
         Config(std::string config_file_path, logLevel minimumLogLevel);
         
-        json get_config(ConfigType config_type);
+        json& get_config(ConfigType config_type);
         void print_config();
         void load_base_config();
         void write_base_config(); 
-        void change_config(std::string msg_string);
-
-
+        void change_config(json msg_config);
+    
     private:
         json m_json_config; 
         std::string m_config_file_path;
         Logger logger;
+
+        std::string find_config_file(std::string config_file_path);
 
 };
 

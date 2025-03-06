@@ -3,15 +3,13 @@
 
 #include <iostream>
 #include <json.hpp>
-#include "PolePlacementControl.hpp"
+#include "FullStateFeedbackControl.hpp"
 #include "sensor.hpp"
 #include "control_allocation.hpp"
 #include "motors.hpp"
 #include "logger.hpp"
 
 using json = nlohmann::json;
-
-const float DEGtoRAD=0.01745329f;
 
 const uint8_t CONTROL_OFF =     0x00;    //000
 const uint8_t CONTROL_Z =       0x01;    //001
@@ -35,12 +33,11 @@ private:
     double force_roll;              /// calculated force roll
     double force_pitch;             /// calculated force pitch
     bool c_verbose;                   /// verbose mode
-    Sensor sensor;                  /// sensor class
-    ControlSystemZ control_z;           /// Pointer to ControlSystemZ object
-    ControlSystemPITCH control_pitch;   /// Pointer to ControlSystemPitch object
-    ControlSystemROLL control_roll;     /// Pointer to ControlSystemRoll object
     Logger logger;
-
+    Sensor& sensor;                  /// sensor class
+    ControlSystem control_z;           /// Pointer to ControlSystemZ object
+    ControlSystem control_pitch;           /// Pointer to ControlSystemZ object
+    ControlSystem control_roll;           /// Pointer to ControlSystemZ object
 
 public:
     /**
@@ -49,7 +46,7 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    Controller(Sensor sensor, json jsonConfig, logLevel minimumLoglevel);
+    Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui
@@ -88,9 +85,16 @@ public:
     float get_reference(uint8_t ref_type);
 
     /**
+     * @brief Update internal parameters from config
+     */
+    void update_parameters(const json& jsonConfig);
+
+
+    /**
      * @brief Get the debug json
      * 
      * @param debug json doc for adding the informations
+     * @param jsonConfig Pointer to the json object with the configuration.
      */
     void update_debug(json& debug);
 };

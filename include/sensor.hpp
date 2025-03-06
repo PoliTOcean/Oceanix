@@ -2,6 +2,8 @@
 #define SENSOR_H
 
 #include <iostream>
+#include <cmath>
+#include <cstdlib>
 #include <json.hpp>
 #include "wt61.hpp"
 #include "bar02.hpp"
@@ -14,6 +16,8 @@ const int IMU_ERROR=0x02;
 const int BAR_OK=0x04;
 const int BAR_ERROR=0x08;
 
+const float DEGtoRAD=0.01745329f;
+
 class Sensor {
 public:
     Wt61 imu;           ///< Imu object
@@ -23,7 +27,7 @@ public:
      * @brief Construct a new Sensor object containing IMU and barometer
      * 
      */
-    Sensor(logLevel imuLogLevel, logLevel bar02LogLevel);
+    Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode = false, logLevel imuLogLevel, logLevel bar02LogLevel);
 
     /**
      * @brief read all sensors, should be called at 100 Hz
@@ -100,12 +104,37 @@ public:
      */
     float* get_gyro();
 
+    float lowPassFilter(float current_value, float prev_filtered_value);
+
+    float get_Zspeed();
+
     /**
      * @brief update the debug json with sensors status, depth, roll, pitch, yaw
      * 
      * @param debug json to be modified
      */
     void update_debug(json& debug);
-};
 
+private:
+    float prev_depth = 0;    // Previous depth (m)
+    float prev_speed = 0;     // Initial speed (m/s)
+
+    // Filtered values initialization
+    float filtered_accel = 0;
+    float filtered_depth = 0;
+    float fused_speed = 0;
+
+    float alpha;  // Complementary filter constant  1-> only accelerometer
+    float beta;    // Low-pass filter coefficient (adjust as needed)
+    float dt = 0.03;  //30 millis
+
+    bool test_mode;
+
+    float simulate_temperature();
+    float simulate_depth();
+    float simulate_angle();
+    float simulate_acceleration();
+    float simulate_gyro();
+
+};
 #endif // SENSOR_H

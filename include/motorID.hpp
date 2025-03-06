@@ -3,15 +3,15 @@
 
 #include <string>
 
-enum class MotorID {
-  FSX=0,
-  FDX,
-  RSX,
+enum class MotorID {  //ordered as standard
+  FDX=0,
+  FSX,
   RDX,
-  UPFSX,
+  RSX,
   UPFDX,
-  UPRSX,
+  UPFSX,
   UPRDX,
+  UPRSX,
   NUM_MOTORS
 };
 

@@ -11,33 +11,38 @@ bool isJsonParseable(const std::string& str) {
     }
 }
 
-bool checkJsonFormat(const std::string msg, json ref_json) {
-    int correspond = 0;
-    if (!isJsonParseable(msg))
-            return false;
-
-    json msg_json = json::parse(msg);
-
+bool checkJsonFormat(const json& msg_json, const json& ref_json) {
+    // Extract keys from both JSON objects
     std::set<std::string> keys_msg;
     std::set<std::string> keys_json;
 
-    for (auto it = msg_json.begin(); it!=msg_json.end(); ++it)
+    for (auto it = msg_json.begin(); it != msg_json.end(); ++it)
         keys_msg.insert(it.key());
-    for (auto it = ref_json.begin(); it!=ref_json.end(); ++it)
+    for (auto it = ref_json.begin(); it != ref_json.end(); ++it)
         keys_json.insert(it.key());
 
-    if (keys_msg == keys_json) {
-        for (const auto& str : keys_json) {
-            if(ref_json[str].is_object())
-                if(!checkJsonFormat(msg_json[str].dump(), ref_json[str]))
-                    return false;
+    // Check if both sets of keys are equal
+    if (keys_msg != keys_json) {
+        return false;
+    }
 
-            if (msg_json[str].type() == ref_json[str].type()) correspond++;
+    // Check type of each key's value
+    for (const auto& key : keys_json) {
+        if (ref_json[key].is_object()) {
+            // Recursively check nested objects
+            if (!checkJsonFormat(msg_json[key], ref_json[key])) {
+                return false;
+            }
+        } else {
+            // Check if the types match for non-object values
+            if (msg_json[key].type() != ref_json[key].type()) {
+                return false;
+            }
         }
     }
 
-    // return keys_msg == keys_json
-    return correspond == keys_json.size();
+    // All keys and their types match
+    return true;
 }
 
 
