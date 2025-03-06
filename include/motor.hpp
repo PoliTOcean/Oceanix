@@ -4,6 +4,7 @@
 #include <iostream>
 #include "control_allocation.hpp"
 #include "motorID.hpp"
+#include <stdint.h>
 
 class Motor {
 private:

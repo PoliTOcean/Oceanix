@@ -1,9 +1,8 @@
 #include "sensor.hpp"
 
-// Constructor with an additional parameter for test mode
-Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode) 
-    : imu(Wt61()), 
-    barometer(Bar02()),
+Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode, logLevel imuLogLevel, logLevel bar02LogLevel) 
+    : imu(Wt61(imuLogLevel)), 
+    barometer(Bar02(bar02LogLevel)),
     alpha(Zspeed_alpha),
     beta(Zspeed_beta),
     test_mode(test_mode) {

@@ -1,6 +1,6 @@
 #include "motors.hpp"
 
-Motors::Motors(json config)
+Motors::Motors(json config, logLevel minimumLoglevel)
     : thrust_max_xy(config["thrust_max_xy"]), thrust_max_z(config["thrust_max_z"]),
     motors{         //same order as motorID
         Motor(MotorID::FDX, config["FDX_coeff"], config["FDX_pwm_zero"], config["pwm_slew_rate_max"]),
@@ -11,7 +11,8 @@ Motors::Motors(json config)
         Motor(MotorID::UPFSX, config["UPFSX_coeff"], config["UPFSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"])
-    } {}
+    },
+    logger(Logger(MOTORS_LOG_NAME, minimumLoglevel)) {}
 
 float* Motors::calculate_thrust(json axes){
     float z = (float)axes["Z"];
@@ -95,7 +96,7 @@ float Motors::limit_thrust(float thrust, float thrust_max){
     if(fabsf(thrust)>thrust_max){
         int sign = fabsf(thrust)/thrust;
         thrust = thrust_max * sign;
-        std::cout << "[MOTORS][WARNING] motor thrust limit surpassed, limited to the max" << std::endl;
+        logger.log(logWARNING, "motor thrust limit surpassed, limited to the max");
     }
     return thrust;
 }
@@ -115,6 +116,12 @@ void Motors::update_debug(json& debug){
 void Motors::offset_thrust_max(float offset){
     thrust_max_xy += offset;
     thrust_max_z += offset;
-    std::cout << "[MOTORS][INFO] new motor thrust max for xy: " << thrust_max_xy << std::endl;
-    std::cout << "[MOTORS][INFO] new motor thrust max for z: " << thrust_max_z << std::endl;
+    std::ostringstream logMessage;
+
+    logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
+    logger.log(logINFO, logMessage.str());
+
+    logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
+    logger.log(logINFO, logMessage.str());
+
 }

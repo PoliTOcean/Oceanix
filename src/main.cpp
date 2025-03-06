@@ -24,6 +24,8 @@
 #include "nucleo.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
+#include <iostream>
 
 using json = nlohmann::json;
 
@@ -71,6 +73,7 @@ std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t controller_state=CONTROL_OFF;
+Logger *logger;
 
 void state_commands(json msg, Timer_data* data);
 
@@ -89,6 +92,8 @@ int main(int argc, char* argv[]){
     uv_timer_t timer_com;
     uv_timer_t timer_debug;
 
+    //Now it defaults to all, but the config should be read from a file in the future
+    
     state_mapper["ARM_ROV"] = ARM_ROV;
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
     state_mapper["PITCH_REFERENCE_UPDATE"] = PITCH_REFERENCE_UPDATE;
@@ -99,27 +104,35 @@ int main(int argc, char* argv[]){
     state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["NONE"] = NONE;
 
-    Config config = Config(config_path);
+    Config config = Config(config_path, LOG_ALL);
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
 
-    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["verbose_mqtt"]);
+    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["mqtt_loglevel"]);
 	while(!mqtt_client.mqtt_connect())
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["verbose_nucleo"], test_mode);
+    Logger::configLogTypeCout(general_config["logTypeCOUT"]);
+    Logger::configLogTypeFile(general_config["logTypeFILE"]);
+    Logger::configLogTypeMQTT(general_config["logTypeMQTT"]);
+    Logger::setLogFileDir(general_config["logFileDir"]);
+    Logger::setMQTTClient(&mqtt_client);
+
+    logger = new Logger("MAIN   ", general_config["main_loglevel"]);
+
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true, test_mode); // true to mantain compatibility
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
         nucleo.connect();
-        std::cout << "INIT FAILED" << std::endl;
+        logger->log(logERROR,"INIT FAILED");
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
-    std::cout << "INIT SUCCESS" << std::endl;
+    logger->log(logINFO,"INIT SUCCESS");
 
-    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], test_mode); 
+    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], test_mode, general_config["imu_loglevel"], general_config["bar02_loglevel"]); 
 
-    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["verbose_controller"]);
+    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
 
-    Motors motors = Motors(config.get_config(ConfigType::MOTORS));
+    Motors motors = Motors(config.get_config(ConfigType::MOTORS), general_config["motors_loglevel"]);
 
     Timer_data* timer_data = new Timer_data();
     timer_data->sensor = &sensor;
@@ -147,6 +160,8 @@ int main(int argc, char* argv[]){
     
     uv_run(loop, UV_RUN_DEFAULT);
 
+    Logger::closeLogFile(); //Not sure this should be placed here
+
     return 0;
 }
 
@@ -171,6 +186,8 @@ void timer_motors_callback(uv_timer_t* handle) {
 }
 
 void timer_com_callback(uv_timer_t* handle){
+    std::ostringstream logMessage;
+
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     std::pair <Topic, json> msg;
 
@@ -182,6 +199,8 @@ void timer_com_callback(uv_timer_t* handle){
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
             data->nucleo->send_arm(msg.second["command"]);
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
+            logMessage << "config message: " << msg.second.dump();
+            logger->log(logINFO, logMessage.str());
             //std::cout << "config message: " << msg.second.dump(2) << std::endl;
             data->config->change_config(msg.second);
             data->config->write_base_config();
@@ -206,12 +225,13 @@ void timer_debug_callback(uv_timer_t* handle){
         data->mqtt_client->send_debug(json_debug);
         
     if(!data->nucleo->is_connected())
-        std::cout<< "NUCLEO disconnected" << std::endl;
+        logger->log(logINFO,"NUCLEO disconnected");
 }
 
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
     float current_ref=0;
+    std::ostringstream logMessage;
     json conf;
     try{
         cmd = state_mapper[msg.begin().key()];
@@ -219,11 +239,11 @@ void state_commands(json msg, Timer_data* data){
             case ARM_ROV:
                 rov_armed = !rov_armed;
                 if(rov_armed){
-                    std::cout << "[MAIN][INFO] ROV ARMED" << std::endl;
+                    logger->log(logINFO, "ROV ARMED");
                     data->sensor->set_pressure_baseline();
                 }
                 else
-                    std::cout << "[MAIN][INFO] ROV DISARMED" << std::endl;
+                    logger->log(logINFO, "ROV DISARMED");
                 break;
             case CHANGE_CONTROLLER_STATUS:
                 controller_state = !controller_state;
@@ -259,6 +279,7 @@ void state_commands(json msg, Timer_data* data){
                 break;
         }
     } catch (const json::exception& e) {
-        std::cout << "JSON error parsing state_commands: " << e.what() << std::endl;
+        logMessage << "JSON error parsing state_commands: " << e.what();
+        logger->log(logERROR, logMessage.str());
     }
 }

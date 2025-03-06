@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include "json.hpp"
 #include "config.hpp"
+#include "logger.hpp"
 #include "utils.hpp"
 
 using json = nlohmann::json;
@@ -16,7 +17,7 @@ enum class ConfigType { ALL, GENERAL, MOTORS, CONTROLLER };
 
 class Config {
     public:
-        Config(std::string config_file_path);
+        Config(std::string config_file_path, logLevel minimumLogLevel);
         
         json& get_config(ConfigType config_type);
         void print_config();
@@ -27,6 +28,7 @@ class Config {
     private:
         json m_json_config; 
         std::string m_config_file_path;
+        Logger logger;
 
         std::string find_config_file(std::string config_file_path);
 

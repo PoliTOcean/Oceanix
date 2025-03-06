@@ -5,17 +5,17 @@
 #include <iostream>
 #include "json.hpp"
 #include "mqtt/async_client.h"
-#include "mqtt_client.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 using msg_pt = std::shared_ptr<const mqtt::message>;
 using json = nlohmann::json;
 
-enum class Topic { AXES, COMMANDS, ARM, CONFIG, DEBUG };
+enum class Topic { AXES, COMMANDS, ARM, CONFIG, DEBUG, LOG};
 
-class MQTTClient {
+class MQTTClient{
     public:
-        MQTTClient(std::string server_address, std::string client_id, int QOS, bool verbose);
+        MQTTClient(std::string server_address, std::string client_id, int QOS, logLevel minimumLoglevel);
 
         bool is_connected();
         bool mqtt_connect();
@@ -35,6 +35,8 @@ class MQTTClient {
         bool m_verbose;
 
         msg_pt m_msg;
+
+        Logger logger;
 };
 
 #endif // MQTTCLIENT_H

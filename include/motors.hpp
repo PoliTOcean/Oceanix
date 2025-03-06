@@ -6,6 +6,7 @@
 #include "motor.hpp"
 #include "motorID.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 const int MIN_INPUT_READING = -32678;    // Minimum input reading value from the joystick
 const int MAX_INPUT_READING = 32678;     // Maximum input reading value from the joystick
@@ -40,7 +41,7 @@ public:
      * 
      * @param config the json containig all the configuration parameters
      */
-    Motors(json config);
+    Motors(json config, logLevel minimumLoglevel);
 
     /**
     * @brief calculate thrust of all the motors
@@ -69,6 +70,7 @@ public:
      * @param offset is the value added to current thrust max
      */
     void offset_thrust_max(float offset);
+
 
 private:
     /**
@@ -102,6 +104,7 @@ private:
      * @return float the value of the thrust
      */
     float limit_thrust(float thrust, float thrust_max);
+    Logger logger;
 };
 
 #endif

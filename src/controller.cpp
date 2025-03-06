@@ -1,17 +1,18 @@
 #include "controller.hpp"
 
-Controller::Controller(Sensor& sensor, json jsonConfig, bool verbose) 
+Controller::Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel) 
     : sensor(sensor), 
     state(CONTROL_OFF),
     reference_roll(0),
     reference_pitch(0),
-    c_verbose(verbose),
     control_z(ControlSystem(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"])),
     control_pitch(ControlSystem(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"])),
-    control_roll(ControlSystem(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"]))
-    {}
+    control_roll(ControlSystem(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"])),
+    logger(Logger(CONTROLLER_LOG_NAME, minimumLoglevel)){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
+    std::ostringstream message;
+    
     float total_power=0;
     force_z=0;
     force_roll=0;
@@ -33,8 +34,10 @@ void Controller::calculate(float* motor_thrust) {  //directly modify the motor_t
     
     if(controller_active==true && controller_active_old==false){
         reference_z=sensor.get_depth();
-        if(c_verbose)
-            std::cout << "[CONTROLLER][INFO] control Z active at depth " << reference_z << std::endl;
+        if(c_verbose){
+            message  << "control Z active at depth " << reference_z;
+            logger.log(logINFO, "Invalid reference type");
+        }
     }
 
     if(state == CONTROL_OFF)
@@ -58,35 +61,49 @@ void Controller::activate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state |= ref_type;
     else
-        std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+        logger.log(logERROR, "Invalid reference type");
 }
 
 void Controller::disactivate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state &= ~ref_type;
     else
-        std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+        logger.log(logERROR, "Invalid reference type");
 }
 
 void Controller::change_reference(uint8_t ref_type, float ref) {
+    
+    std::ostringstream message;
+    logLevel message_level;
+
     switch(ref_type) {
         case CONTROL_Z:
             reference_z = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_z changed to: " << reference_z << std::endl;
+            if(c_verbose){
+                message << "reference_z changed to: " << reference_z << std::endl;
+                logger.log(logINFO, message.str());
+            }
             break;
+
         case CONTROL_ROLL:
             reference_roll = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_roll changed to: " << reference_roll << std::endl;
+
+            if(c_verbose){
+                message << "reference_roll changed to: " << reference_roll << std::endl;
+                logger.log(logINFO, message.str());
+            }
             break;
+
         case CONTROL_PITCH:
             reference_pitch = ref;
-            if(c_verbose)
-                std::cout << "[CONTROLLER][INFO] reference_pitch changed to: " << reference_pitch << std::endl;
+            if(c_verbose){
+                message << "reference_pitch changed to: " << reference_pitch << std::endl;
+                logger.log(logINFO, message.str());
+            }
             break;
+
         default:
-            std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+            logger.log(logERROR, "Invalid reference type");
             break;
     }
 }
@@ -105,7 +122,7 @@ float Controller::get_reference(uint8_t ref_type) {
         return reference_roll;
     else if(ref_type == CONTROL_PITCH)
         return reference_pitch;
-    std::cout << "[CONTROLLER][ERROR] Invalid reference type" << std::endl;
+    logger.log(logERROR, "Invalid reference type");
     return 0;
 }
 

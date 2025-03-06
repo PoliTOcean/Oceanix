@@ -7,6 +7,7 @@
 #include "sensor.hpp"
 #include "control_allocation.hpp"
 #include "motors.hpp"
+#include "logger.hpp"
 
 using json = nlohmann::json;
 
@@ -32,6 +33,7 @@ private:
     double force_roll;              /// calculated force roll
     double force_pitch;             /// calculated force pitch
     bool c_verbose;                   /// verbose mode
+    Logger logger;
     Sensor& sensor;                  /// sensor class
     ControlSystem control_z;           /// Pointer to ControlSystemZ object
     ControlSystem control_pitch;           /// Pointer to ControlSystemZ object
@@ -44,7 +46,7 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    Controller(Sensor& sensor, json jsonConfig, bool verbose);
+    Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui
