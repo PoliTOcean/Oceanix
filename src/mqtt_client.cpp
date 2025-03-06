@@ -122,7 +122,7 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
         }
         else{
             logger.log(logWARNING, "Message parsing error");
-            return false;
+            return false;   
         }
         return true;
     }
