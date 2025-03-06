@@ -8,7 +8,7 @@ std::map <ConfigType, std::string> config_map {
 };
 
 
-Config::Config(std::string config_file_path, logLevel minimumLoglevel) : logger(Logger("CONFIG ", minimumLoglevel)) {
+Config::Config(std::string config_file_path, logLevel minimumLoglevel) : logger(Logger(CONFIG_LOG_NAME, minimumLoglevel)) {
     m_config_file_path = find_config_file(config_file_path);
     
     load_base_config();

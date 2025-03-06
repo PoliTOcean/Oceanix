@@ -118,7 +118,7 @@ int main(int argc, char* argv[]){
     Logger::setLogFileDir(general_config["logFileDir"]);
     Logger::setMQTTClient(&mqtt_client);
 
-    logger = new Logger("MAIN   ", general_config["main_loglevel"]);
+    logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
 
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true, test_mode); // true to mantain compatibility
     while (nucleo.init(0x00) != COMM_STATUS::OK) {
