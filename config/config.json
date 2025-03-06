@@ -46,8 +46,8 @@
         "logTypeCOUT": true,
         "logTypeFILE": true,
         "logTypeMQTT": true,
-        "logFileDir": "log/"
-        "motor_interval": 10,
+        "logFileDir": "log/",
+        "motor_interval": 10
     },
     "Motors": {
         "FDX_coeff": 1,

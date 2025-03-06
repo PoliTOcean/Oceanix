@@ -1,6 +1,6 @@
 #include "sensor.hpp"
 
-Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode, logLevel imuLogLevel, logLevel bar02LogLevel) 
+Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode) 
     : imu(Wt61(imuLogLevel)), 
     barometer(Bar02(bar02LogLevel)),
     alpha(Zspeed_alpha),

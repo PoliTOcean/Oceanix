@@ -15,7 +15,7 @@ Config::Config(std::string config_file_path, logLevel minimumLoglevel) : logger(
 }
 
 void Config::change_config(json msg_config) { 
-    if (!checkJsonFormat(msg_string, m_json_config))
+    if (!checkJsonFormat(msg_config, m_json_config))
         logger.log(logWARNING, "Config json not parseble or wrong keys/key types!");
     else
         logger.log(logINFO, "Config json updated!");

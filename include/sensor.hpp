@@ -27,7 +27,7 @@ public:
      * @brief Construct a new Sensor object containing IMU and barometer
      * 
      */
-    Sensor(float Zspeed_alpha, float Zspeed_beta, bool test_mode = false, logLevel imuLogLevel, logLevel bar02LogLevel);
+    Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode = false);
 
     /**
      * @brief read all sensors, should be called at 100 Hz
