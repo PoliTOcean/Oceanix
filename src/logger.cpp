@@ -1,5 +1,6 @@
 #include "logger.hpp"
 #include "mqtt_client.hpp"
+#include <filesystem>
 
 //Static fields declaration
 bool Logger::logTypeCout = false;
@@ -84,10 +85,15 @@ void Logger::createLogFile(){
     time (&rawtime);
     timeinfo = localtime(&rawtime);
 
+    std::filesystem::path dirPath = std::filesystem::path(logFileDir);
+    
+    if (!std::filesystem::exists(dirPath)) {
+            std::filesystem::create_directories(dirPath); // Creates all directories in the path if they do not exist
+    }
+
+    
     strftime(buffer,sizeof(buffer),"%d-%m-%Y_%H:%M:%S",timeinfo);
     std::string timestamp_string(buffer);
-
-    std::cout << timestamp_string;    
 
     Logger::logFileFullPath = Logger::logFileDir + "/log_" + timestamp_string;
 
