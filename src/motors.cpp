@@ -12,7 +12,7 @@ Motors::Motors(json config, logLevel minimumLoglevel)
         Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"]),
         Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"])
     },
-    logger(Logger("MOTORS ", minimumLoglevel)) {}
+    logger(Logger(MOTORS_LOG_NAME, minimumLoglevel)) {}
 
 float* Motors::calculate_thrust(json axes){
     float z = (float)axes["Z"];

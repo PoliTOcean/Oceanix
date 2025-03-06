@@ -13,7 +13,7 @@ Controller::Controller(Sensor sensor, json jsonConfig, logLevel minimumLoglevel)
                                     jsonConfig["denCPitch3"], jsonConfig["numCPitch2"], jsonConfig["numCPitch3"], jsonConfig["cPITCH_inf"])),
     control_roll(ControlSystemROLL(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], (float)jsonConfig["minErrorImu"]*DEGtoRAD, jsonConfig["weight"], jsonConfig["buoyancy"], 
                                     jsonConfig["denCRoll2"], jsonConfig["denCRoll3"], jsonConfig["numCRoll2"], jsonConfig["numCRoll3"], jsonConfig["cROLL_inf"])),
-    logger(Logger("CONTROL", minimumLoglevel)){}
+    logger(Logger(CONTROLLER_LOG_NAME, minimumLoglevel)){}
 
 void Controller::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
     std::ostringstream message;

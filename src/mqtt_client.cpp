@@ -21,7 +21,7 @@ std::map <std::string, Topic> inverse_topic_map {
 
 MQTTClient::MQTTClient(std::string server_address, std::string client_id, int QOS, logLevel minimumLoglevel):
     cli(server_address, client_id),
-    logger(Logger("MQTThst", minimumLoglevel)) {
+    logger(Logger(MQTT_LOG_NAME, minimumLoglevel)) {
     m_server_address = server_address;
     m_client_id = client_id;
     m_QOS = QOS;

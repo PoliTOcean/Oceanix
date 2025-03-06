@@ -5,7 +5,7 @@ Wt61::Wt61(logLevel minimumLoglevel)
     temperature(0.0), 
     roll(0.0), pitch(0.0), yaw(0.0), 
     acc({0,0,0}), gyro({0,0,0}), 
-    logger(Logger("IMU   ", minimumLoglevel)) {
+    logger(Logger(IMU_LOG_NAME, minimumLoglevel)) {
     char const *dev = "/dev/i2c-1";
     status = WT61P_begin(const_cast<char*>(dev), 0x50);
     if (status != 0)

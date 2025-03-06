@@ -7,6 +7,14 @@
 #include <fstream>
 #include <ctime>
 
+#define MQTT_LOG_NAME       "MQTThst"
+#define BAR02_LOG_NAME      "BAR02  "
+#define CONFIG_LOG_NAME     "CONFIG "
+#define CONTROLLER_LOG_NAME "CONTROL"
+#define MAIN_LOG_NAME       "MAIN   "
+#define MOTORS_LOG_NAME     "MOTORS "
+#define IMU_LOG_NAME        "IMU   "
+
 #define LOG_ALL (logLevel)0 //This can be passed to construct the Logger objects, so it defaults to the lowest value
 
 

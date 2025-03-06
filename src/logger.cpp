@@ -69,7 +69,7 @@ void Logger::log(logLevel loglevel, std::string message){
 
         if(Logger::logTypeMQTT){
             //TO DO
-            if(Logger::mqtt_client != NULL){
+            if(Logger::mqtt_client != NULL && Logger::unitName != MQTT_LOG_NAME){
                 Logger::mqtt_client->send_msg(logString, Topic::LOG);
             }
         }

@@ -1,6 +1,6 @@
 #include "bar02.hpp"
 
-Bar02::Bar02(logLevel minimumLogLevel) : status(0), temperature(0.0), depth(0.0), pressure_baseline(1000), logger(Logger("BAR02  ", minimumLogLevel)) {
+Bar02::Bar02(logLevel minimumLogLevel) : status(0), temperature(0.0), depth(0.0), pressure_baseline(1000), logger(Logger(BAR02_LOG_NAME, minimumLogLevel)) {
     status = ms5837_basic_init(MS5837_TYPE_02BA01);
     if (status != 0)
         logger.log(logERROR, "barometer init fail");
