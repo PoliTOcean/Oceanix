@@ -34,7 +34,8 @@
 /*/.vscode
 .DS_STORE
 /build
+/log
 /tmp
-/venv
+*/venv
 .vscode
 __pycache__
