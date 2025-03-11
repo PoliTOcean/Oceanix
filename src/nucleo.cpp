@@ -81,7 +81,7 @@ void Nucleo::m_init_mapper() {
     m_arm_value_mapper["OPEN_NIPPER"] = 3;
     m_arm_value_mapper["CLOSE_NIPPER"] = 4;
     m_arm_value_mapper["STOP_NIPPER"] = 5;
-    m_arm_value_mapper["TORQUE_WRIST_ON"] = 9;
+    m_arm_value_mapper["TORQUE_WRIST_ON"] = 6;
     m_arm_value_mapper["TORQUE_WRIST_OFF"] = 7;
-    m_arm_value_mapper["None"] = 6;
+    m_arm_value_mapper["None"] = 9;
 }
