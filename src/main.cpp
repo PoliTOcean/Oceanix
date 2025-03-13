@@ -218,15 +218,15 @@ void timer_com_callback(uv_timer_t* handle){
 
 void timer_debug_callback(uv_timer_t* handle){
     Timer_data* data = static_cast<Timer_data*>(handle->data);
-    json json_debug;
+    json rov_status_json;
 
-    data->motors->update_debug(json_debug);
-    data->controller->update_debug(json_debug);
-    json_debug["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-    data->sensor->update_debug(json_debug);
+    data->motors->update_debug(rov_status_json);
+    data->controller->update_debug(rov_status_json);
+    rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+    data->sensor->update_debug(rov_status_json);
 
-    if(!json_debug.empty())
-        data->mqtt_client->send_debug(json_debug);
+    if(!rov_status_json.empty())
+        data->mqtt_client->send_debug(rov_status_json);
         
     if(!data->nucleo->is_connected())
         logger->log(logINFO,"NUCLEO disconnected");
