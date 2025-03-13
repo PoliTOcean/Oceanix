@@ -18,14 +18,21 @@ float* Motors::calculate_thrust(json axes){
     float z = (float)axes["Z"];
     float y = (float)axes["Y"];
     float x = (float)axes["X"];
+
+    float pitch = (float)axes["PITCH"];
+    float roll = (float)axes["ROLL"];
     float yaw = (float)axes["YAW"];
 
     x = normalize_quadratic(x, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
     y = normalize_quadratic(y, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
+    
+    pitch = normalize_quadratic(pitch, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
+    roll = normalize_quadratic(roll, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
+
     yaw = normalize_quadratic(yaw, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
     z = normalize(z, MIN_INPUT_READING, MAX_INPUT_READING, -1, 1);
 
-    float joystick_input[6] = {x, y, z, 0, 0, yaw};
+    float joystick_input[6] = {x, y, z, pitch, roll, yaw};
 
     // Perform matrix multiplication
     for (int i = 0; i < 8; ++i) {

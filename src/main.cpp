@@ -49,12 +49,16 @@ json json_axes_off = {
     {"X", 0},
     {"Y", 0},
     {"Z", 0},
+    {"PITCH", 0},
+    {"ROLL", 0},
     {"YAW", 0}
 };
 json json_axes = {
     {"X", 0},
     {"Y", 0},
     {"Z", 0},
+    {"PITCH", 0},
+    {"ROLL", 0},
     {"YAW", 0}
 };
 
