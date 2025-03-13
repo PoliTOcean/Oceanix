@@ -72,6 +72,8 @@ typedef enum {
 std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
+uint8_t nucleo_connected=0;
+
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
 
@@ -125,12 +127,18 @@ int main(int argc, char* argv[]){
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
 
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true, test_mode); // true to mantain compatibility
-    while (nucleo.init(0x00) != COMM_STATUS::OK) {
-        nucleo.connect();
-        logger->log(logERROR,"INIT FAILED");
+    
+    for(int i=0; i<5; i++){
+        nucleo_connected = (nucleo.init(0x00) == COMM_STATUS::OK);
+        if(nucleo_connected){
+            logger->log(logINFO,"NUCLEO INIT SUCCESS");
+            nucleo.connect();
+            break; //Exits from the for cycle
+        }
+
+        logger->log(logERROR,"NUCLEO INIT FAILED");
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
-    logger->log(logINFO,"INIT SUCCESS");
 
     Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 
 
@@ -223,13 +231,21 @@ void timer_debug_callback(uv_timer_t* handle){
     data->motors->update_debug(rov_status_json);
     data->controller->update_debug(rov_status_json);
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+    rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
+    
     data->sensor->update_debug(rov_status_json);
 
     if(!rov_status_json.empty())
         data->mqtt_client->send_debug(rov_status_json);
         
-    if(!data->nucleo->is_connected())
+    if(!data->nucleo->is_connected()){
         logger->log(logINFO,"NUCLEO disconnected");
+        nucleo_connected = 0;
+        if(data->nucleo->init(0x00) == COMM_STATUS::OK && data->nucleo->connect()){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
+            nucleo_connected = 1;
+            logger->log(logINFO,"NUCLEO connected");
+        }
+    }
 }
 
 void state_commands(json msg, Timer_data* data){
