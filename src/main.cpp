@@ -104,18 +104,22 @@ int main(int argc, char* argv[]){
     state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["NONE"] = NONE;
 
+    Logger::configLogTypeCout(true);
+
     Config config = Config(config_path, LOG_ALL);
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
-
-    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["mqtt_loglevel"]);
-	while(!mqtt_client.mqtt_connect())
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+    
     Logger::configLogTypeCout(general_config["logTypeCOUT"]);
     Logger::configLogTypeFile(general_config["logTypeFILE"]);
     Logger::configLogTypeMQTT(general_config["logTypeMQTT"]);
     Logger::setLogFileDir(general_config["logFileDir"]);
+    
+    MQTTClient mqtt_client = MQTTClient(general_config["mqtt_server_addr"], general_config["mqtt_client_id"], 0, general_config["mqtt_loglevel"]);
+
+    while(!mqtt_client.mqtt_connect())
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
