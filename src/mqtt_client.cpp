@@ -40,7 +40,6 @@ bool MQTTClient::mqtt_connect() {
         
     try {
         cli.start_consuming();
-
         logger.log(logINFO, "Connecting to the MQTT server...");
         //auto tok = cli.connect(m_conn_opts);
         auto tok = cli.connect();
@@ -55,8 +54,6 @@ bool MQTTClient::mqtt_connect() {
             cli.subscribe(topic_map[Topic::COMMANDS], m_QOS)->wait();
             cli.subscribe(topic_map[Topic::ARM], m_QOS)->wait();
             cli.subscribe(topic_map[Topic::CONFIG], m_QOS)->wait();
-            //cli.subscribe(topic_map[Topic::DEBUG], m_QOS)->wait();
-            cli.subscribe(topic_map[Topic::LOG], m_QOS)->wait();
         }
         logger.log(logINFO, "Connection established");
     }
@@ -99,8 +96,9 @@ bool MQTTClient::send_msg(std::string msg, Topic topic) {
     
     if (cli.is_connected()) {
         cli.publish(topic_map[topic], msg);
-        logMessage << "MQTT send msg: " << msg << "  to topic: " << topic_map[topic] << std::endl;
+        logMessage << "MQTT sent message to topic: " << topic_map[topic] << std::endl;
         logger.log(logINFO, logMessage.str());
+        logger.log(logDEBUG, msg);
         return true;
     }
     else {
@@ -117,11 +115,12 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
         if (isJsonParseable(m_msg->get_payload())){
             msgp->first = inverse_topic_map[m_msg->get_topic()];
             msgp->second = json::parse(m_msg->get_payload());
-            logMessage << "received msg: " << m_msg->get_payload() << "  from topic: " << m_msg->get_topic() << std::endl;
+            logMessage << "Received msg: " << m_msg->get_payload() << " from topic: " << m_msg->get_topic();
             logger.log(logINFO, logMessage.str());
         }
         else{
-            logger.log(logWARNING, "Message parsing error");
+            logMessage << "Message parsing error: " << m_msg->get_payload() << " from topic: " << m_msg->get_topic();
+            logger.log(logWARNING, logMessage.str());
             return false;   
         }
         return true;
