@@ -11,7 +11,7 @@
 using msg_pt = std::shared_ptr<const mqtt::message>;
 using json = nlohmann::json;
 
-enum class Topic { AXES, COMMANDS, ARM, CONFIG, DEBUG, LOG};
+enum class Topic { AXES, COMMANDS, ARM, CONFIG, STATUS, LOG};
 
 class MQTTClient{
     public:

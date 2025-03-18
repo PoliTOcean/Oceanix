@@ -5,7 +5,7 @@ std::map <Topic, std::string> topic_map {
     {Topic::COMMANDS, "state_commands/"},
     {Topic::ARM, "arm_commands/"},
     {Topic::CONFIG, "config/"},
-    {Topic::DEBUG, "debug/"},
+    {Topic::STATUS, "status/"},
     {Topic::LOG, "log/"},
 
 };
@@ -15,7 +15,7 @@ std::map <std::string, Topic> inverse_topic_map {
     {"state_commands/", Topic::COMMANDS},
     {"arm_commands/", Topic::ARM},
     {"config/", Topic::CONFIG},
-    {"debug/", Topic::DEBUG},
+    {"status/", Topic::STATUS},
     {"log/", Topic::LOG},
 };
 
@@ -73,7 +73,7 @@ void MQTTClient::mqtt_disconnect() {
         cli.unsubscribe(topic_map[Topic::COMMANDS])->wait();
         cli.unsubscribe(topic_map[Topic::ARM])->wait();
         cli.unsubscribe(topic_map[Topic::CONFIG])->wait();
-        cli.unsubscribe(topic_map[Topic::DEBUG])->wait();
+        cli.unsubscribe(topic_map[Topic::STATUS])->wait();
         cli.unsubscribe(topic_map[Topic::LOG])->wait();
 
         
@@ -129,7 +129,7 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
     return false;
 }
 
-bool MQTTClient::send_debug(json debug_json) { return send_msg(debug_json.dump(), Topic::DEBUG); }
+bool MQTTClient::send_debug(json debug_json) { return send_msg(debug_json.dump(), Topic::STATUS); }
 
 bool MQTTClient::is_msg_type(Topic topic2, Topic topic1) { 
     return topic_map[topic1] == topic_map[topic2];
