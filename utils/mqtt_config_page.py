@@ -1,6 +1,6 @@
 # mqtt_config_page.py
 import tkinter as tk
-from mqtt_handler import initialize_mqtt, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_DEBUG, MQTT_TOPIC_ARM
+from mqtt_handler import initialize_mqtt, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_STATUS, MQTT_TOPIC_ARM
 
 class MQTTConfigPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -12,7 +12,7 @@ class MQTTConfigPage(tk.Frame):
         default_topic_config = MQTT_TOPIC_CONFIG
         default_topic_commands = MQTT_TOPIC_COMMANDS
         default_topic_axes = MQTT_TOPIC_AXES
-        default_topic_debug = MQTT_TOPIC_DEBUG
+        default_topic_status = MQTT_TOPIC_STATUS
         default_topic_arm = MQTT_TOPIC_ARM
 
         tk.Label(self, text="MQTT Broker:").grid(row=0, column=0, padx=10, pady=10)
@@ -43,10 +43,10 @@ class MQTTConfigPage(tk.Frame):
         self.topic_axes_entry.insert(0, default_topic_axes)  # Set default value
         self.topic_axes_entry.grid(row=4, column=1, padx=10, pady=10)
 
-        tk.Label(self, text="MQTT Topic Debug:").grid(row=5, column=0, padx=10, pady=10)
-        self.topic_debug_entry = tk.Entry(self)
-        self.topic_debug_entry.insert(0, default_topic_debug)  # Set default value
-        self.topic_debug_entry.grid(row=5, column=1, padx=10, pady=10)
+        tk.Label(self, text="MQTT Topic Status:").grid(row=5, column=0, padx=10, pady=10)
+        self.topic_status_entry = tk.Entry(self)
+        self.topic_status_entry.insert(0, default_topic_status)  # Set default value
+        self.topic_status_entry.grid(row=5, column=1, padx=10, pady=10)
 
         save_button = tk.Button(self, text="Save and Connect", command=self.save_and_connect)
         save_button.grid(row=8, column=0, columnspan=2, pady=10)
@@ -62,11 +62,11 @@ class MQTTConfigPage(tk.Frame):
         topic_config = self.topic_config_entry.get()
         topic_commands = self.topic_commands_entry.get()
         topic_axes = self.topic_axes_entry.get()
-        topic_debug = self.topic_debug_entry.get()
+        topic_status = self.topic_status_entry.get()
         topic_arm = self.topic_arm_entry.get()
 
         try:
-            res = initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug, topic_arm)
+            res = initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_status, topic_arm)
         except (TimeoutError, ConnectionRefusedError):
             self.connect_output_label.config(text="Failed to connect to MQTT broker", fg="red")
             

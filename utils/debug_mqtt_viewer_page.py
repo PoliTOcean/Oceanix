@@ -1,6 +1,6 @@
 # debug_mqtt_viewer_page.py
 import tkinter as tk
-from mqtt_handler import register_callback, unregister_callback, MQTT_TOPIC_DEBUG
+from mqtt_handler import register_callback, unregister_callback, MQTT_TOPIC_STATUS
 
 class DebugMQTTViewerPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -79,7 +79,7 @@ class DebugMQTTViewerPage(tk.Frame):
         register_callback(self.update_data)
 
     def update_data(self, message, topic):
-        if topic != MQTT_TOPIC_DEBUG:
+        if topic != MQTT_TOPIC_STATUS:
             return
 
         # Update the variables with the received message data

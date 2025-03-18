@@ -12,16 +12,17 @@ MQTT_BROKER = ["127.0.0.1", "10.0.0.254"]
 MQTT_TOPIC_CONFIG = "config/"
 MQTT_TOPIC_COMMANDS = "state_commands/"
 MQTT_TOPIC_AXES = "axes/"
-MQTT_TOPIC_DEBUG = "debug/"
+MQTT_TOPIC_STATUS = "status/"
 MQTT_TOPIC_ARM = "arm_commands/"
+MQTT_TOPIC_LOG = "log/"
 
-def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debug, topic_arm):
-    global mqtt_client, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_DEBUG, MQTT_TOPIC_ARM
+def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_status, topic_arm):
+    global mqtt_client, MQTT_BROKER, MQTT_TOPIC_CONFIG, MQTT_TOPIC_COMMANDS, MQTT_TOPIC_AXES, MQTT_TOPIC_STATUS, MQTT_TOPIC_ARM
     MQTT_BROKER = broker
     MQTT_TOPIC_CONFIG = topic_config
     MQTT_TOPIC_COMMANDS = topic_commands
     MQTT_TOPIC_AXES = topic_axes
-    MQTT_TOPIC_DEBUG = topic_debug
+    MQTT_TOPIC_STATUS = topic_status
     MQTT_TOPIC_ARM = topic_arm
 
     if mqtt_client is not None:
@@ -43,8 +44,8 @@ def initialize_mqtt(broker, topic_config, topic_commands, topic_axes, topic_debu
 
     mqtt_client.subscribe(topic_config)
     # mqtt_client.subscribe(topic_commands)
-    # mqtt_client.subscribe(topic_axes)
-    mqtt_client.subscribe(topic_debug)
+    mqtt_client.subscribe(MQTT_TOPIC_LOG)
+    mqtt_client.subscribe(topic_status)
     return result
 
 def on_connect(client, userdata, flags, rc):
@@ -59,7 +60,12 @@ def on_message(client, userdata, msg):
         for callback in mqtt_callbacks:
             callback(message, msg.topic)
     except json.JSONDecodeError:
-        print("Failed to decode JSON message")
+        if msg.topic == MQTT_TOPIC_LOG:
+            message = msg.payload.decode('utf-8')
+            for callback in mqtt_callbacks:
+                callback(message, msg.topic)
+        else:
+            print("Failed to decode JSON message")
 
 def register_callback(callback):
     mqtt_callbacks.append(callback)
