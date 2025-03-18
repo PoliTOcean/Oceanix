@@ -41,8 +41,10 @@ Each topic below defines the permissible keys and values, as well as the directi
       - `CHANGE_CONTROLLER_STATUS`: Changes the controller status. The value is irrelevant.
       - `PITCH_REFERENCE_UPDATE`: Updates the pitch reference value.
       - `ROLL_REFERENCE_UPDATE`: Updates the roll reference value.
+      - `DEPTH_REFERENCE_UPDATE`: Updates the depth reference value.
       - `PITCH_REFERENCE_OFFSET`: Offsets the current pitch reference value.
       - `ROLL_REFERENCE_OFFSET`: Offsets the current roll reference value.
+      - `DEPTH_REFERENCE_OFFSET`: Offsets the current depth reference value.
       - `THRUST_MAX_OFFSET`: Offsets the maximum thrust value.
     - **Example Message**:
       ```json
@@ -73,9 +75,9 @@ Each topic below defines the permissible keys and values, as well as the directi
      }
      ```
 
-4. ### **debug/**
+4. ### **status/**
    - **Direction**: GUI ← Oceanix
-   - **Description**: Sends debug information from Oceanix to the GUI at a configurable interval.
+   - **Description**: Sends status information from Oceanix to the GUI at a configurable interval.
    - **Keys**:
      - `variable_name`: The name of the variable being monitored.
      - `value`: Current value of the variable
