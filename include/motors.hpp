@@ -30,7 +30,7 @@ private:
         {-cos(PI / 4), -sin(PI / 4), 0, 0, 0, 0.5},//RDX
         {-cos(PI / 4), sin(PI / 4), 0, 0, 0, -0.5},//RSX
         {0, 0, 1, 1, 1, 0},//UPFDX
-        {0, 0, 1, -1, 1, 0},//UPFSX    
+        {0, 0, 1, 1, -1, 0},//UPFSX    
         {0, 0, 1, -1, 1, 0},//UPRDX     
         {0, 0, 1, -1, -1, 0}//UPRSX       
     };                                                                  ///< matrix for thrust calculation
