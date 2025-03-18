@@ -67,8 +67,10 @@ typedef enum {
     CHANGE_CONTROLLER_STATUS,
     PITCH_REFERENCE_UPDATE,
     ROLL_REFERENCE_UPDATE,
+    DEPTH_REFERENCE_UPDATE,
     PITCH_REFERENCE_OFFSET,
     ROLL_REFERENCE_OFFSET,
+    DEPTH_REFERENCE_OFFSET,
     THRUST_MAX_OFFSET,
     REQUEST_CONFIG,
     NONE
@@ -104,8 +106,10 @@ int main(int argc, char* argv[]){
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
     state_mapper["PITCH_REFERENCE_UPDATE"] = PITCH_REFERENCE_UPDATE;
     state_mapper["ROLL_REFERENCE_UPDATE"] = ROLL_REFERENCE_UPDATE;
+    state_mapper["DEPTH_REFERENCE_UPDATE"] = DEPTH_REFERENCE_UPDATE;
     state_mapper["PITCH_REFERENCE_OFFSET"] = PITCH_REFERENCE_OFFSET;
     state_mapper["ROLL_REFERENCE_OFFSET"] = ROLL_REFERENCE_OFFSET;
+    state_mapper["DEPTH_REFERENCE_OFFSET"] = DEPTH_REFERENCE_OFFSET;
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
     state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["NONE"] = NONE;
@@ -258,7 +262,15 @@ void state_commands(json msg, Timer_data* data){
     std::ostringstream logMessage;
     json conf;
     try{
-        cmd = state_mapper[msg.begin().key()];
+        auto it = state_mapper.find(msg.begin().key());
+        if (it != state_mapper.end()) {
+            cmd = it->second;
+        } else {
+            // Default to NONE for unknown commands
+            cmd = NONE;
+            logMessage << "Unknown command received: " << msg.begin().key();
+            logger->log(logWARNING, logMessage.str());
+        }
         switch(cmd){
             case ARM_ROV:
                 rov_armed = !rov_armed;
@@ -271,10 +283,8 @@ void state_commands(json msg, Timer_data* data){
                 break;
             case CHANGE_CONTROLLER_STATUS:
                 controller_state = !controller_state;
-                if(controller_state){
-                    //data->controller->activate(CONTROL_Z);
+                if(controller_state)
                     data->controller->activate(general_config["controller_profile"]);
-                }
                 else
                     data->controller->disactivate(CONTROL_ALL);
                 break;
@@ -284,6 +294,9 @@ void state_commands(json msg, Timer_data* data){
             case ROLL_REFERENCE_UPDATE:
                 data->controller->change_reference(CONTROL_ROLL, msg["ROLL_REFERENCE_UPDATE"]);
                 break;
+            case DEPTH_REFERENCE_UPDATE:
+                data->controller->change_reference(CONTROL_Z, msg["DEPTH_REFERENCE_UPDATE"]);
+                break;
             case PITCH_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_PITCH);
                 data->controller->change_reference(CONTROL_PITCH, current_ref + (float)msg["PITCH_REFERENCE_OFFSET"]);
@@ -291,6 +304,10 @@ void state_commands(json msg, Timer_data* data){
             case ROLL_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_ROLL);
                 data->controller->change_reference(CONTROL_ROLL, current_ref + (float)msg["ROLL_REFERENCE_OFFSET"]);
+                break;
+            case DEPTH_REFERENCE_OFFSET:
+                current_ref = data->controller->get_reference(CONTROL_Z);
+                data->controller->change_reference(CONTROL_Z, current_ref + (float)msg["DEPTH_REFERENCE_OFFSET"]);
                 break;
             case THRUST_MAX_OFFSET:
                 data->motors->offset_thrust_max(msg["THRUST_MAX_OFFSET"]);
