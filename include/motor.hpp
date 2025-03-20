@@ -27,10 +27,11 @@ public:
     uint16_t calculate_pwm(float x);
 
     /**
-     * @brief Sets the correction coefficient for the motor.
+     * @brief Change correction coefficient and zero_pwm of the motor. 
      * @param correction The new correction coefficient.
+     * @param new_zero_pwm The new zero_pwm value.
      */
-    void set_correction(float correction);
+    void change_parameters(float correction, uint16_t new_zero_pwm);
 
 private:
     /**

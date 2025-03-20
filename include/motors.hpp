@@ -71,6 +71,11 @@ public:
      */
     void offset_thrust_max(float offset);
 
+    /**
+    * @brief Change parameters of all motors
+    * @param config, json file with new parameters.
+    */
+    void update_parameters(json config);
 
 private:
     /**

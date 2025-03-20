@@ -214,20 +214,25 @@ void timer_com_callback(uv_timer_t* handle){
     if(data->mqtt_client->receive_msg(&msg)){
         if(data->mqtt_client->is_msg_type(msg.first, Topic::AXES))
             json_axes = msg.second;
+        
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::COMMANDS))
             state_commands(msg.second, data);
+        
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
             data->nucleo->send_arm(msg.second["command"]);
+        
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
             logMessage << "config message: " << msg.second.dump();
             logger->log(logINFO, logMessage.str());
-            //std::cout << "config message: " << msg.second.dump(2) << std::endl;
+            
             data->config->change_config(msg.second);
             data->config->write_base_config();
             general_config = data->config->get_config(ConfigType::GENERAL);
             data->controller->update_parameters(data->config->get_config(ConfigType::CONTROLLER));
+            data->motors->update_parameters(data->config->get_config(ConfigType::MOTORS));
         }
     }
+
     data->nucleo->update_buffer();
     data->nucleo->get_heartbeat();
 }

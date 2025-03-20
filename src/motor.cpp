@@ -14,8 +14,10 @@ uint16_t Motor::calculate_pwm(float x){
     return pwm;
 }
 
-void Motor::set_correction(float correction){
+// TODO: Add method in motors
+void Motor::change_parameters(float correction, uint16_t new_zero_pwm) {
     correction_coeff = correction;
+    zero_pwm = new_zero_pwm;
 }
 
 void Motor::limit_slew_rate(){
