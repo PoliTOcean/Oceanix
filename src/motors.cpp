@@ -120,13 +120,16 @@ void Motors::update_debug(json& debug){
     }
 }
 
-void Motors::update_parameters(json config) {
+void Motors::update_parameters(const json& general_config, const json& specific_config) {
     std::string motorNames[] = {"FDX", "FSX", "RDX", "RSX", "UPFDX", "UPFSX", "UPRDX", "UPRSX"};
     for (int i=0; i<8; i++)
-        motors[i].change_parameters((float) config[motorNames[i]+"_coeff"], (uint16_t) config[motorNames[i]+"_pwm_zero"]);
+        motors[i].change_parameters((float) specific_config[motorNames[i]+"_coeff"], (uint16_t) specific_config[motorNames[i]+"_pwm_zero"]);
 
-    thrust_max_xy = config["thrust_max_xy"]; 
-    thrust_max_z = config["thrust_max_z"]; 
+    thrust_max_xy = specific_config["thrust_max_xy"]; 
+    thrust_max_z = specific_config["thrust_max_z"]; 
+
+    logger.setLogLevel(general_config["motors_loglevel"]);
+
 }
 
 void Motors::offset_thrust_max(float offset){

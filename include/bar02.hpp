@@ -5,6 +5,7 @@
 #include "driver_ms5837_basic.h"
 #include "logger.hpp"
 #include <sstream> //for using std::ostringstream
+#include "utils.hpp"
 
 /**
  * @brief Bar02 class representing a pressure sensor.
@@ -43,6 +44,8 @@ public:
      * @return Depth in meters.
      */
     float get_depth();
+
+    void update_parameters(const json& general_config);
 
 private:
     int status;         ///< Status of the sensor.

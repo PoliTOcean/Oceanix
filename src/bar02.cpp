@@ -53,3 +53,8 @@ void Bar02::set_pressure_baseline() {
     logMessage << "Pressure baseline set to: " << pressure_baseline << " mbar";
     logger.log(logINFO, logMessage.str());
 }
+
+void Bar02::update_parameters(const json& general_config){
+    logger.setLogLevel(general_config["bar02_loglevel"]);
+
+}

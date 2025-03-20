@@ -168,6 +168,11 @@ void Sensor::update_debug(json& debug) {
     debug["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
 }
 
+void Sensor::update_parameters(const json& general_config) {
+    barometer.update_parameters(general_config);
+    imu.update_parameters(general_config);
+}
+
 // Functions to generate simulated sensor data
 float Sensor::simulate_temperature() {
     return static_cast<float>(std::rand()) / RAND_MAX * 30; // Simulate temperature in range [0-30]

@@ -134,3 +134,8 @@ bool MQTTClient::send_debug(json debug_json) { return send_msg(debug_json.dump()
 bool MQTTClient::is_msg_type(Topic topic2, Topic topic1) { 
     return topic_map[topic1] == topic_map[topic2];
 }
+
+void MQTTClient::update_parameters(const json& general_config){
+    logger.setLogLevel(general_config["mqtt_loglevel"]);
+
+}

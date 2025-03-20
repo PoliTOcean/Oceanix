@@ -228,8 +228,14 @@ void timer_com_callback(uv_timer_t* handle){
             data->config->change_config(msg.second);
             data->config->write_base_config();
             general_config = data->config->get_config(ConfigType::GENERAL);
-            data->controller->update_parameters(data->config->get_config(ConfigType::CONTROLLER));
-            data->motors->update_parameters(data->config->get_config(ConfigType::MOTORS));
+            
+            data->controller->update_parameters(general_config, data->config->get_config(ConfigType::CONTROLLER));
+            data->motors->update_parameters(general_config, data->config->get_config(ConfigType::MOTORS));
+            data->mqtt_client->update_parameters(general_config);
+            data->sensor->update_parameters(general_config);
+        
+            logger->setLogLevel(general_config["main_loglevel"]);
+
         }
     }
 

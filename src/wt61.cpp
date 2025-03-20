@@ -11,7 +11,7 @@ Wt61::Wt61(logLevel minimumLoglevel)
     if (status != 0)
         logger.log(logERROR, "imu init fail");
     else
-        logger.log(logINFO, "imu init fail");
+        logger.log(logERROR, "imu init fail");
 }
 
 void Wt61::read_sensor() {
@@ -68,4 +68,10 @@ float* Wt61::get_acc() {
 
 float* Wt61::get_gyro() {
     return gyro;
+}
+
+
+void Wt61::update_parameters(const json& general_config){
+    logger.setLogLevel(general_config["imu_loglevel"]);
+
 }

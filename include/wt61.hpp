@@ -4,6 +4,7 @@
 #include <iostream>
 #include "WIT61P.h"
 #include "logger.hpp"
+#include "utils.hpp"
 
 class Wt61{
 public:
@@ -68,6 +69,7 @@ public:
      */
     float* get_gyro();
 
+    void update_parameters(const json& general_config);
 
 private:
     int status;         ///< status of the sensor

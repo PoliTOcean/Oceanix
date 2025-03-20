@@ -87,7 +87,7 @@ public:
     /**
      * @brief Update internal parameters from config
      */
-    void update_parameters(const json& jsonConfig);
+    void update_parameters(const json& general_config, const json& specific_config);
 
 
     /**

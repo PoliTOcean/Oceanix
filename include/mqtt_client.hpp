@@ -26,6 +26,8 @@ class MQTTClient{
         bool send_debug(json debug_json); // Add mask
         bool is_msg_type(Topic topic2, Topic topic1);
 
+        void update_parameters(const json& general_config);
+
     private:
         std::string m_server_address;
         std::string m_client_id;

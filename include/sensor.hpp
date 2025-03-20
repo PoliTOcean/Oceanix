@@ -115,6 +115,8 @@ public:
      */
     void update_debug(json& debug);
 
+    void update_parameters(const json& general_config);
+
 private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)

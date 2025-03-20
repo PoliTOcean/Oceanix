@@ -107,12 +107,15 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
             break;
     }
 }
+    
+void Controller::update_parameters(const json& general_config, const json& specific_config){
 
-void Controller::update_parameters(const json& jsonConfig){
+    control_z.update_paramters(specific_config["minForceZ"], specific_config["maxForceZ"], specific_config["minErrorIntZ"], specific_config["maxErrorIntZ"], std::vector<double>{specific_config["Kx0_Z"], specific_config["Kx1_Z"]}, specific_config["Ki_Z"]);
+    control_pitch.update_paramters(specific_config["minForcePitch"], specific_config["maxForcePitch"], specific_config["minErrorIntPitch"], specific_config["maxErrorIntPitch"], std::vector<double>{specific_config["Kx0_Pitch"], specific_config["Kx1_Pitch"]}, specific_config["Ki_Pitch"]);
+    control_roll.update_paramters(specific_config["minForceRoll"], specific_config["maxForceRoll"], specific_config["minErrorIntRoll"], specific_config["maxErrorIntRoll"], std::vector<double>{specific_config["Kx0_Roll"], specific_config["Kx1_Roll"]}, specific_config["Ki_Roll"]);
 
-    control_z.update_paramters(jsonConfig["minForceZ"], jsonConfig["maxForceZ"], jsonConfig["minErrorIntZ"], jsonConfig["maxErrorIntZ"], std::vector<double>{jsonConfig["Kx0_Z"], jsonConfig["Kx1_Z"]}, jsonConfig["Ki_Z"]);
-    control_pitch.update_paramters(jsonConfig["minForcePitch"], jsonConfig["maxForcePitch"], jsonConfig["minErrorIntPitch"], jsonConfig["maxErrorIntPitch"], std::vector<double>{jsonConfig["Kx0_Pitch"], jsonConfig["Kx1_Pitch"]}, jsonConfig["Ki_Pitch"]);
-    control_roll.update_paramters(jsonConfig["minForceRoll"], jsonConfig["maxForceRoll"], jsonConfig["minErrorIntRoll"], jsonConfig["maxErrorIntRoll"], std::vector<double>{jsonConfig["Kx0_Roll"], jsonConfig["Kx1_Roll"]}, jsonConfig["Ki_Roll"]);
+    logger.setLogLevel(general_config["controller_loglevel"]);
+
 }
 
 float Controller::get_reference(uint8_t ref_type) {

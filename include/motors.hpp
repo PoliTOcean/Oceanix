@@ -75,7 +75,7 @@ public:
     * @brief Change parameters of all motors
     * @param config, json file with new parameters.
     */
-    void update_parameters(json config);
+    void update_parameters(const json& general_config, const json& specific_config);
 
 private:
     /**
