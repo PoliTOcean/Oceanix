@@ -1,7 +1,7 @@
 #include "motor.hpp"
 
-Motor::Motor(MotorID id, float correction, uint16_t zero_pwm, int max_slew_rate)
-    : motor_id(id), correction_coeff(correction), pwm_zero(zero_pwm), slew_rate_max(max_slew_rate), pwm_old(zero_pwm) {}
+Motor::Motor(MotorID id, float correction, uint16_t pwm_zero, int max_slew_rate)
+    : motor_id(id), correction_coeff(correction), pwm_zero(pwm_zero), slew_rate_max(max_slew_rate), pwm_old(pwm_zero) {}
 
 uint16_t Motor::calculate_pwm(float x){
     x = x * correction_coeff;
@@ -15,9 +15,9 @@ uint16_t Motor::calculate_pwm(float x){
 }
 
 // TODO: Add method in motors
-void Motor::change_parameters(float correction, uint16_t new_zero_pwm) {
+void Motor::change_parameters(float correction, uint16_t new_pwm_zero) {
     correction_coeff = correction;
-    zero_pwm = new_zero_pwm;
+    pwm_zero = new_pwm_zero;
 }
 
 void Motor::limit_slew_rate(){

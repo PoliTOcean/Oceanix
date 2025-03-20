@@ -16,7 +16,7 @@ private:
     int slew_rate_max;      ///< max pwm change between 2 calculations
 
 public:
-    Motor(MotorID id, float correction, uint16_t zero_pwm, int max_slew_rate);
+    Motor(MotorID id, float correction, uint16_t pwm_zero, int max_slew_rate);
 
     /**
      * @brief Given the thrust calcutate the corresponding pwm of the motor
@@ -27,11 +27,11 @@ public:
     uint16_t calculate_pwm(float x);
 
     /**
-     * @brief Change correction coefficient and zero_pwm of the motor. 
+     * @brief Change correction coefficient and pwm_zero of the motor. 
      * @param correction The new correction coefficient.
-     * @param new_zero_pwm The new zero_pwm value.
+     * @param new_pwm_zero The new pwm_zero value.
      */
-    void change_parameters(float correction, uint16_t new_zero_pwm);
+    void change_parameters(float correction, uint16_t new_pwm_zero);
 
 private:
     /**
