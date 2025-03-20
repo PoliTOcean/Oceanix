@@ -42,6 +42,8 @@
         public:
             Logger(std::string unitName, logLevel minimumLogLevel);    
             void log(logLevel logtype, std::string message);
+            void setLogLevel(logLevel new_level);
+            
             static void configLogTypeCout(bool value);
             static void configLogTypeFile(bool value);
             static void configLogTypeMQTT(bool value);
@@ -49,7 +51,7 @@
             static void setLogFileDir(std::string logFileDir);  //To initialize Logger::logFileDir
             static void setMQTTClient(MQTTClient *mqttclient);
             static void closeLogFile();
-    
+            
     };
 
 #endif //LOGGER_H

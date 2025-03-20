@@ -77,6 +77,10 @@ void Logger::log(logLevel loglevel, std::string message){
     }
 }
 
+void Logger::setLogLevel(logLevel new_level){
+    minimumLogLevel = new_level;
+}
+
 void Logger::createLogFile(){
     time_t rawtime;
     struct tm * timeinfo;
