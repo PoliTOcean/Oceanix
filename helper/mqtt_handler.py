@@ -8,7 +8,7 @@ mqtt_client = None
 mqtt_callbacks = []
 
 # MQTT settings with default values
-MQTT_BROKER = ["127.0.0.1", "10.0.0.254"]
+MQTT_BROKER = ["10.0.0.254", "127.0.0.1"]
 MQTT_TOPIC_CONFIG = "config/"
 MQTT_TOPIC_COMMANDS = "state_commands/"
 MQTT_TOPIC_AXES = "axes/"
