@@ -13,8 +13,9 @@ std::ofstream Logger::logFile;
 MQTTClient *Logger::mqtt_client = NULL;
 
 Logger::Logger(std::string unitName, logLevel minimumLogLevel) 
-    : unitName(unitName), 
-    minimumLogLevel(minimumLogLevel) {}
+    : unitName(unitName) {
+    setLogLevel(minimumLogLevel);
+}
 
 void Logger::configLogTypeCout(bool value){
     Logger::logTypeCout = value;
@@ -78,6 +79,8 @@ void Logger::log(logLevel loglevel, std::string message){
 }
 
 void Logger::setLogLevel(logLevel new_level){
+    if(new_level < LOG_ALL) new_level = LOG_ALL;
+    if(new_level > LOG_ALL) new_level = logERROR;
     minimumLogLevel = new_level;
 }
 
