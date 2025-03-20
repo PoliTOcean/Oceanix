@@ -133,8 +133,7 @@ int main(int argc, char* argv[]){
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
-
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, true, test_mode); // true to mantain compatibility
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
     
     for(int i=0; i<5; i++){
         nucleo_connected = (nucleo.init(0x00) == COMM_STATUS::OK);
