@@ -218,7 +218,7 @@ void timer_com_callback(uv_timer_t* handle){
             state_commands(msg.second, data);
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
-            data->nucleo->send_arm(msg.second["command"]);
+            data->nucleo->send_arm(msg.second.begin().key());
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
             logMessage << "config message: " << msg.second.dump();
