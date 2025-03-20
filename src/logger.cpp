@@ -80,7 +80,7 @@ void Logger::log(logLevel loglevel, std::string message){
 
 void Logger::setLogLevel(logLevel new_level){
     if(new_level < LOG_ALL) new_level = LOG_ALL;
-    if(new_level > LOG_ALL) new_level = logERROR;
+    if(new_level > logERROR) new_level = logERROR;
     minimumLogLevel = new_level;
 }
 
