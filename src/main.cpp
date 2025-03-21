@@ -44,7 +44,7 @@ struct Timer_data {
 
 const std::string config_path = "../config/config.json";
 
-json general_config;
+json general_config, motors_config;
 json json_axes_off = {
     {"X", 0},
     {"Y", 0},
@@ -73,12 +73,14 @@ typedef enum {
     DEPTH_REFERENCE_OFFSET,
     THRUST_MAX_OFFSET,
     REQUEST_CONFIG,
+    WORK_MODE,
     NONE
 } state_commands_map;
 std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t nucleo_connected=0;
+uint8_t motors_work_mode=0
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
@@ -112,6 +114,7 @@ int main(int argc, char* argv[]){
     state_mapper["DEPTH_REFERENCE_OFFSET"] = DEPTH_REFERENCE_OFFSET;
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
     state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
+    state_mapper["WORK_MODE"] = WORK_MODE;
     state_mapper["NONE"] = NONE;
 
     Logger::configLogTypeCout(true);
@@ -119,7 +122,8 @@ int main(int argc, char* argv[]){
     Config config = Config(config_path, LOG_ALL);
     config.load_base_config();
 	general_config = config.get_config(ConfigType::GENERAL);
-    
+    motors_config = config.get_config(ConfigType::MOTORS);
+
     Logger::configLogTypeCout(general_config["logTypeCOUT"]);
     Logger::configLogTypeFile(general_config["logTypeFILE"]);
     Logger::configLogTypeMQTT(general_config["logTypeMQTT"]);
@@ -227,14 +231,16 @@ void timer_com_callback(uv_timer_t* handle){
             data->config->change_config(msg.second);
             data->config->write_base_config();
             general_config = data->config->get_config(ConfigType::GENERAL);
-            
+            motors_config = config.get_config(ConfigType::MOTORS);
+
             data->controller->update_parameters(general_config, data->config->get_config(ConfigType::CONTROLLER));
             data->motors->update_parameters(general_config, data->config->get_config(ConfigType::MOTORS));
             data->mqtt_client->update_parameters(general_config);
             data->sensor->update_parameters(general_config);
         
-            logger->setLogLevel(general_config["main_loglevel"]);
+            motors_work_mode = 0; //Since the motors values get restored to the new defaults, to avoid inconsistencies with future code.
 
+            logger->setLogLevel(general_config["main_loglevel"]);
         }
     }
 
@@ -325,6 +331,16 @@ void state_commands(json msg, Timer_data* data){
             case REQUEST_CONFIG:
                 conf = data->config->get_config(ConfigType::ALL);
                 data->mqtt_client->send_msg(conf.dump(), Topic::CONFIG);
+                break;
+            case WORK_MODE:
+                motors_work_mode =! motors_work_mode;
+
+                if(motors_work_mode){
+                    data->motors->set_thrust_max(motors_config["thrust_max_xy_work"], motors_config["thrust_max_z_work"]);
+                }
+                else{
+                    data->motors->set_thrust_max(motors_config["thrust_max_xy"], motors_config["thrust_max_z"]);
+                }
                 break;
             case NONE:
                 break;

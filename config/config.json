@@ -62,6 +62,8 @@
         "UPRSX_pwm_zero": 1550,
         "pwm_slew_rate_max": 70,
         "thrust_max_xy": 2.9,
-        "thrust_max_z": 2.0
+        "thrust_max_z": 2.0,
+        "thrust_max_xy_work": 2.9,
+        "thrust_max_z_work": 2.0
     }
 }

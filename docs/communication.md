@@ -46,6 +46,7 @@ Each topic below defines the permissible keys and values, as well as the directi
       - `ROLL_REFERENCE_OFFSET`: Offsets the current roll reference value.
       - `DEPTH_REFERENCE_OFFSET`: Offsets the current depth reference value.
       - `THRUST_MAX_OFFSET`: Offsets the maximum thrust value.
+      - `WORK_MODE`: Enables and disables motors work mode, setting motors thrust_max_xy and thrust_max_z to 2.9 and 2.0 or reverting them to the default values.
     - **Example Message**:
       ```json
       {
