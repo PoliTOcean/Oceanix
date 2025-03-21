@@ -80,7 +80,7 @@ std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
 uint8_t nucleo_connected=0;
-uint8_t motors_work_mode=0
+uint8_t motors_work_mode=0;
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
@@ -231,7 +231,7 @@ void timer_com_callback(uv_timer_t* handle){
             data->config->change_config(msg.second);
             data->config->write_base_config();
             general_config = data->config->get_config(ConfigType::GENERAL);
-            motors_config = config.get_config(ConfigType::MOTORS);
+            motors_config = data->config->get_config(ConfigType::MOTORS);
 
             data->controller->update_parameters(general_config, data->config->get_config(ConfigType::CONTROLLER));
             data->motors->update_parameters(general_config, data->config->get_config(ConfigType::MOTORS));
