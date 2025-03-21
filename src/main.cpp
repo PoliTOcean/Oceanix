@@ -136,7 +136,7 @@ int main(int argc, char* argv[]){
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
     
     for(int i=0; i<5; i++){
-        nucleo_connected = (nucleo.init(0x00) == COMM_STATUS::OK);
+        nucleo_connected = (nucleo.init(0x04) == COMM_STATUS::OK);
         if(nucleo_connected){
             logger->log(logINFO,"NUCLEO INIT SUCCESS");
             nucleo.connect();
@@ -259,7 +259,7 @@ void timer_debug_callback(uv_timer_t* handle){
     if(!data->nucleo->is_connected()){
         logger->log(logINFO,"NUCLEO disconnected");
         nucleo_connected = 0;
-        if(data->nucleo->init(0x00) == COMM_STATUS::OK && data->nucleo->connect()){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
+        if(data->nucleo->init(0x04) == COMM_STATUS::OK && data->nucleo->connect()){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
             nucleo_connected = 1;
             logger->log(logINFO,"NUCLEO connected");
         }
