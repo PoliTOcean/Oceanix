@@ -62,6 +62,18 @@ else
     echo "libuv is already installed."
 fi
 
+if ! dpkg -s pigpio >/dev/null 2>&1; then
+    echo "pigpio is not installed. Installing libuv..."
+    wget https://github.com/joan2937/pigpio/archive/master.zip
+    unzip master.zip
+    cd pigpio-master
+    make
+    sudo make install
+    cd ..
+else
+    echo "pigpio is already installed."
+fi
+
 # Check for Eclipse Paho MQTT C and C++ libraries
 if ! dpkg -s libpaho-mqtt-dev libpaho-mqttpp-dev >/dev/null 2>&1; then
     echo "Eclipse Paho MQTT libraries are not installed. Installing Eclipse Paho MQTT libraries..."

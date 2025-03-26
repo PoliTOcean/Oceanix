@@ -35,6 +35,8 @@ file(GLOB_RECURSE LIBRARY_SOURCE_CHIM
     "${PROJECT_SOURCE_DIR}/libs/Chimpanzee/src/*.cpp"
 )
 
+find_library(PIGPIO_LIB pigpio)
+
 # Create a static library from the library source files
 add_library(BAR_lib STATIC ${LIBRARY_SOURCE_BAR})
 add_library(IMU_lib STATIC ${LIBRARY_SOURCE_IMU})
@@ -60,7 +62,7 @@ pkg_check_modules(LIBUV REQUIRED libuv)
 target_include_directories(Oceanix PRIVATE ${LIBUV_INCLUDE_DIRS})
 
 # Link the libuv library
-target_link_libraries(Oceanix PRIVATE BAR_lib IMU_lib CTRL_lib CHIM_lib JSON_lib ${LIBUV_LIBRARIES} paho-mqtt3a PahoMqttCpp::paho-mqttpp3)
+target_link_libraries(Oceanix PRIVATE BAR_lib IMU_lib CTRL_lib CHIM_lib JSON_lib ${LIBUV_LIBRARIES} paho-mqtt3a PahoMqttCpp::paho-mqttpp3 ${PIGPIO_LIB})
 
 # Additional libraries you may need
 find_package(OpenSSL REQUIRED)
