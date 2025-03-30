@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <fstream>
 #include <ctime>
+#include <chrono>
 
 #define MQTT_LOG_NAME       "MQTThst"
 #define BAR02_LOG_NAME      "BAR02  "
@@ -19,7 +20,7 @@
 
 
     class MQTTClient;
-    enum logLevel {logDEBUG, logINFO, logWARNING, logERROR};
+    enum logLevel {logSTATUS, logINFO, logWARNING, logERROR};
 
     class Logger {
         private:
@@ -30,14 +31,16 @@
             static bool logTypeFile;
             static bool logTypeMQTT;
             static std::string logFileDir;      //Defaults to "log/" (done in logger.cpp)
-            static std::string logFileFullPath; //Will append to logFileDir the filename
+            static std::string logFileDirStatus; //Default
+            
             static std::ofstream logFile;       
+            static std::ofstream logFileStatus;      
             static MQTTClient *mqtt_client;
 
             std::string logLevelToString(logLevel level);
             std::string generateLogString(logLevel logtype, std::string message);        
-
-            void createLogFile();
+            
+            std::ofstream createLogFile(std::string newFileDir, std::string newFileName);
 
         public:
             Logger(std::string unitName, logLevel minimumLogLevel);    
@@ -50,7 +53,7 @@
 
             static void setLogFileDir(std::string logFileDir);  //To initialize Logger::logFileDir
             static void setMQTTClient(MQTTClient *mqttclient);
-            static void closeLogFile();
+            static void closeLogFiles();
             
     };
 

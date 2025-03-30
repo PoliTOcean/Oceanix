@@ -7,9 +7,10 @@ bool Logger::logTypeCout = false;
 bool Logger::logTypeFile = false;
 bool Logger::logTypeMQTT = false;
 
-std::string Logger::logFileDir = "/log"; //Default
-std::string Logger::logFileFullPath;
+std::string Logger::logFileDir = "log/"; //Default
+std::string Logger::logFileDirStatus = "log/status/"; //Default
 std::ofstream Logger::logFile;
+std::ofstream Logger::logFileStatus;
 MQTTClient *Logger::mqtt_client = NULL;
 
 Logger::Logger(std::string unitName, logLevel minimumLogLevel) 
@@ -31,6 +32,7 @@ void Logger::configLogTypeMQTT(bool value){
 
 void Logger::setLogFileDir(std::string logFileDir){
     Logger::logFileDir = logFileDir;
+    Logger::logFileDirStatus = logFileDir + "/status/";
 }
 
 void Logger::setMQTTClient(MQTTClient *mqtt_client){
@@ -40,7 +42,7 @@ void Logger::setMQTTClient(MQTTClient *mqtt_client){
 std::string Logger::logLevelToString(logLevel loglevel) {
     switch (loglevel) {
         case logINFO:       return "[INFO ]";
-        case logDEBUG:      return "[DEBUG]";
+        case logSTATUS:      return "[STATS]";
         case logWARNING:    return "[WARN ]";
         case logERROR:      return "[ERROR]";
         default:      return "[UNKNOWN]";
@@ -48,7 +50,11 @@ std::string Logger::logLevelToString(logLevel loglevel) {
 }
 
 std::string Logger::generateLogString(logLevel loglevel, std::string message){
-        return "["+ unitName + "]" + logLevelToString(loglevel) + message;
+        const auto now = std::chrono::system_clock::now().time_since_epoch();
+        const auto timestamp = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(now).count());
+
+        if(loglevel > logSTATUS) return timestamp + "["+ unitName + "]" + logLevelToString(loglevel) + message;
+        else return timestamp + " " + message;
 }
 
 void Logger::log(logLevel loglevel, std::string message){
@@ -57,23 +63,33 @@ void Logger::log(logLevel loglevel, std::string message){
         
         std::string logString = generateLogString(loglevel, message) + "\n";
 
-        if(Logger::logTypeCout){
+        if(Logger::logTypeCout && loglevel > logSTATUS){
             std::cout << logString;
         }
 
         if(Logger::logTypeFile){
-            if(!Logger::logFile.is_open()){
-                //The logFile stream isn't associated with an existing file
-                Logger::createLogFile();
+            if(loglevel > logSTATUS){
+                if(!Logger::logFile.is_open()){
+                    //The logFile stream isn't associated with an existing file
+                    Logger::logFile = Logger::createLogFile(Logger::logFileDir, "log_");
+                }
+                Logger::logFile << logString;
             }
-            Logger::logFile << logString;
+            else{
+                if(!Logger::logFileStatus.is_open()){
+                    //The logFile stream isn't associated with an existing file
+                    Logger::logFileStatus = Logger::createLogFile(Logger::logFileDirStatus, "log_status_");
+                }
+                Logger::logFileStatus << logString;
+            }
         }
 
         if(Logger::logTypeMQTT){
-            //TO DO
             if(Logger::mqtt_client != NULL && Logger::unitName != MQTT_LOG_NAME){
-                Logger::mqtt_client->send_msg(logString, Topic::LOG);
+                if(loglevel > logSTATUS) Logger::mqtt_client->send_msg(logString, Topic::LOG);
+                else Logger::mqtt_client->send_msg(logString, Topic::STATUS);
             }
+
         }
     }
 }
@@ -84,15 +100,17 @@ void Logger::setLogLevel(logLevel new_level){
     minimumLogLevel = new_level;
 }
 
-void Logger::createLogFile(){
+std::ofstream Logger::createLogFile(std::string newFileDir, std::string newFileName){
     time_t rawtime;
     struct tm * timeinfo;
     char buffer[80];
+    std::ofstream newFile;
+    std::string newFileFullName;
 
     time (&rawtime);
     timeinfo = localtime(&rawtime);
 
-    std::filesystem::path dirPath = std::filesystem::path(logFileDir);
+    std::filesystem::path dirPath = std::filesystem::path(newFileDir);
     
     if (!std::filesystem::exists(dirPath)) {
             std::filesystem::create_directories(dirPath); // Creates all directories in the path if they do not exist
@@ -102,11 +120,13 @@ void Logger::createLogFile(){
     strftime(buffer,sizeof(buffer),"%d-%m-%Y_%H:%M:%S",timeinfo);
     std::string timestamp_string(buffer);
 
-    Logger::logFileFullPath = Logger::logFileDir + "/log_" + timestamp_string;
-
-    Logger::logFile.open(Logger::logFileFullPath);
+    newFileFullName = newFileDir + newFileName + timestamp_string;
+    std::cout << newFileFullName << "\n";
+    newFile.open(newFileFullName);
+    return newFile;
 }
 
-void Logger::closeLogFile(){
+void Logger::closeLogFiles(){
     Logger::logFile.close();
+    Logger::logFileStatus.close();
 }
