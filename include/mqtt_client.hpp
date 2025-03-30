@@ -23,7 +23,6 @@ class MQTTClient{
         bool mqtt_reconnect();
         bool send_msg(std::string msg, Topic topic);
         bool receive_msg(std::pair <Topic, json>* msgp);
-        bool send_debug(json debug_json); // Add mask
         bool is_msg_type(Topic topic2, Topic topic1);
 
         void update_parameters(const json& general_config);

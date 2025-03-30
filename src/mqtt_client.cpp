@@ -98,7 +98,7 @@ bool MQTTClient::send_msg(std::string msg, Topic topic) {
         cli.publish(topic_map[topic], msg);
         logMessage << "MQTT sent message to topic: " << topic_map[topic] << std::endl;
         logger.log(logINFO, logMessage.str());
-        logger.log(logDEBUG, msg);
+        logger.log(logSTATUS, msg);
         return true;
     }
     else {
@@ -128,8 +128,6 @@ bool MQTTClient::receive_msg(std::pair <Topic, json>* msgp ) {
 
     return false;
 }
-
-bool MQTTClient::send_debug(json debug_json) { return send_msg(debug_json.dump(), Topic::STATUS); }
 
 bool MQTTClient::is_msg_type(Topic topic2, Topic topic1) { 
     return topic_map[topic1] == topic_map[topic2];
