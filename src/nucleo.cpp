@@ -18,17 +18,18 @@ bool Nucleo::is_connected() {
     return m_protocol.is_connected();
 }
 
-bool Nucleo::connect() {
-    if (m_test_mode) {
-        return true; // Simulate successful connection in test mode
-    }
-    return m_protocol.connect();
-}
+// bool Nucleo::connect() {
+//     if (m_test_mode) {
+//         return true; // Simulate successful connection in test mode
+//     }
+//     return m_protocol.connect();
+// }
 
 COMM_STATUS Nucleo::init(uint8_t frequency) {
     if (m_test_mode) {
         return COMM_STATUS::OK; // Simulate successful initialization in test mode
     }
+    m_protocol.connect();
     return m_protocol.init(frequency);
 }
 

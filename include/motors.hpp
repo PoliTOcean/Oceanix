@@ -77,6 +77,13 @@ public:
     */
     void update_parameters(const json& general_config, const json& specific_config);
 
+    /**
+    * @brief Change thrust_max_xy and thrust_max_z
+    * @param new_thrust_max_xy, new_thrust_max_z new values.
+    */
+    void set_thrust_max(float new_thrust_max_xy, float new_thrust_max_z);
+
+
 private:
     /**
     * @brief map the input interval to the output interval

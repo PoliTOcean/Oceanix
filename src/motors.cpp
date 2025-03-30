@@ -127,22 +127,26 @@ void Motors::update_parameters(const json& general_config, const json& specific_
     for (int i=0; i<8; i++)
         motors[i].change_parameters((float) specific_config[motorNames[i]+"_coeff"], (uint16_t) specific_config[motorNames[i]+"_pwm_zero"]);
 
-    thrust_max_xy = specific_config["thrust_max_xy"]; 
-    thrust_max_z = specific_config["thrust_max_z"]; 
+    set_thrust_max(specific_config["thrust_max_xy"], specific_config["thrust_max_z"]);
 
     logger.setLogLevel(general_config["motors_loglevel"]);
 
 }
 
-void Motors::offset_thrust_max(float offset){
-    thrust_max_xy += offset;
-    thrust_max_z += offset;
+void Motors::set_thrust_max(float new_thrust_max_xy, float new_thrust_max_z){
     std::ostringstream logMessage;
+    
+    thrust_max_xy = new_thrust_max_xy;
+    thrust_max_z = new_thrust_max_z; 
 
     logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
     logger.log(logINFO, logMessage.str());
 
     logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
     logger.log(logINFO, logMessage.str());
+}
 
+void Motors::offset_thrust_max(float offset){
+    
+    set_thrust_max(thrust_max_xy+offset, thrust_max_z+offset);
 }
