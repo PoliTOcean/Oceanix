@@ -108,16 +108,18 @@ float Motors::limit_thrust(float thrust, float thrust_max){
     return thrust;
 }
 
-void Motors::update_debug(json& debug){
+json Motors::get_status(){
+    json status;
     for (int i = 0; i < static_cast<int>(MotorID::NUM_MOTORS); ++i) {
         MotorID motor_id = static_cast<MotorID>(i);
         std::string motor_name = motorID_to_string(motor_id);
         
-        debug["motor_thrust"][motor_name] = floatToStringWithDecimals(motor_thrust[i], 2);
-        debug["pwm"][motor_name] = floatToStringWithDecimals(pwm[i], 2);
-        debug["motor_thrust_max_xy"] = floatToStringWithDecimals(thrust_max_xy, 2);
-        debug["motor_thrust_max_z"] = floatToStringWithDecimals(thrust_max_z, 2);
+        status["motor_thrust"][motor_name] = floatToStringWithDecimals(motor_thrust[i], 2);
+        status["pwm"][motor_name] = floatToStringWithDecimals(pwm[i], 2);
+        status["motor_thrust_max_xy"] = floatToStringWithDecimals(thrust_max_xy, 2);
+        status["motor_thrust_max_z"] = floatToStringWithDecimals(thrust_max_z, 2);
     }
+    return status;
 }
 
 void Motors::update_parameters(const json& general_config, const json& specific_config) {

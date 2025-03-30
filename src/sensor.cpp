@@ -154,18 +154,20 @@ float Sensor::get_Zspeed() {
     return fused_speed;
 }
 
-void Sensor::update_debug(json& debug) {
+json Sensor::get_status() {
+    json status;
     read_sensor();
-    debug["imu_state"] = (imu.get_status() == 0) ? "OK" : "OFF";
-    debug["bar_state"] = (barometer.get_status() == 0) ? "OK" : "OFF";
-    debug["depth"] = floatToStringWithDecimals(get_depth(), 3);
-    debug["roll"] = floatToStringWithDecimals(get_roll(), 3);
-    debug["pitch"] = floatToStringWithDecimals(get_pitch(), 3);
-    debug["yaw"] = floatToStringWithDecimals(get_yaw(), 3);
-    debug["internal_temperature"] = floatToStringWithDecimals(get_internal_temperature(), 3);
-    debug["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
-    debug["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
-    debug["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
+    status["imu_state"] = (imu.get_status() == 0) ? "OK" : "OFF";
+    status["bar_state"] = (barometer.get_status() == 0) ? "OK" : "OFF";
+    status["depth"] = floatToStringWithDecimals(get_depth(), 3);
+    status["roll"] = floatToStringWithDecimals(get_roll(), 3);
+    status["pitch"] = floatToStringWithDecimals(get_pitch(), 3);
+    status["yaw"] = floatToStringWithDecimals(get_yaw(), 3);
+    status["internal_temperature"] = floatToStringWithDecimals(get_internal_temperature(), 3);
+    status["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
+    status["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
+    status["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
+    return status;
 }
 
 void Sensor::update_parameters(const json& general_config) {

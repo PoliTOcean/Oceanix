@@ -109,11 +109,11 @@ public:
     float get_Zspeed();
 
     /**
-     * @brief update the debug json with sensors status, depth, roll, pitch, yaw
+     * @brief Get the status in JSON
      * 
-     * @param debug json to be modified
+     * @return json containing the status
      */
-    void update_debug(json& debug);
+    json get_status();
 
     void update_parameters(const json& general_config);
 

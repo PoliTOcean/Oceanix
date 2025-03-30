@@ -58,11 +58,11 @@ public:
     uint16_t* calculate_pwm();
 
     /**
-     * @brief Get the debug object
+     * @brief Get the status in JSON
      * 
-     * @param debug document for adding info
+     * @return json containing the status
      */
-    void update_debug(json& debug);
+    json get_status();
 
     /**
      * @brief Increase/decrease the max thrust of all motors

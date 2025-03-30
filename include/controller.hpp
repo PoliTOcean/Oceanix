@@ -91,12 +91,11 @@ public:
 
 
     /**
-     * @brief Get the debug json
+     * @brief Get the status in JSON
      * 
-     * @param debug json doc for adding the informations
-     * @param jsonConfig Pointer to the json object with the configuration.
+     * @return json containing the status
      */
-    void update_debug(json& debug);
+    json get_status();
 };
 
 #endif // CONTROLLER_H
