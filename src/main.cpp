@@ -31,7 +31,7 @@ using json = nlohmann::json;
 
 void timer_motors_callback(uv_timer_t* handle);
 void timer_com_callback(uv_timer_t* handle);
-void timer_debug_callback(uv_timer_t* handle);
+void timer_status_callback(uv_timer_t* handle);
 
 struct Timer_data {
     Sensor* sensor;
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]){
 
     uv_timer_t timer_motors;
     uv_timer_t timer_com;
-    uv_timer_t timer_debug;
+    uv_timer_t timer_status;
 
     //Now it defaults to all, but the config should be read from a file in the future
     
@@ -171,15 +171,15 @@ int main(int argc, char* argv[]){
     timer_com.data = timer_data;
     uv_timer_start(&timer_com, timer_com_callback, 200, 2);
 
-    uv_timer_init(loop, &timer_debug);
-    timer_debug.data = timer_data;
-    uv_timer_start(&timer_debug, timer_debug_callback, general_config["debug_interval"], general_config["debug_interval"]);
+    uv_timer_init(loop, &timer_status);
+    timer_status.data = timer_data;
+    uv_timer_start(&timer_status, timer_status_callback, general_config["debug_interval"], general_config["debug_interval"]);
 
     controller.activate(CONTROL_OFF);
     
     uv_run(loop, UV_RUN_DEFAULT);
 
-    Logger::closeLogFile(); //Not sure this should be placed here
+    Logger::closeLogFiles(); //Not sure this should be placed here
 
     return 0;
 }
@@ -242,19 +242,20 @@ void timer_com_callback(uv_timer_t* handle){
     data->nucleo->get_heartbeat();
 }
 
-void timer_debug_callback(uv_timer_t* handle){
+void timer_status_callback(uv_timer_t* handle){
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     json rov_status_json;
 
-    data->motors->update_debug(rov_status_json);
-    data->controller->update_debug(rov_status_json);
+    rov_status_json["motors"] = data->motors->get_status();
+    rov_status_json["controller"] = data->controller->get_status();    
+    rov_status_json["sensors"] = data->sensor->get_status();
+
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
     rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
     
-    data->sensor->update_debug(rov_status_json);
 
     if(!rov_status_json.empty())
-        data->mqtt_client->send_debug(rov_status_json);
+        logger->log(logSTATUS, rov_status_json.dump());
         
     if(!data->nucleo->is_connected()){
         logger->log(logINFO,"NUCLEO disconnected");
