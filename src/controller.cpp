@@ -140,5 +140,8 @@ json Controller::get_status(){
     status["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     status["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
     status["reference_pitch"] = floatToStringWithDecimals(reference_pitch, 3);
+    status["error_integral"]["Z"] = floatToStringWithDecimals(control_z.get_error_integral(), 3);
+    status["error_integral"]["ROLL"] = floatToStringWithDecimals(control_roll.get_error_integral(), 3);
+    status["error_integral"]["PITCH"] = floatToStringWithDecimals(control_pitch.get_error_integral(), 3);
     return status;
 }

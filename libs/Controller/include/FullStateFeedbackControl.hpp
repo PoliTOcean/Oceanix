@@ -14,6 +14,7 @@ class ControlSystem
         double calculateU(double reference, double y_measurement, std::vector<double> x_measurement);
 
         void update_paramters(double minForce, double maxForce, double minErrrorInt, double maxErrorInt, std::vector<double> Kx, double Ki);
+        double get_error_integral();
 
     private:
 

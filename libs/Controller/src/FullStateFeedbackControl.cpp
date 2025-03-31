@@ -61,3 +61,7 @@ void ControlSystem::update_paramters(double minForce, double maxForce, double mi
     this->Kx = Kx;
     this->Ki = Ki;
 }
+
+double ControlSystem::get_error_integral(){
+    return this->ErrorIntegral;
+}
