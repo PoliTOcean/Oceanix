@@ -60,6 +60,13 @@ std::string Logger::generateLogString(logLevel loglevel, std::string message){
 void Logger::log(logLevel loglevel, std::string message){
     //Don't log anything if this logmessage loglevel is lower than the minimum one
     if(loglevel >= minimumLogLevel){
+
+        if(Logger::logTypeMQTT){
+            if(Logger::mqtt_client != NULL && Logger::unitName != MQTT_LOG_NAME){
+                if(loglevel > logSTATUS) Logger::mqtt_client->send_msg(message, Topic::LOG);
+                //else Logger::mqtt_client->send_msg(message, Topic::STATUS);
+            }
+        }
         
         std::string logString = generateLogString(loglevel, message) + "\n";
 
@@ -82,14 +89,6 @@ void Logger::log(logLevel loglevel, std::string message){
                 }
                 Logger::logFileStatus << logString;
             }
-        }
-
-        if(Logger::logTypeMQTT){
-            if(Logger::mqtt_client != NULL && Logger::unitName != MQTT_LOG_NAME){
-                if(loglevel > logSTATUS) Logger::mqtt_client->send_msg(logString, Topic::LOG);
-                else Logger::mqtt_client->send_msg(logString, Topic::STATUS);
-            }
-
         }
     }
 }

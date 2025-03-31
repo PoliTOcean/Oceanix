@@ -216,6 +216,15 @@ void timer_motors_callback(uv_timer_t* handle) {
     motor_pwm = data->motors->calculate_pwm();
 
     data->nucleo->send_pwm(motor_pwm);
+
+
+    json rov_status_json;
+    rov_status_json.update(data->motors->get_status());
+    rov_status_json.update(data->controller->get_status());    
+    rov_status_json.update(data->sensor->get_status());
+
+    if(!rov_status_json.empty())
+        logger->log(logSTATUS, rov_status_json.dump());
 }
 
 void timer_com_callback(uv_timer_t* handle){
@@ -262,16 +271,17 @@ void timer_status_callback(uv_timer_t* handle){
     Timer_data* data = static_cast<Timer_data*>(handle->data);
     json rov_status_json;
 
-    rov_status_json["motors"] = data->motors->get_status();
-    rov_status_json["controller"] = data->controller->get_status();    
-    rov_status_json["sensors"] = data->sensor->get_status();
+    rov_status_json.update(data->motors->get_status());
+    rov_status_json.update(data->controller->get_status());    
+    rov_status_json.update(data->sensor->get_status());
 
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
     rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
     
 
     if(!rov_status_json.empty())
-        logger->log(logSTATUS, rov_status_json.dump());
+        //logger->log(logSTATUS, rov_status_json.dump());
+        data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
         
     if(!data->nucleo->is_connected()){
         logger->log(logINFO,"NUCLEO disconnected");
