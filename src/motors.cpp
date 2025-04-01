@@ -3,14 +3,14 @@
 Motors::Motors(json config, logLevel minimumLoglevel)
     : thrust_max_xy(config["thrust_max_xy"]), thrust_max_z(config["thrust_max_z"]),
     motors{         //same order as motorID
-        Motor(MotorID::FDX, config["FDX_coeff"], config["FDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::FSX, config["FSX_coeff"], config["FSX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::RDX, config["RDX_coeff"], config["RDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::RSX, config["RSX_coeff"], config["RSX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPFDX, config["UPFDX_coeff"], config["UPFDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPFSX, config["UPFSX_coeff"], config["UPFSX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["pwm_slew_rate_max"]),
-        Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["pwm_slew_rate_max"])
+        Motor(MotorID::FDX, config["FDX_coeff"], config["FDX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_xy"]),
+        Motor(MotorID::FSX, config["FSX_coeff"], config["FSX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_xy"]),
+        Motor(MotorID::RDX, config["RDX_coeff"], config["RDX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_xy"]),
+        Motor(MotorID::RSX, config["RSX_coeff"], config["RSX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_xy"]),
+        Motor(MotorID::UPFDX, config["UPFDX_coeff"], config["UPFDX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_z"]),
+        Motor(MotorID::UPFSX, config["UPFSX_coeff"], config["UPFSX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_z"]),
+        Motor(MotorID::UPRDX, config["UPRDX_coeff"], config["UPRDX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_z"]),
+        Motor(MotorID::UPRSX, config["UPRSX_coeff"], config["UPRSX_pwm_zero"], config["thrust_slew_rate_max"], config["thrust_max_z"])
     },
     logger(Logger(MOTORS_LOG_NAME, minimumLoglevel)) {}
 
@@ -56,14 +56,10 @@ float* Motors::calculate_thrust(json axes){
 
 uint16_t* Motors::calculate_pwm(){
     for(int i=0; i<8; i++){
-        if(i<4)
-            motor_thrust[i] = limit_thrust(motor_thrust[i], thrust_max_xy);
-        else
-            motor_thrust[i] = limit_thrust(motor_thrust[i], thrust_max_z);
-    }
-
-    for(int i=0; i<8; i++)
+        //limit thrust to the max value and also slew rate
+        motor_thrust[i] = motors[i].limit_thrust(motor_thrust[i]);
         pwm[i] = motors[i].calculate_pwm(motor_thrust[i]);
+    }
     return pwm;
 }
 
@@ -99,14 +95,14 @@ float Motors::normalize_quadratic(float x, float in_min, float in_max, float out
     return (x*x)/(max*max)*sign;
 }
 
-float Motors::limit_thrust(float thrust, float thrust_max){
-    if(fabsf(thrust)>thrust_max){
-        int sign = fabsf(thrust)/thrust;
-        thrust = thrust_max * sign;
-        logger.log(logWARNING, "motor thrust limit surpassed, limited to the max");
-    }
-    return thrust;
-}
+// float Motors::limit_thrust(float thrust, float thrust_max){
+//     if(fabsf(thrust)>thrust_max){
+//         int sign = fabsf(thrust)/thrust;
+//         thrust = thrust_max * sign;
+//         logger.log(logWARNING, "motor thrust limit surpassed, limited to the max");
+//     }
+//     return thrust;
+// }
 
 json Motors::get_status(){
     json status;
@@ -136,14 +132,25 @@ void Motors::update_parameters(const json& general_config, const json& specific_
 void Motors::set_thrust_max(float new_thrust_max_xy, float new_thrust_max_z){
     std::ostringstream logMessage;
     
-    thrust_max_xy = new_thrust_max_xy;
-    thrust_max_z = new_thrust_max_z; 
+    if(thrust_max_xy != new_thrust_max_xy){
+        thrust_max_xy = new_thrust_max_xy;
 
-    logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
-    logger.log(logINFO, logMessage.str());
+        for(int i=0; i<4; i++)
+            motors[i].set_thrust_max(thrust_max_xy);
 
-    logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
-    logger.log(logINFO, logMessage.str());
+        logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
+        logger.log(logINFO, logMessage.str());
+    }
+    
+    if(thrust_max_z != new_thrust_max_z){
+        thrust_max_z = new_thrust_max_z; 
+
+        for(int i=4; i<8; i++)
+            motors[i].set_thrust_max(thrust_max_z);
+        
+        logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
+        logger.log(logINFO, logMessage.str());
+    }
 }
 
 void Motors::offset_thrust_max(float offset){

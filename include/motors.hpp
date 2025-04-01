@@ -108,14 +108,14 @@ private:
     float normalize_quadratic(float x, float in_min, float in_max, float out_min, float out_max);
     void normalize_vector(const float *input_array, float *output_array, int size);
 
-    /**
-     * @brief check if the calculated thrust is greater than the limit, if needed limit it
-     * 
-     * @param thrust current thrust
-     * @param thrust_max thrust limit
-     * @return float the value of the thrust
-     */
-    float limit_thrust(float thrust, float thrust_max);
+    // /**
+    //  * @brief check if the calculated thrust is greater than the limit, if needed limit it
+    //  * 
+    //  * @param thrust current thrust
+    //  * @param thrust_max thrust limit
+    //  * @return float the value of the thrust
+    //  */
+    // float limit_thrust(float thrust, float thrust_max);
     Logger logger;
 };
 
