@@ -79,7 +79,7 @@ uint8_t ms5837_basic_init(ms5837_type_t type)
     }
     
     /* set temperature osr */
-    res = ms5837_set_temperature_osr(&gs_handle, MS5837_BASIC_DEFAULT_TEMPERATURE_OSR);
+    res = ms5837_set_temperature_osr(&gs_handle, MS5837_OSR_256);
     if (res != 0)
     {
         ms5837_interface_debug_print("ms5837: set temperature osr failed.\n");
@@ -89,7 +89,7 @@ uint8_t ms5837_basic_init(ms5837_type_t type)
     }
     
     /* set pressure osr */
-    res = ms5837_set_pressure_osr(&gs_handle, MS5837_BASIC_DEFAULT_PRESSURE_OSR);
+    res = ms5837_set_pressure_osr(&gs_handle, MS5837_OSR_512);
     if (res != 0)
     {
         ms5837_interface_debug_print("ms5837: set pressure osr failed.\n");

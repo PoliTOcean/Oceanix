@@ -14,7 +14,7 @@
 #define MAX_PACKET_SIZE 256
 
 
-const std::vector<std::string> serial_prefixes = {"/dev/ttyUSB"};
+const std::vector<std::string> serial_prefixes = {"/dev/ttyACM", "/dev/ttyUSB"};
 
 Serial::Serial() {
     m_connected = false;
