@@ -35,7 +35,7 @@
         "logTypeFILE": true,
         "logTypeMQTT": true,
         "main_loglevel": 0,
-        "motor_interval": 10,
+        "motor_interval": 20,
         "motors_loglevel": 0,
         "mqtt_client_id": "oceanix",
         "mqtt_loglevel": 1,

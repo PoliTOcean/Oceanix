@@ -84,6 +84,7 @@ std::map <std::string, state_commands_map> state_mapper;
 uint8_t rov_armed=0;
 uint8_t nucleo_connected=0;
 uint8_t motors_work_mode=0;
+uint8_t status_callback=0;
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
@@ -185,9 +186,9 @@ int main(int argc, char* argv[]){
     timer_com.data = timer_data;
     uv_timer_start(&timer_com, timer_com_callback, 200, 2);
 
-    uv_timer_init(loop, &timer_status);
-    timer_status.data = timer_data;
-    uv_timer_start(&timer_status, timer_status_callback, general_config["debug_interval"], general_config["debug_interval"]);
+    // uv_timer_init(loop, &timer_status);
+    // timer_status.data = timer_data;
+    // uv_timer_start(&timer_status, timer_status_callback, general_config["debug_interval"], general_config["debug_interval"]);
 
     controller.activate(CONTROL_OFF);
     
@@ -225,6 +226,16 @@ void timer_motors_callback(uv_timer_t* handle) {
 
     if(!rov_status_json.empty())
         logger->log(logSTATUS, rov_status_json.dump());
+
+    status_callback++;
+    if(status_callback==5){
+        status_callback=0;
+        rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+        rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
+
+        if(!rov_status_json.empty())
+            data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
+    }
 }
 
 void timer_com_callback(uv_timer_t* handle){
@@ -267,31 +278,31 @@ void timer_com_callback(uv_timer_t* handle){
     data->nucleo->get_heartbeat();
 }
 
-void timer_status_callback(uv_timer_t* handle){
-    Timer_data* data = static_cast<Timer_data*>(handle->data);
-    json rov_status_json;
+// void timer_status_callback(uv_timer_t* handle){
+//     Timer_data* data = static_cast<Timer_data*>(handle->data);
+//     json rov_status_json;
 
-    rov_status_json.update(data->motors->get_status());
-    rov_status_json.update(data->controller->get_status());    
-    rov_status_json.update(data->sensor->get_status());
+//     rov_status_json.update(data->motors->get_status());
+//     rov_status_json.update(data->controller->get_status());    
+//     rov_status_json.update(data->sensor->get_status());
 
-    rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-    rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
+//     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
+//     rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
     
 
-    if(!rov_status_json.empty())
-        //logger->log(logSTATUS, rov_status_json.dump());
-        data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
+//     if(!rov_status_json.empty())
+//         //logger->log(logSTATUS, rov_status_json.dump());
+//         data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
         
-    if(!data->nucleo->is_connected()){
-        logger->log(logINFO,"NUCLEO disconnected");
-        nucleo_connected = 0;
-        if(data->nucleo->init(0x04) == COMM_STATUS::OK){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
-            nucleo_connected = 1;
-            logger->log(logINFO,"NUCLEO connected");
-        }
-    }
-}
+//     if(!data->nucleo->is_connected()){
+//         logger->log(logINFO,"NUCLEO disconnected");
+//         nucleo_connected = 0;
+//         if(data->nucleo->init(0x04) == COMM_STATUS::OK){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
+//             nucleo_connected = 1;
+//             logger->log(logINFO,"NUCLEO connected");
+//         }
+//     }
+// }
 
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
