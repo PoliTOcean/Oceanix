@@ -212,7 +212,6 @@ void timer_motors_callback(uv_timer_t* handle) {
     }
     else
         motor_thrust = data->motors->calculate_thrust(json_axes_off);
-
     
     motor_pwm = data->motors->calculate_pwm();
 
@@ -223,6 +222,8 @@ void timer_motors_callback(uv_timer_t* handle) {
     rov_status_json.update(data->motors->get_status());
     rov_status_json.update(data->controller->get_status());    
     rov_status_json.update(data->sensor->get_status());
+    rov_status_json["AXES"] = json_axes;
+    rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
 
     if(!rov_status_json.empty())
         logger->log(logSTATUS, rov_status_json.dump());

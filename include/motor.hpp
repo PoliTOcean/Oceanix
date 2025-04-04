@@ -17,7 +17,7 @@ private:
     float thrust_max;       ///< max thrust of the motor
 
 public:
-    Motor(MotorID id, float correction, uint16_t pwm_zero, int max_slew_rate, float thrust_max);
+    Motor(MotorID id, float correction, uint16_t pwm_zero, float max_slew_rate, float thrust_max);
     
     /**
      * @brief Given the thrust limit to the max value, limit also slewrate

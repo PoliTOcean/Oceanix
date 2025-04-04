@@ -1,6 +1,6 @@
 #include "motor.hpp"
 
-Motor::Motor(MotorID id, float correction, uint16_t pwm_zero, int max_slew_rate, float thrust_max)
+Motor::Motor(MotorID id, float correction, uint16_t pwm_zero, float max_slew_rate, float thrust_max)
     : motor_id(id), correction_coeff(correction), pwm_zero(pwm_zero), slew_rate_max(max_slew_rate), thrust_old(0), thrust_max(thrust_max) {}
 
 float Motor::limit_thrust(float thrust){
@@ -10,7 +10,6 @@ float Motor::limit_thrust(float thrust){
         //logger.log(logWARNING, "motor thrust limit surpassed, limited to the max");
     }
     thrust = limit_slew_rate(thrust);
-    thrust_old = thrust;
     return thrust;
 }
 
@@ -33,13 +32,18 @@ void Motor::set_thrust_max(float new_thrust_max) {
 }
 
 float Motor::limit_slew_rate(float thrust){
-    if(thrust>0){
-        if((thrust-thrust_old)>slew_rate_max)
-            thrust = thrust_old + slew_rate_max;
+    float delta = thrust - thrust_old;
+
+    // Apply slew rate limiting only if the change exceeds the allowed rate
+    if (delta > slew_rate_max) {
+        thrust = thrust_old + slew_rate_max;
+    } 
+    else if (delta < -slew_rate_max) {
+        thrust = thrust_old - slew_rate_max;
     }
-    else {
-        if((thrust_old-thrust)>slew_rate_max)
-            thrust = thrust_old - slew_rate_max;
-    }
+
+    // Update thrust_old for the next call
+    thrust_old = thrust;
+
     return thrust;
 }
