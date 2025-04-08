@@ -1,6 +1,6 @@
 #include "nucleo.hpp"
 
-Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, bool verbose, bool test_mode, logLevel minimumLoglevel, int64_t heartbeat_interval)
+Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, bool verbose, bool test_mode)
     : m_protocol(version, sub_version, address, baudrate, verbose), m_test_mode(test_mode),
     logger(Logger(MQTT_LOG_NAME, minimumLoglevel)) {
         

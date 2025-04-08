@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 class Nucleo {
     public:
-        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, bool verbose = false, bool test_mode = false, logLevel minimumLoglevel, int64_t heartbeat_interval);
+        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, bool verbose = false, bool test_mode = false);
 
         bool is_connected();
         COMM_STATUS init(uint8_t frequency, int n_tries);
