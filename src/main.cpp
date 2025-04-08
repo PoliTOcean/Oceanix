@@ -140,8 +140,8 @@ int main(int argc, char* argv[]){
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
-    nucleo_connected = nucleo.init(0x04, 5) == COMM_STATUS::OK;
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, 0x04, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
+    nucleo_connected = nucleo.init(5) == COMM_STATUS::OK;
 
 
     Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 

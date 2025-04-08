@@ -1,10 +1,12 @@
 #include "nucleo.hpp"
 
-Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, bool verbose, bool test_mode)
+Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool verbose, bool test_mode)
     : m_protocol(version, sub_version, address, baudrate, verbose), m_test_mode(test_mode),
     logger(Logger(MQTT_LOG_NAME, minimumLoglevel)) {
         
     heartbeat_interval = heartbeat_interval;
+    starting_frequency = starting_frequency;
+
     m_init_mapper();
 }
 
@@ -43,6 +45,9 @@ bool Nucleo::is_connected() {
     } 
         
     last_hb_timestamp = new_timestamp;
+    
+    if(connected == false) init(5);
+
     return connected;
 }
 
@@ -53,7 +58,7 @@ bool Nucleo::is_connected() {
 //     return m_protocol.connect();
 // }
 
-COMM_STATUS Nucleo::init(uint8_t frequency, int n_tries) {
+COMM_STATUS Nucleo::init(int n_tries) {
     if (m_test_mode) {
         return COMM_STATUS::OK; // Simulate successful initialization in test mode
     }
@@ -65,7 +70,7 @@ COMM_STATUS Nucleo::init(uint8_t frequency, int n_tries) {
         gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         m_protocol.connect();
-        init_status = (m_protocol.init(frequency));
+        init_status = (m_protocol.init(starting_frequency));
         if(init_status == COMM_STATUS::OK){
             const auto now = std::chrono::system_clock::now().time_since_epoch();
             last_hb_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();

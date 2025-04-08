@@ -19,10 +19,10 @@ using json = nlohmann::json;
 
 class Nucleo {
     public:
-        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, bool verbose = false, bool test_mode = false);
+        Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool verbose = false, bool test_mode = false);
 
         bool is_connected();
-        COMM_STATUS init(uint8_t frequency, int n_tries);
+        COMM_STATUS init(int n_tries);
         std::pair<COMM_STATUS, std::optional<std::vector<uint8_t>>> get_heartbeat(); // use auto
         void update_buffer();
 
@@ -35,6 +35,7 @@ class Nucleo {
         bool m_test_mode;
         int64_t last_hb_timestamp;
         int64_t heartbeat_interval;
+        int64_t starting_frequency;
         std::map <std::string, int> m_arm_value_mapper;
         Logger logger;
 
