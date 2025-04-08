@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], general_config["motor_interval"], general_config["nucleo_debug"], test_mode); // true to mantain compatibility
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
     nucleo_connected = nucleo.init(0x04, 5) == COMM_STATUS::OK;
 
 
@@ -219,9 +219,6 @@ void timer_motors_callback(uv_timer_t* handle) {
         if(!rov_status_json.empty())
             data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
     }
-
-    data->nucleo->update_buffer();
-    nucleo_connected = data->nucleo->is_connected();
 }
 
 void timer_com_callback(uv_timer_t* handle){
@@ -259,6 +256,9 @@ void timer_com_callback(uv_timer_t* handle){
             logger->setLogLevel(general_config["main_loglevel"]);
         }
     }
+
+    data->nucleo->update_buffer();
+    nucleo_connected = data->nucleo->is_connected();
 }
 
 // void timer_status_callback(uv_timer_t* handle){
