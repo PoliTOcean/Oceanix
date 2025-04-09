@@ -27,6 +27,7 @@
 #include "logger.hpp"
 #include <iostream>
 #include <pigpio.h>
+#include <thread>
 
 #define RST_PIN 17
 
@@ -88,6 +89,8 @@ uint8_t status_callback=0;
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
+
+std::mutex mtx;
 
 void state_commands(json msg, Timer_data* data);
 
@@ -176,6 +179,11 @@ int main(int argc, char* argv[]){
     timer_data->mqtt_client = &mqtt_client;
     timer_data->config = &config;
 
+    // Start updating_sensor thread
+    std::thread updating_sensor_thread(sensor.update_thread, sensor, general_config["debug_interval"]);
+    updating_sensor_thread.detach();
+
+    
     uv_loop_t* loop = uv_default_loop();
 
     uv_timer_init(loop, &timer_motors);
@@ -207,7 +215,7 @@ void timer_motors_callback(uv_timer_t* handle) {
 
     if(rov_armed){
         motor_thrust = data->motors->calculate_thrust(json_axes);
-        data->sensor->read_sensor();
+        // data->sensor->read_sensor(); -> Deprecated
         data->controller->calculate(motor_thrust);
     }
     else

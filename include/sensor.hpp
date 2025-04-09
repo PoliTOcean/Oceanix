@@ -2,6 +2,8 @@
 #define SENSOR_H
 
 #include <iostream>
+#include <thread>
+#include <mutex>
 #include <cmath>
 #include <cstdlib>
 #include <json.hpp>
@@ -28,12 +30,6 @@ public:
      * 
      */
     Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode = false);
-
-    /**
-     * @brief read all sensors, should be called at 100 Hz
-     * 
-     */
-    void read_sensor();
 
     /**
      * @brief get sensor status
@@ -117,6 +113,16 @@ public:
 
     void update_parameters(const json& general_config);
 
+    /**
+     * @brief Static function: indipendent thread updating sensors' value at a given period
+     * 
+     * @param sensor The sensor object to be updated. This object holds the current value and any necessary state.
+     * @param timeout The time in milliseconds between updates. The function will sleep for this duration between updates
+     * 
+     * @return Nothing
+     */
+    static void update_thread(Sensor sensor, uint64_t timeout);
+
 private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)
@@ -138,5 +144,12 @@ private:
     float simulate_acceleration();
     float simulate_gyro();
 
+    /**
+     * @brief read all sensors, should be called at 100 Hz
+     * 
+     */
+    void read_sensor();
+    
+    static std::mutex mtx;
 };
 #endif // SENSOR_H

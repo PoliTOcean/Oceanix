@@ -1,5 +1,7 @@
 #include "sensor.hpp"
 
+std::mutex Sensor::mtx;
+
 Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode) 
     : imu(Wt61(imuLogLevel)), 
     barometer(Bar02(bar02LogLevel)),
@@ -156,7 +158,7 @@ float Sensor::get_Zspeed() {
 
 json Sensor::get_status() {
     json status;
-    read_sensor();
+    std::unique_lock<std::mutex> lock(this->mtx);
     status["imu_state"] = (imu.get_status() == 0) ? "OK" : "OFF";
     status["bar_state"] = (barometer.get_status() == 0) ? "OK" : "OFF";
     status["depth"] = floatToStringWithDecimals(get_depth(), 3);
@@ -167,6 +169,7 @@ json Sensor::get_status() {
     status["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
     status["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
     status["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
+    lock.unlock();
     return status;
 }
 
@@ -194,4 +197,14 @@ float Sensor::simulate_acceleration() {
 
 float Sensor::simulate_gyro() {
     return static_cast<float>((std::rand()) / RAND_MAX * 20) - 10; // Simulate gyro data in range [-10, 10]
+}
+
+void Sensor::update_thread(Sensor sensor, uint64_t timeout) {
+    while (1) {
+        std::unique_lock<std::mutex> lock(mtx);
+        sensor.read_sensor();
+        lock.unlock();
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+    }
 }
