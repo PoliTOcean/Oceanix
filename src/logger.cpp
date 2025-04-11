@@ -10,12 +10,12 @@ bool Logger::logTypeMQTT = false;
 std::string Logger::logFileDir = "log/"; //Default
 std::string Logger::logFileDirStatus = "log/status/"; //Default
 std::vector<std::string> Logger::status_file_keys = {   "timestamp", "Zacc", "Zspeed", "controller_state.DEPTH", "controller_state.PITCH", "controller_state.ROLL", "depth",
-                                                "error_integral.PITCH", "error_integral.ROLL", "error_integral.Z","force_pitch", "force_roll", "force_z"
+                                                "error_integral.PITCH", "error_integral.ROLL", "error_integral.Z","force_pitch", "force_roll", "force_z",
                                                 "motor_thrust.FDX", "motor_thrust.FSX", "motor_thrust.RDX", "motor_thrust.RSX", "motor_thrust.UPFDX", "motor_thrust.UPFSX",
                                                 "motor_thrust.UPRDX", "motor_thrust.UPRSX", "motor_thrust_max_xy", "motor_thrust_max_z", "pwm.FDX", "pwm.FSX", "pwm.RDX",
                                                 "pwm.RSX", "pwm.UPFDX", "pwm.UPFSX", "pwm.UPRDX", "pwm.UPRSX", "reference_pitch", "reference_roll", "reference_z",
                                                 "pitch", "roll", "yaw", "angular_x", "angular_y", "angular_z", "internal_temperature", "external_temperature", "imu_state",
-                                                "bar_state", "AXES", "rov_armed"};
+                                                "bar_state", "AXES"};
 std::ofstream Logger::logFile;
 std::ofstream Logger::logFileStatus;
 MQTTClient *Logger::mqtt_client = NULL;

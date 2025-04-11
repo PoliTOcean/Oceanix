@@ -112,6 +112,12 @@ json Motors::get_status(){
         MotorID motor_id = static_cast<MotorID>(i);
         std::string motor_name = motorID_to_string(motor_id);
         
+        thrust_key.str("");
+        thrust_key.clear();
+
+        pwm_key.str("");
+        pwm_key.clear();
+
         thrust_key << "motor_thrust." << motor_name;
         pwm_key << "pwm." << motor_name;
 

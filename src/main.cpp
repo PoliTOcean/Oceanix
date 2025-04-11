@@ -225,9 +225,10 @@ void timer_motors_callback(uv_timer_t* handle) {
     rov_status_json["AXES"] = json_axes;
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
 
-    if(!rov_status_json.empty() && rov_armed){
+    if(!rov_status_json.empty()){
+        logMessage << rov_status_json[Logger::status_file_keys[1]];
         //Starting from 1 because it's the timestamp key and it is generated inside the log method 
-        for(int i=1; i<Logger::status_file_keys.size(); i++){
+        for(int i=2; i<Logger::status_file_keys.size(); i++){
             logMessage << "," << rov_status_json[Logger::status_file_keys[i]];
         }
         logger->log(logSTATUS, logMessage.str());
