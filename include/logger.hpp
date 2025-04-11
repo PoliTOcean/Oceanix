@@ -7,6 +7,7 @@
 #include <fstream>
 #include <ctime>
 #include <chrono>
+#include <vector>
 
 #define MQTT_LOG_NAME       "MQTThst"
 #define BAR02_LOG_NAME      "BAR02  "
@@ -32,17 +33,21 @@
             static bool logTypeMQTT;
             static std::string logFileDir;      //Defaults to "log/" (done in logger.cpp)
             static std::string logFileDirStatus; //Default
-            
+
             static std::ofstream logFile;       
             static std::ofstream logFileStatus;      
             static MQTTClient *mqtt_client;
 
+            
             std::string logLevelToString(logLevel level);
             std::string generateLogString(logLevel logtype, std::string message);        
             
             std::ofstream createLogFile(std::string newFileDir, std::string newFileName);
 
         public:
+
+            static std::vector<std::string> status_file_keys;
+
             Logger(std::string unitName, logLevel minimumLogLevel);    
             void log(logLevel logtype, std::string message);
             void setLogLevel(logLevel new_level);
@@ -53,6 +58,8 @@
 
             static void setLogFileDir(std::string logFileDir);  //To initialize Logger::logFileDir
             static void setMQTTClient(MQTTClient *mqttclient);
+        
+            
             static void closeLogFiles();
             
     };
