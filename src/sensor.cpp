@@ -156,6 +156,7 @@ float Sensor::get_Zspeed() {
 
 json Sensor::get_status() {
     json status;
+    float *gyro = get_gyro();
     read_sensor();
     status["imu_state"] = (imu.get_status() == 0) ? "OK" : "OFF";
     status["bar_state"] = (barometer.get_status() == 0) ? "OK" : "OFF";
@@ -167,6 +168,10 @@ json Sensor::get_status() {
     status["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
     status["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
     status["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
+    status["angular_x"] = gyro[0];
+    status["angular_y"] = gyro[0];
+    status["angular_z"] = gyro[0];
+    
     return status;
 }
 
