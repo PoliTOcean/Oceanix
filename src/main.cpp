@@ -201,7 +201,8 @@ int main(int argc, char* argv[]){
 
 void timer_motors_callback(uv_timer_t* handle) {
     float* motor_thrust;
-    uint16_t* motor_pwm;
+    uint16_t* motors_pwm;
+    std::ostringstream logMessage;
 
     Timer_data* data = static_cast<Timer_data*>(handle->data);
 
@@ -213,9 +214,8 @@ void timer_motors_callback(uv_timer_t* handle) {
     else
         motor_thrust = data->motors->calculate_thrust(json_axes_off);
     
-    motor_pwm = data->motors->calculate_pwm();
-
-    data->nucleo->send_pwm(motor_pwm);
+    motors_pwm = data->motors->calculate_pwm();
+    data->nucleo->send_pwm(motors_pwm);
 
 
     json rov_status_json;
@@ -225,8 +225,13 @@ void timer_motors_callback(uv_timer_t* handle) {
     rov_status_json["AXES"] = json_axes;
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
 
-    if(!rov_status_json.empty())
-        logger->log(logSTATUS, rov_status_json.dump());
+    if(!rov_status_json.empty() && rov_armed){
+        //Starting from 1 because it's the timestamp key and it is generated inside the log method 
+        for(int i=1; i<Logger::status_file_keys.size(); i++){
+            logMessage << "," << rov_status_json[Logger::status_file_keys[i]];
+        }
+        logger->log(logSTATUS, logMessage.str());
+    }
 
     status_callback++;
     if(status_callback==5){
