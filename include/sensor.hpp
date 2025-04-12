@@ -121,7 +121,7 @@ public:
      * 
      * @return Nothing
      */
-    static void update_thread(Sensor sensor, uint64_t timeout);
+    static void update_thread(Sensor *sensor, uint64_t timeout);
 
 private:
     float prev_depth = 0;    // Previous depth (m)
@@ -150,6 +150,103 @@ private:
      */
     void read_sensor();
     
-    static std::mutex mtx;
+    static std::mutex write_mtx;
+
+    typedef struct imu_values {
+        bool state;
+        float roll;
+        float pitch;
+        float yaw;
+        float z_speed;
+        float* acc;
+        float* gyro;
+    } Imu;
+
+    typedef struct bar_values {
+        bool state;
+        float depth;
+        float internal_temperature;
+        float external_temperature;
+    } Barometer;
+
+
+
+    Imu imu_values;
+    Barometer barometer_values;
+ 
+    /**
+     * @brief Write sensors values in the structs [CALL IT AFTER A SENSOR UPDATE] 
+     *  
+     * @warning Thread Safety: Not Safe
+     * @return Nothing
+     */
+    void write_sensor();
+
+
+    /**
+     * @brief get sensor status
+     * 
+     * @return int status can be compared to the constants values
+     */
+    int sensor_status_hadware();
+
+    /**
+     * @brief Get the internal temperature value
+     * 
+     * @return float temperature in C°
+     */
+    float get_internal_temperature_hardware();
+
+    /**
+     * @brief Get the external temperature value
+     * 
+     * @return float temperature in C°
+     */
+    float get_external_temperature_hardware();
+
+    /**
+     * @brief Get the depth
+     * 
+     * @return float depth in meters
+     */
+    float get_depth_hardware();
+
+    /**
+     * @brief Get the roll
+     * 
+     * @return float roll in DEG
+     */
+    float get_roll_hardware();
+
+    /**
+     * @brief Get the pitch object
+     * 
+     * @return float pitch in DEG
+     */
+    float get_pitch_hardware();
+
+    /**
+     * @brief Get the yaw object
+     * 
+     * @return float yaw in DEG
+     */
+    float get_yaw_hardware();
+
+    /**
+     * @brief Get the acc array (x, y, z)
+     * 
+     * @return float* array with the 3 axes accelleration in m/s^2
+     */
+    float* get_acc_hardware();
+
+    /**
+     * @brief Get the gyro array (x, y, z)
+     * 
+     * @return float* array with the 3 axes gyroscope in DEG/s^2
+     */
+    float* get_gyro_hardware();
+
+
+    float get_Zspeed_hardware();
 };
 #endif // SENSOR_H

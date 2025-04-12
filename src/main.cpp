@@ -180,7 +180,7 @@ int main(int argc, char* argv[]){
     timer_data->config = &config;
 
     // Start updating_sensor thread
-    std::thread updating_sensor_thread(sensor.update_thread, sensor, general_config["debug_interval"]);
+    std::thread updating_sensor_thread(sensor.update_thread, &sensor, general_config["debug_interval"]);
     updating_sensor_thread.detach();
 
     
