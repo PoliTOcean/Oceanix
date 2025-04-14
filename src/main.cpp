@@ -28,7 +28,6 @@
 #include <iostream>
 #include <pigpio.h>
 
-#define RST_PIN 17
 
 using json = nlohmann::json;
 
@@ -141,26 +140,9 @@ int main(int argc, char* argv[]){
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, 0x04, test_mode); // true to mantain compatibility
+    nucleo_connected = nucleo.init(5) == COMM_STATUS::OK;
 
-    if(gpioInitialise()<0)
-        logger->log(logERROR, "FAILED GPIO INIT");
-
-    for(int i=0; i<5; i++){
-        gpioSetMode(RST_PIN, PI_INPUT);
-        gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        nucleo_connected = (nucleo.init(0x04) == COMM_STATUS::OK);
-        if(nucleo_connected){
-            logger->log(logINFO,"NUCLEO INIT SUCCESS");
-            break; //Exits from the for cycle
-        }
-        gpioSetMode(RST_PIN, PI_OUTPUT);
-        gpioWrite(RST_PIN, 0);
-
-        logger->log(logERROR,"NUCLEO INIT FAILED");
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
 
     Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 
 
@@ -276,7 +258,7 @@ void timer_com_callback(uv_timer_t* handle){
     }
 
     data->nucleo->update_buffer();
-    data->nucleo->get_heartbeat();
+    nucleo_connected = data->nucleo->is_connected();
 }
 
 // void timer_status_callback(uv_timer_t* handle){
