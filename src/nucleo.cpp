@@ -1,8 +1,8 @@
 #include "nucleo.hpp"
 
-Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool verbose, bool test_mode)
-    : m_protocol(version, sub_version, address, baudrate, verbose), m_test_mode(test_mode),
-    logger(Logger(MQTT_LOG_NAME, minimumLoglevel)) {
+Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool test_mode)
+    : m_protocol(version, sub_version, address, baudrate, !minimumLoglevel), m_test_mode(test_mode),
+    logger(Logger(NUCLEO_LOG_NAME, minimumLoglevel)) {
         
     heartbeat_interval = heartbeat_interval;
     starting_frequency = starting_frequency;
@@ -34,18 +34,17 @@ bool Nucleo::is_connected() {
     if(heartbeat_packet.first == COMM_STATUS::OK){
         connected = true;
         logger.log(logINFO, "Heartbeat received with status: OK");
+    	last_hb_timestamp = new_timestamp;
     }
-    else{
+    else if(heartbeat_packet.first != COMM_STATUS::SERIAL_NOT_IN_BUFFER){
         logger.log(logINFO, "Heartbeat received with a status different from OK");
-        if((new_timestamp - last_hb_timestamp) > (heartbeat_interval*4)){
-            logger.log(logINFO,"disconnected");
-            connected = false;
-        }
-        else connected = true;
-    } 
+    }
+    if((new_timestamp - last_hb_timestamp) > (heartbeat_interval*4)){
+        logger.log(logINFO,"disconnected");
+        connected = false;
+    }
+    else connected = true; 
         
-    last_hb_timestamp = new_timestamp;
-    
     if(connected == false) init(5);
 
     return connected;

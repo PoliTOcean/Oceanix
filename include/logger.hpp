@@ -15,6 +15,7 @@
 #define MAIN_LOG_NAME       "MAIN   "
 #define MOTORS_LOG_NAME     "MOTORS "
 #define IMU_LOG_NAME        "IMU   "
+#define NUCLEO_LOG_NAME     "NUCLEO "
 
 #define LOG_ALL (logLevel)0 //This can be passed to construct the Logger objects, so it defaults to the lowest value
 
