@@ -11,7 +11,7 @@ Wt61::Wt61(logLevel minimumLoglevel)
     if (status != 0)
         logger.log(logERROR, "imu init fail");
     else
-        logger.log(logERROR, "imu init fail");
+        logger.log(logINFO, "imu init success");
 }
 
 void Wt61::read_sensor() {
