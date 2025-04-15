@@ -2,6 +2,8 @@
 #define SENSOR_H
 
 #include <iostream>
+#include <thread>
+#include <mutex>
 #include <cmath>
 #include <cstdlib>
 #include <json.hpp>
@@ -28,12 +30,6 @@ public:
      * 
      */
     Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode = false);
-
-    /**
-     * @brief read all sensors, should be called at 100 Hz
-     * 
-     */
-    void read_sensor();
 
     /**
      * @brief get sensor status
@@ -117,6 +113,16 @@ public:
 
     void update_parameters(const json& general_config);
 
+    /**
+     * @brief Static function: indipendent thread updating sensors' value at a given period
+     * 
+     * @param sensor The sensor object to be updated. This object holds the current value and any necessary state.
+     * @param timeout The time in milliseconds between updates. The function will sleep for this duration between updates
+     * 
+     * @return Nothing
+     */
+    static void update_thread(Sensor *sensor, uint64_t timeout);
+
 private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)
@@ -138,5 +144,109 @@ private:
     float simulate_acceleration();
     float simulate_gyro();
 
+    /**
+     * @brief read all sensors, should be called at 100 Hz
+     * 
+     */
+    void read_sensor();
+    
+    static std::mutex write_mtx;
+
+    typedef struct imu_values {
+        bool state;
+        float roll;
+        float pitch;
+        float yaw;
+        float z_speed;
+        float* acc;
+        float* gyro;
+    } Imu;
+
+    typedef struct bar_values {
+        bool state;
+        float depth;
+        float internal_temperature;
+        float external_temperature;
+    } Barometer;
+
+
+
+    Imu imu_values;
+    Barometer barometer_values;
+ 
+    /**
+     * @brief Write sensors values in the structs [CALL IT AFTER A SENSOR UPDATE] 
+     *  
+     * @warning Thread Safety: Not Safe
+     * @return Nothing
+     */
+    void write_sensor();
+
+
+    /**
+     * @brief get sensor status
+     * 
+     * @return int status can be compared to the constants values
+     */
+    int sensor_status_hadware();
+
+    /**
+     * @brief Get the internal temperature value
+     * 
+     * @return float temperature in C°
+     */
+    float get_internal_temperature_hardware();
+
+    /**
+     * @brief Get the external temperature value
+     * 
+     * @return float temperature in C°
+     */
+    float get_external_temperature_hardware();
+
+    /**
+     * @brief Get the depth
+     * 
+     * @return float depth in meters
+     */
+    float get_depth_hardware();
+
+    /**
+     * @brief Get the roll
+     * 
+     * @return float roll in DEG
+     */
+    float get_roll_hardware();
+
+    /**
+     * @brief Get the pitch object
+     * 
+     * @return float pitch in DEG
+     */
+    float get_pitch_hardware();
+
+    /**
+     * @brief Get the yaw object
+     * 
+     * @return float yaw in DEG
+     */
+    float get_yaw_hardware();
+
+    /**
+     * @brief Get the acc array (x, y, z)
+     * 
+     * @return float* array with the 3 axes accelleration in m/s^2
+     */
+    float* get_acc_hardware();
+
+    /**
+     * @brief Get the gyro array (x, y, z)
+     * 
+     * @return float* array with the 3 axes gyroscope in DEG/s^2
+     */
+    float* get_gyro_hardware();
+
+
+    float get_Zspeed_hardware();
 };
 #endif // SENSOR_H

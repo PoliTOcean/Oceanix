@@ -40,8 +40,7 @@
         "mqtt_client_id": "oceanix",
         "mqtt_loglevel": 2,
         "mqtt_server_addr": "127.0.0.1",
-        "nucleo_debug": false,
-        "nucleo_loglevel": 0
+        "nucleo_loglevel": 2
     },
     "Motors": {
         "FDX_coeff": -1.0,
