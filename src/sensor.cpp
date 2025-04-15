@@ -38,6 +38,7 @@ void Sensor::set_pressure_baseline() {
         return;
     }
     barometer.set_pressure_baseline();
+    imu.set_yaw_zero();
 }
 
 json Sensor::get_status() {

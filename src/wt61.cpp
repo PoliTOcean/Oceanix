@@ -14,6 +14,8 @@ Wt61::Wt61(logLevel minimumLoglevel, const json& general_config)
         logger.log(logERROR, "imu init fail");
     else
         logger.log(logINFO, "imu init success");
+
+    yaw_offset = 0;
 }
 
 void Wt61::read_sensor() {
@@ -61,7 +63,7 @@ float Wt61::get_pitch() {
 }
 
 float Wt61::get_yaw() {
-    return yaw;
+    return yaw+yaw_offset;
 }
 
 float* Wt61::get_acc() {
@@ -77,4 +79,8 @@ void Wt61::update_parameters(const json& general_config){
     logger.setLogLevel(general_config["imu_loglevel"]);
     roll_offset = general_config["imu_roll_offset"];
     pitch_offset = general_config["imu_pitch_offset"];
+}
+
+void Wt61::set_yaw_zero(){
+    yaw_offset = -yaw;
 }
