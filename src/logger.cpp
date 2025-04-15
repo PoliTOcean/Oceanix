@@ -16,6 +16,9 @@ std::vector<std::string> Logger::status_file_keys = {   "timestamp", "Zacc", "Zs
                                                 "pwm.RSX", "pwm.UPFDX", "pwm.UPFSX", "pwm.UPRDX", "pwm.UPRSX", "reference_pitch", "reference_roll", "reference_z",
                                                 "pitch", "roll", "yaw", "angular_x", "angular_y", "angular_z", "internal_temperature", "external_temperature", "imu_state",
                                                 "bar_state", "AXES"};
+
+
+std::vector<std::string> Logger::transformed_status_file_keys;
 std::ofstream Logger::logFile;
 std::ofstream Logger::logFileStatus;
 MQTTClient *Logger::mqtt_client = NULL;
@@ -68,15 +71,15 @@ void Logger::log(logLevel loglevel, std::string message){
     //Don't log anything if this logmessage loglevel is lower than the minimum one
     if(loglevel >= minimumLogLevel){
 
+        std::string logString = generateLogString(loglevel, message) + "\n";
+
         if(Logger::logTypeMQTT && loglevel > logSTATUS){
             if(Logger::mqtt_client != NULL && Logger::unitName != MQTT_LOG_NAME){
-                if(loglevel > logSTATUS) Logger::mqtt_client->send_msg(message, Topic::LOG);
-                //else Logger::mqtt_client->send_msg(message, Topic::STATUS);
+                if(loglevel > logSTATUS) Logger::mqtt_client->send_msg(logString, Topic::LOG);
+                //else Logger::mqtt_client->send_msg(logString, Topic::STATUS);
             }
         }
         
-        std::string logString = generateLogString(loglevel, message) + "\n";
-
         if(Logger::logTypeCout && loglevel > logSTATUS){
             std::cout << logString;
         }

@@ -106,24 +106,14 @@ float Motors::normalize_quadratic(float x, float in_min, float in_max, float out
 
 json Motors::get_status(){
     json status;
-    std::ostringstream thrust_key, pwm_key;
-
     for (int i = 0; i < static_cast<int>(MotorID::NUM_MOTORS); ++i) {
         MotorID motor_id = static_cast<MotorID>(i);
         std::string motor_name = motorID_to_string(motor_id);
         
-        thrust_key.str("");
-        thrust_key.clear();
-
-        pwm_key.str("");
-        pwm_key.clear();
-
-        thrust_key << "motor_thrust." << motor_name;
-        pwm_key << "pwm." << motor_name;
-
-        status[thrust_key.str()] = floatToStringWithDecimals(motor_thrust[i], 2);
-        status[pwm_key.str()] = floatToStringWithDecimals(pwm[i], 2);
+        status["motor_thrust"][motor_name] = floatToStringWithDecimals(motor_thrust[i], 2);
+        status["pwm"][motor_name] = floatToStringWithDecimals(pwm[i], 2);
     }
+    
     status["motor_thrust_max_xy"] = floatToStringWithDecimals(thrust_max_xy, 2);
     status["motor_thrust_max_z"] = floatToStringWithDecimals(thrust_max_z, 2);
     return status;

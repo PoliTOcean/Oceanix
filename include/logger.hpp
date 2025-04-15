@@ -47,6 +47,8 @@
         public:
 
             static std::vector<std::string> status_file_keys;
+            static std::vector<std::string> transformed_status_file_keys; // Used to read the flattened dictionary inside main
+
 
             Logger(std::string unitName, logLevel minimumLogLevel);    
             void log(logLevel logtype, std::string message);

@@ -131,17 +131,17 @@ float Controller::get_reference(uint8_t ref_type) {
 
 json Controller::get_status(){
     json status;
-    status["controller_state.DEPTH"] = (state & CONTROL_Z) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
-    status["controller_state.ROLL"] = (state & CONTROL_ROLL) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
-    status["controller_state.PITCH"] = (state & CONTROL_PITCH) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
+    status["controller_state"]["DEPTH"] = (state & CONTROL_Z) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
+    status["controller_state"]["ROLL"] = (state & CONTROL_ROLL) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
+    status["controller_state"]["PITCH"] = (state & CONTROL_PITCH) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
     status["force_z"] = floatToStringWithDecimals(force_z, 3);
     status["force_roll"] = floatToStringWithDecimals(force_roll, 3);
     status["force_pitch"] = floatToStringWithDecimals(force_pitch, 3);
     status["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     status["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
     status["reference_pitch"] = floatToStringWithDecimals(reference_pitch, 3);
-    status["error_integral.Z"] = floatToStringWithDecimals(control_z.get_error_integral(), 3);
-    status["error_integral.ROLL"] = floatToStringWithDecimals(control_roll.get_error_integral(), 3);
-    status["error_integral.PITCH"] = floatToStringWithDecimals(control_pitch.get_error_integral(), 3);
+    status["error_integral"]["Z"] = floatToStringWithDecimals(control_z.get_error_integral(), 3);
+    status["error_integral"]["ROLL"] = floatToStringWithDecimals(control_roll.get_error_integral(), 3);
+    status["error_integral"]["PITCH"] = floatToStringWithDecimals(control_pitch.get_error_integral(), 3);
     return status;
 }

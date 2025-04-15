@@ -218,18 +218,30 @@ void timer_motors_callback(uv_timer_t* handle) {
     data->nucleo->send_pwm(motors_pwm);
 
 
-    json rov_status_json;
+    json rov_status_json, flat_json;
     rov_status_json.update(data->motors->get_status());
     rov_status_json.update(data->controller->get_status());    
     rov_status_json.update(data->sensor->get_status());
     rov_status_json["AXES"] = json_axes;
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
 
+    if (Logger::transformed_status_file_keys.empty()) {
+        for (const auto& s : Logger::status_file_keys) {
+            std::string modified = s;
+            std::replace(modified.begin(), modified.end(), '.', '/');
+            modified = "/" + modified;
+            Logger::transformed_status_file_keys.push_back(modified);
+        }
+    }
+
+
     if(!rov_status_json.empty()){
-        logMessage << rov_status_json[Logger::status_file_keys[1]];
+        flat_json = rov_status_json.flatten();
+
+        logMessage << flat_json[Logger::transformed_status_file_keys[1]];
         //Starting from 1 because it's the timestamp key and it is generated inside the log method 
-        for(int i=2; i<Logger::status_file_keys.size(); i++){
-            logMessage << "," << rov_status_json[Logger::status_file_keys[i]];
+        for(int i=2; i<Logger::transformed_status_file_keys.size(); i++){
+            logMessage << "," << flat_json[Logger::transformed_status_file_keys[i]];
         }
         logger->log(logSTATUS, logMessage.str());
     }
