@@ -71,7 +71,7 @@ public:
 
     void update_parameters(const json& general_config);
 
-    void Wt61::set_yaw_zero();
+    void set_yaw_zero();
 
 private:
     int status;         ///< status of the sensor
