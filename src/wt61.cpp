@@ -1,10 +1,12 @@
 #include "wt61.hpp"
 
-Wt61::Wt61(logLevel minimumLoglevel) 
+Wt61::Wt61(logLevel minimumLoglevel, const json& general_config) 
     : status(0), 
     temperature(0.0), 
     roll(0.0), pitch(0.0), yaw(0.0), 
     acc({0,0,0}), gyro({0,0,0}), 
+    roll_offset(general_config["imu_roll_offset"]), 
+    pitch_offset(general_config["imu_pitch_offset"]),
     logger(Logger(IMU_LOG_NAME, minimumLoglevel)) {
     char const *dev = "/dev/i2c-1";
     status = WT61P_begin(const_cast<char*>(dev), 0x50);
@@ -51,11 +53,11 @@ float Wt61::get_temperature() {
 }
 
 float Wt61::get_roll() {
-    return roll;
+    return roll+roll_offset;
 }
 
 float Wt61::get_pitch() {
-    return pitch;
+    return pitch+pitch_offset;
 }
 
 float Wt61::get_yaw() {
@@ -73,5 +75,6 @@ float* Wt61::get_gyro() {
 
 void Wt61::update_parameters(const json& general_config){
     logger.setLogLevel(general_config["imu_loglevel"]);
-
+    roll_offset = general_config["imu_roll_offset"];
+    pitch_offset = general_config["imu_pitch_offset"];
 }

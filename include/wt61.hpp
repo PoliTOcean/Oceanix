@@ -12,7 +12,7 @@ public:
      * @brief Construct a new imu Wt61 object
      * 
      */
-    Wt61(logLevel minimumLoglevel);
+    Wt61(logLevel minimumLoglevel, const json& general_config);
 
     /**
      * @brief call for updating the measure
@@ -79,6 +79,8 @@ private:
     float yaw;          ///< yaw angle in DEG
     float acc[3];       ///< accelleration (x, y, z) in m/s^2
     float gyro[3];      ///< gyroscope (x, y, z) in DEG/s^2
+    float roll_offset;   ///< roll offset in DEG
+    float pitch_offset;  ///< pitch offset in DEG
 
     Logger logger;
 };

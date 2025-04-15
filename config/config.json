@@ -35,12 +35,14 @@
         "logTypeFILE": true,
         "logTypeMQTT": true,
         "main_loglevel": 0,
-        "motor_interval": 20,
+        "motor_interval": 10,
         "motors_loglevel": 0,
         "mqtt_client_id": "oceanix",
         "mqtt_loglevel": 2,
         "mqtt_server_addr": "127.0.0.1",
-        "nucleo_loglevel": 2
+        "nucleo_loglevel": 2,
+        "imu_roll_offset": 0.0,
+        "imu_pitch_offset": 0.0
     },
     "Motors": {
         "FDX_coeff": -1.0,
@@ -59,7 +61,7 @@
         "UPRDX_pwm_zero": 1540,
         "UPRSX_coeff": -1.0,
         "UPRSX_pwm_zero": 1540,
-        "thrust_slew_rate_max": 0.5,
+        "thrust_slew_rate_max": 0.4,
         "thrust_max_xy": 2.0,
         "thrust_max_xy_work": 1.3,
         "thrust_max_z": 1.8,

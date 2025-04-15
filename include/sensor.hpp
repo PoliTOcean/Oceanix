@@ -29,7 +29,7 @@ public:
      * @brief Construct a new Sensor object containing IMU and barometer
      * 
      */
-    Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode = false);
+    Sensor(const json& general_config, bool test_mode = false);
 
     /**
      * @brief get sensor status

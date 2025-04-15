@@ -2,13 +2,13 @@
 
 std::mutex Sensor::write_mtx;
 
-Sensor::Sensor(float Zspeed_alpha, float Zspeed_beta, logLevel imuLogLevel, logLevel bar02LogLevel, bool test_mode) 
-    : imu(Wt61(imuLogLevel)), 
-    barometer(Bar02(bar02LogLevel)),
-    alpha(Zspeed_alpha),
-    beta(Zspeed_beta),
+Sensor::Sensor(const json& general_config, bool test_mode) 
+    : imu(Wt61(general_config["imu_loglevel"], general_config)), 
+    barometer(Bar02(general_config["bar02_loglevel"])),
+    alpha(general_config["Zspeed_alpha"]),
+    beta(general_config["Zspeed_beta"]),
     test_mode(test_mode) {
-
+    
     barometer_values = {
         .state = false,
         .depth = 0.00,

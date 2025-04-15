@@ -147,7 +147,7 @@ int main(int argc, char* argv[]){
     nucleo_connected = nucleo.init(5) == COMM_STATUS::OK;
 
 
-    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 
+    Sensor sensor = Sensor(general_config, test_mode); 
 
     Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
 
