@@ -52,6 +52,9 @@ json Sensor::get_status() {
     status["yaw"] = floatToStringWithDecimals(imu_values.pitch, 3);
     status["Zspeed"] = floatToStringWithDecimals(imu_values.z_speed, 3);
     status["Zacc"] = floatToStringWithDecimals(imu_values.acc[2], 3);
+    status["angular_x"] = floatToStringWithDecimals(imu_values.gyro[0], 3);
+    status["angular_y"] = floatToStringWithDecimals(imu_values.gyro[1], 3);
+    status["angular_z"] = floatToStringWithDecimals(imu_values.gyro[2], 3);
 
     // Barometer related values
     status["bar_state"] = barometer_values.state ? "OK" : "OFF";
