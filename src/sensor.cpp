@@ -50,7 +50,7 @@ json Sensor::get_status() {
     status["imu_state"] = imu_values.state ? "OK" : "OFF";
     status["roll"] = floatToStringWithDecimals(imu_values.roll, 3);
     status["pitch"] = floatToStringWithDecimals(imu_values.pitch, 3);
-    status["yaw"] = floatToStringWithDecimals(imu_values.pitch, 3);
+    status["yaw"] = floatToStringWithDecimals(imu_values.yaw, 3);
     status["Zspeed"] = floatToStringWithDecimals(imu_values.z_speed, 3);
     status["Zacc"] = floatToStringWithDecimals(imu_values.acc[2], 3);
     status["angular_x"] = floatToStringWithDecimals(imu_values.gyro[0], 3);
