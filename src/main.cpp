@@ -15,8 +15,10 @@
 #include <fstream>
 #include <unistd.h>
 #include <uv.h>
-#include <json.hpp>
 #include <chrono>
+#include <iostream>
+#include <pigpio.h>
+#include <json.hpp>
 #include "sensor.hpp"
 #include "controller.hpp"
 #include "motors.hpp"
@@ -25,8 +27,6 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
-#include <iostream>
-#include <pigpio.h>
 
 #define RST_PIN 17
 

@@ -3,11 +3,12 @@
 
 #include <iostream>
 #include <json.hpp>
-#include "FullStateFeedbackControl.hpp"
 #include "sensor.hpp"
-#include "control_allocation.hpp"
 #include "motors.hpp"
 #include "logger.hpp"
+#include "EVA_MIMOControllerCodeGen.h"
+//#include "control_allocation.hpp"
+//#include "FullStateFeedbackControl.hpp"
 
 using json = nlohmann::json;
 
@@ -17,27 +18,34 @@ const uint8_t CONTROL_ROLL =    0x02;    //010
 const uint8_t CONTROL_PITCH =   0x04;    //100
 const uint8_t CONTROL_ALL =     0x07;    //111
 
+
+class Controller {
+    public:
+        void virtual set_reference(uint8_t ref_type, float ref) = 0;
+        float virtual get_reference(uint8_t ref_type) = 0;
+        void virtual set_parameters(const json& general_config, const json& specific_config) = 0;
+        void virtual calculate(float* motor_thrust) = 0;
+        json virtual get_status() = 0; 
+        void virtual activate(uint8_t ref_type) = 0;
+        void virtual deactivate(uint_t ref_type) = 0;
+}
+
 /**
  * @class Controller
  * @brief Controls the depth, pitch and roll. When active calculates the thrust for the 4 UP motors
  */
-class Controller {
+class MIMOController: public Controller {
 private:
     uint8_t state;                      /// controller's current state
     bool controller_active;         /// controller internal state  
     bool controller_active_old;     /// last controller internal state
     float reference_z;              /// reference depth
-    float reference_roll;           /// reference roll
+    float reference_roll;           /// reference CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH
     float reference_pitch;          /// reference pitch
-    double force_z;                 /// calculated force z axis
-    double force_roll;              /// calculated force roll
-    double force_pitch;             /// calculated force pitch
     bool c_verbose;                   /// verbose mode
     Logger logger;
     Sensor& sensor;                  /// sensor class
-    ControlSystem control_z;           /// Pointer to ControlSystemZ object
-    ControlSystem control_pitch;           /// Pointer to ControlSystemZ object
-    ControlSystem control_roll;           /// Pointer to ControlSystemZ object
+    EVA_MIMOControlCodeGen mimo_controller;
 
 public:
     /**
