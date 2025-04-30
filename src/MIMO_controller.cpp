@@ -1,6 +1,6 @@
 #include "controller.hpp"
 
-MIMOController::Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel) 
+MIMOController::MIMOController(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel) 
     : sensor(sensor), 
     state(CONTROL_OFF),
     reference_roll(0),
@@ -58,7 +58,7 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[3];
 }
 
-void Controller::activate(uint8_t ref_type) {
+void MIMOController::activate(uint8_t ref_type) {
     // Check that ref_type has at maximum the first 3 bits set
     if ((ref_type & CONTROL_ALL) == ref_type)  
         state |= ref_type;
@@ -66,7 +66,7 @@ void Controller::activate(uint8_t ref_type) {
         logger.log(logERROR, "Invalid reference type");
 }
 
-void Controller::disactivate(uint8_t ref_type) {
+void MIMOController::deactivate(uint8_t ref_type) {
     // Check that ref_type has at maximum the first 3 bits set
     if ((ref_type & CONTROL_ALL) == ref_type)  
         state &= ~ref_type;
@@ -74,7 +74,7 @@ void Controller::disactivate(uint8_t ref_type) {
         logger.log(logERROR, "Invalid reference type");
 }
 
-void Controller::change_reference(uint8_t ref_type, float ref) {
+void MIMOController::change_reference(uint8_t ref_type, float ref) {
     
     std::ostringstream message;
     logLevel message_level;
@@ -111,12 +111,12 @@ void Controller::change_reference(uint8_t ref_type, float ref) {
     }
 }
     
-void Controller::update_parameters(const json& general_config, const json& specific_config){
+void MIMOController::update_parameters(const json& general_config, const json& specific_config){
     mimo_controller.set_parameters(specific_config);
     logger.setLogLevel(general_config["controller_loglevel"]);
 }
 
-float Controller::get_reference(uint8_t ref_type) {
+float MIMOController::get_reference(uint8_t ref_type) {
     if(ref_type == CONTROL_Z)
         return reference_z;
     else if(ref_type == CONTROL_ROLL)
@@ -127,7 +127,7 @@ float Controller::get_reference(uint8_t ref_type) {
     return 0;
 }
 
-json Controller::get_status(){
+json MIMOController::get_status(){
     json status;
     status["controller_state"]["DEPTH"] = (state & CONTROL_Z) ? (controller_active ? "ACTIVE" : "READY") : "OFF";
     status["controller_state"]["ROLL"] = (state & CONTROL_ROLL) ? (controller_active ? "ACTIVE" : "READY") : "OFF";

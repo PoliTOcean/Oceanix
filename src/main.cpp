@@ -20,7 +20,8 @@
 #include <pigpio.h>
 #include <json.hpp>
 #include "sensor.hpp"
-#include "controller.hpp"
+#include "MIMO_controller.hpp"
+#include "PP_controller.hpp"
 #include "motors.hpp"
 #include "mqtt_client.hpp"
 #include "nucleo.hpp"
@@ -164,7 +165,15 @@ int main(int argc, char* argv[]){
 
     Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 
 
-    Controller controller = Controller(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
+    std::string controllerType = general_config["controller_type"]; // Read from config
+    Controller* controller = nullptr;
+    if (controllerType == "MIMO") {
+        controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
+    } else if (controllerType == "PP") {
+        controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
+    } else {
+        logger->log(logERROR,"INVALID CONTROLLER TYPE");
+    }
 
     Motors motors = Motors(config.get_config(ConfigType::MOTORS), general_config["motors_loglevel"]);
 
@@ -335,7 +344,7 @@ void state_commands(json msg, Timer_data* data){
                 if(controller_state)
                     data->controller->activate(general_config["controller_profile"]);
                 else
-                    data->controller->disactivate(CONTROL_ALL);
+                    data->controller->deactivate(CONTROL_ALL);
                 break;
             case PITCH_REFERENCE_UPDATE:
                 data->controller->change_reference(CONTROL_PITCH, msg["PITCH_REFERENCE_UPDATE"]);
