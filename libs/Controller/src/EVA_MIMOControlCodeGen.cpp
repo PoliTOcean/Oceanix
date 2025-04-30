@@ -200,13 +200,13 @@ void EVA_MIMOControlCodeGen::step()
 
 // Initialize or change model parameters
 void set_parameters(const json& params) {
-  for (int i=0; i<36; i++) rtConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
-  for (int i=0; i<12; i++) rtConstP.InegratorGain_Gain[i] = params["InegratorGain_Gain"].at(i);
-  for (int i=0; i<24; i++) rtConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
-  for (int i=0; i<24; i++) rtConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
-  for (int i=0; i<30; i++) rtConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
-  for (int i=0; i<30; i++) rtConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
-  for (int i=0; i<18; i++) rtConstP.ExtractRPZ_Gain[i] = params["ExtractRPZ_Gain"].at(i);
+  for (int i=0; i<36; i++) EVA_MIMOControlCodeGen_ConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
+  for (int i=0; i<12; i++) EVA_MIMOControlCodeGen_ConstP.InegratorGain_Gain[i] = params["InegratorGain_Gain"].at(i);
+  for (int i=0; i<24; i++) EVA_MIMOControlCodeGen_ConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
+  for (int i=0; i<24; i++) EVA_MIMOControlCodeGen_ConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
+  for (int i=0; i<30; i++) EVA_MIMOControlCodeGen_ConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
+  for (int i=0; i<30; i++) EVA_MIMOControlCodeGen_ConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
+  for (int i=0; i<18; i++) EVA_MIMOControlCodeGen_ConstP.ExtractRPZ_Gain[i] = params["ExtractRPZ_Gain"].at(i);
 }
 /* Model terminate function */
 void EVA_MIMOControlCodeGen::terminate()
@@ -218,8 +218,8 @@ void EVA_MIMOControlCodeGen::terminate()
 EVA_MIMOControlCodeGen::EVA_MIMOControlCodeGen() :
   EVA_MIMOControlCodeGen_U(),
   EVA_MIMOControlCodeGen_Y(),
-  EVA_MIMOControlCodeGen_DW(),
-  EVA_MIMOControlCodeGen_M()
+  EVA_MIMOControlCodeGen_DW()
+  //EVA_MIMOControlCodeGen_M()
 {
   /* Currently there is no constructor body generated.*/
 }
@@ -228,8 +228,3 @@ EVA_MIMOControlCodeGen::EVA_MIMOControlCodeGen() :
 /* Currently there is no destructor body generated.*/
 EVA_MIMOControlCodeGen::~EVA_MIMOControlCodeGen() = default;
 
-/* Real-Time Model get method */
-RT_MODEL_EVA_MIMOControlCodeG_T * EVA_MIMOControlCodeGen::getRTM()
-{
-  return (&EVA_MIMOControlCodeGen_M);
-}

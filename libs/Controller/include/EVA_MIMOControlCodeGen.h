@@ -23,9 +23,11 @@
 #include <cmath>
 #include <json.hpp>
 #include "rtwtypes.h"
-#include "rtw_continuous.h"
-#include "rtw_solver.h"
-#include "EVA_MIMOControlCodeGen_types.h"
+//#include "rtw_continuous.h"
+//#include "rtw_solver.h"
+//include "EVA_MIMOControlCodeGen_types.h"
+
+using json = nlohmann::json;
 
 /* Macros for accessing real-time model data structure */
 #ifndef rtmGetErrorStatus
@@ -35,6 +37,8 @@
 #ifndef rtmSetErrorStatus
 #define rtmSetErrorStatus(rtm, val)    ((rtm)->errorStatus = (val))
 #endif
+
+//typedef struct tag_RTM_EVA_MIMOControlCodeGe_T RT_MODEL_EVA_MIMOControlCodeG_T;
 
 /* Block states (default storage) for system '<Root>' */
 struct DW_EVA_MIMOControlCodeGen_T {
@@ -93,13 +97,11 @@ struct ExtY_EVA_MIMOControlCodeGen_T {
   real_T u[4];                         /* '<Root>/u' */
 };
 
-/* Real-time Model Data Structure */
-struct tag_RTM_EVA_MIMOControlCodeGe_T {
-  const char_T *errorStatus;
-};
+
 
 /* Constant parameters (default storage) */
-extern const ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
+//extern const ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
+ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
 
 /* Class declaration for model EVA_MIMOControlCodeGen */
 class EVA_MIMOControlCodeGen final
@@ -117,9 +119,6 @@ class EVA_MIMOControlCodeGen final
 
   /* Move Assignment Operator */
   EVA_MIMOControlCodeGen& operator= (EVA_MIMOControlCodeGen &&) = delete;
-
-  /* Real-Time Model get method */
-  RT_MODEL_EVA_MIMOControlCodeG_T * getRTM();
 
   /* External inputs */
   ExtU_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_U;
@@ -146,9 +145,6 @@ class EVA_MIMOControlCodeGen final
  private:
   /* Block states */
   DW_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_DW;
-
-  /* Real-Time Model */
-  RT_MODEL_EVA_MIMOControlCodeG_T EVA_MIMOControlCodeGen_M;
 };
 
 /*-
