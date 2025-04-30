@@ -21,7 +21,6 @@
 #include <json.hpp>
 #include "sensor.hpp"
 #include "MIMO_controller.hpp"
-#include "PP_controller.hpp"
 #include "motors.hpp"
 #include "mqtt_client.hpp"
 #include "nucleo.hpp"
@@ -168,9 +167,9 @@ int main(int argc, char* argv[]){
     std::string controllerType = general_config["controller_type"]; // Read from config
     Controller* controller = nullptr;
     if (controllerType == "MIMO") {
-        controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
-    } else if (controllerType == "PP") {
-        controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER), general_config["controller_loglevel"]);
+        controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
+    //} else if (controllerType == "PP") {
+    //    controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
     } else {
         logger->log(logERROR,"INVALID CONTROLLER TYPE");
     }
@@ -180,7 +179,7 @@ int main(int argc, char* argv[]){
     Timer_data* timer_data = new Timer_data();
     timer_data->sensor = &sensor;
     timer_data->motors = &motors;
-    timer_data->controller = &controller;
+    timer_data->controller = controller;
     timer_data->nucleo = &nucleo;
     timer_data->mqtt_client = &mqtt_client;
     timer_data->config = &config;
@@ -199,7 +198,7 @@ int main(int argc, char* argv[]){
     // timer_status.data = timer_data;
     // uv_timer_start(&timer_status, timer_status_callback, general_config["debug_interval"], general_config["debug_interval"]);
 
-    controller.activate(CONTROL_OFF);
+    controller->activate(CONTROL_OFF);
     
     uv_run(loop, UV_RUN_DEFAULT);
 
@@ -273,7 +272,7 @@ void timer_com_callback(uv_timer_t* handle){
             general_config = data->config->get_config(ConfigType::GENERAL);
             motors_config = data->config->get_config(ConfigType::MOTORS);
 
-            data->controller->update_parameters(general_config, data->config->get_config(ConfigType::CONTROLLER));
+            data->controller->set_parameters(general_config, data->config->get_config(ConfigType::CONTROLLER)[general_config["controller_type"]]);
             data->motors->update_parameters(general_config, data->config->get_config(ConfigType::MOTORS));
             data->mqtt_client->update_parameters(general_config);
             data->sensor->update_parameters(general_config);
@@ -347,25 +346,25 @@ void state_commands(json msg, Timer_data* data){
                     data->controller->deactivate(CONTROL_ALL);
                 break;
             case PITCH_REFERENCE_UPDATE:
-                data->controller->change_reference(CONTROL_PITCH, msg["PITCH_REFERENCE_UPDATE"]);
+                data->controller->set_reference(CONTROL_PITCH, msg["PITCH_REFERENCE_UPDATE"]);
                 break;
             case ROLL_REFERENCE_UPDATE:
-                data->controller->change_reference(CONTROL_ROLL, msg["ROLL_REFERENCE_UPDATE"]);
+                data->controller->set_reference(CONTROL_ROLL, msg["ROLL_REFERENCE_UPDATE"]);
                 break;
             case DEPTH_REFERENCE_UPDATE:
-                data->controller->change_reference(CONTROL_Z, msg["DEPTH_REFERENCE_UPDATE"]);
+                data->controller->set_reference(CONTROL_Z, msg["DEPTH_REFERENCE_UPDATE"]);
                 break;
             case PITCH_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_PITCH);
-                data->controller->change_reference(CONTROL_PITCH, current_ref + (float)msg["PITCH_REFERENCE_OFFSET"]);
+                data->controller->set_reference(CONTROL_PITCH, current_ref + (float)msg["PITCH_REFERENCE_OFFSET"]);
                 break;
             case ROLL_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_ROLL);
-                data->controller->change_reference(CONTROL_ROLL, current_ref + (float)msg["ROLL_REFERENCE_OFFSET"]);
+                data->controller->set_reference(CONTROL_ROLL, current_ref + (float)msg["ROLL_REFERENCE_OFFSET"]);
                 break;
             case DEPTH_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_Z);
-                data->controller->change_reference(CONTROL_Z, current_ref + (float)msg["DEPTH_REFERENCE_OFFSET"]);
+                data->controller->set_reference(CONTROL_Z, current_ref + (float)msg["DEPTH_REFERENCE_OFFSET"]);
                 break;
             case THRUST_MAX_OFFSET:
                 data->motors->offset_thrust_max(msg["THRUST_MAX_OFFSET"]);

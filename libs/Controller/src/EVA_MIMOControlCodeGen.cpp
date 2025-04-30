@@ -85,9 +85,9 @@ void EVA_MIMOControlCodeGen::step()
      *  Gain: '<Root>/InegratorGain'
      *  Gain: '<Root>/StateGain'
      */
-    rtb_Add_0 += (EVA_MIMOControlCodeGen_ConstP.InegratorGain_Gain[i + 4] *
-                  tmp_2 + EVA_MIMOControlCodeGen_ConstP.InegratorGain_Gain[i] *
-                  tmp_1) + EVA_MIMOControlCodeGen_ConstP.InegratorGain_Gain[i +
+    rtb_Add_0 += (EVA_MIMOControlCodeGen_ConstP.IntegratorGain_Gain[i + 4] *
+                  tmp_2 + EVA_MIMOControlCodeGen_ConstP.IntegratorGain_Gain[i] *
+                  tmp_1) + EVA_MIMOControlCodeGen_ConstP.IntegratorGain_Gain[i +
       8] * tmp_3;
     rtb_Add[i] = rtb_Add_0;
 
@@ -199,20 +199,10 @@ void EVA_MIMOControlCodeGen::step()
 }
 
 // Initialize or change model parameters
-void set_parameters(const json& params) {
-  for (int i=0; i<36; i++) EVA_MIMOControlCodeGen_ConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
-  for (int i=0; i<12; i++) EVA_MIMOControlCodeGen_ConstP.InegratorGain_Gain[i] = params["InegratorGain_Gain"].at(i);
-  for (int i=0; i<24; i++) EVA_MIMOControlCodeGen_ConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
-  for (int i=0; i<24; i++) EVA_MIMOControlCodeGen_ConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
-  for (int i=0; i<30; i++) EVA_MIMOControlCodeGen_ConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
-  for (int i=0; i<30; i++) EVA_MIMOControlCodeGen_ConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
-  for (int i=0; i<18; i++) EVA_MIMOControlCodeGen_ConstP.ExtractRPZ_Gain[i] = params["ExtractRPZ_Gain"].at(i);
-}
+void initialize() {}
+
 /* Model terminate function */
-void EVA_MIMOControlCodeGen::terminate()
-{
-  /* (no terminate code required) */
-}
+void EVA_MIMOControlCodeGen::terminate() {}
 
 /* Constructor */
 EVA_MIMOControlCodeGen::EVA_MIMOControlCodeGen() :

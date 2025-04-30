@@ -3,11 +3,11 @@
 
 #include <iostream>
 #include <json.hpp>
-#include "controller_interface.hpp"
+#include "controller_abstract.hpp"
 #include "sensor.hpp"
 #include "motors.hpp"
 #include "logger.hpp"
-#include "EVA_MIMOControllerCodeGen.h"
+#include "EVA_MIMOControlCodeGen.h"
 
 using json = nlohmann::json;
 
@@ -63,7 +63,7 @@ public:
      * @param ref_type CONTROL_Z or CONTROL_ROLL or CONTROL_PITCH
      * @param ref reference value
      */
-    void change_reference(uint8_t ref_type, float ref) override;
+    void set_reference(uint8_t ref_type, float ref) override;
 
     /**
      * @brief Get the reference object
@@ -76,7 +76,7 @@ public:
     /**
      * @brief Update internal parameters from config
      */
-    void update_parameters(const json& general_config, const json& specific_config) override;
+    void set_parameters(const json& general_config, const json& specific_config) override;
 
 
     /**

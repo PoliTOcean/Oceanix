@@ -21,13 +21,10 @@
 #ifndef EVA_MIMOControlCodeGen_h_
 #define EVA_MIMOControlCodeGen_h_
 #include <cmath>
-#include <json.hpp>
 #include "rtwtypes.h"
 //#include "rtw_continuous.h"
 //#include "rtw_solver.h"
 //include "EVA_MIMOControlCodeGen_types.h"
-
-using json = nlohmann::json;
 
 /* Macros for accessing real-time model data structure */
 #ifndef rtmGetErrorStatus
@@ -56,7 +53,7 @@ struct ConstP_EVA_MIMOControlCodeGen_T {
   /* Expression: -Kd(:,7:end)
    * Referenced by: '<Root>/InegratorGain'
    */
-  real_T InegratorGain_Gain[12];
+  real_T IntegratorGain_Gain[12];
 
   /* Expression: -Kd(:,1:6)
    * Referenced by: '<Root>/StateGain'
@@ -97,12 +94,6 @@ struct ExtY_EVA_MIMOControlCodeGen_T {
   real_T u[4];                         /* '<Root>/u' */
 };
 
-
-
-/* Constant parameters (default storage) */
-//extern const ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
-ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
-
 /* Class declaration for model EVA_MIMOControlCodeGen */
 class EVA_MIMOControlCodeGen final
 {
@@ -126,8 +117,10 @@ class EVA_MIMOControlCodeGen final
   /* External outputs */
   ExtY_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_Y;
 
+  ConstP_EVA_MIMOControlCodeGen_T EVA_MIMOControlCodeGen_ConstP;
+
   /* Initial conditions function */
-  static void set_parameters(const json& params);
+  static void initialize();
 
   /* model step function */
   void step();
