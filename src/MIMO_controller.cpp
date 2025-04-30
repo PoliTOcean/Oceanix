@@ -41,22 +41,22 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
         return;
     else {
         gyro = sensor.get_gyro();
-        mimo_controller.EVA_MIMOControlCodeGen_U.y_measurement[0] = (double) sensor.get_depth();
-        mimo_controller.EVA_MIMOControlCodeGen_U.y_measurement[1] = (double) sensor.get_pitch()*DEGtoRAD;
-        mimo_controller.EVA_MIMOControlCodeGen_U.y_measurement[2] = (double) sensor.get_roll()*DEGtoRAD;
-        mimo_controller.EVA_MIMOControlCodeGen_U.y_measurement[3] = (double) gyro[0];
-        mimo_controller.EVA_MIMOControlCodeGen_U.y_measurement[4] = (double) gyro[1];
+        mimo_controller.rtU.y_measurement[0] = (double) sensor.get_depth();
+        mimo_controller.rtU.y_measurement[1] = (double) sensor.get_pitch()*DEGtoRAD;
+        mimo_controller.rtU.y_measurement[2] = (double) sensor.get_roll()*DEGtoRAD;
+        mimo_controller.rtU.y_measurement[3] = (double) gyro[0];
+        mimo_controller.rtU.y_measurement[4] = (double) gyro[1];
 
-        mimo_controller.EVA_MIMOControlCodeGen_U.z_ref = (double) reference_z;
-        mimo_controller.EVA_MIMOControlCodeGen_U.pitch_ref = reference_pitch; 
-        mimo_controller.EVA_MIMOControlCodeGen_U.roll_ref = reference_roll;
+        mimo_controller.rtU.z_ref = (double) reference_z;
+        mimo_controller.rtU.pitch_ref = reference_pitch; 
+        mimo_controller.rtU.roll_ref = reference_roll;
         mimo_controller.step();    
     }
     
-    motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.EVA_MIMOControlCodeGen_Y.u[0]; 
-    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.EVA_MIMOControlCodeGen_Y.u[1];
-    motor_thrust[static_cast<int>(MotorID::UPRDX)] = (float) mimo_controller.EVA_MIMOControlCodeGen_Y.u[2]; 
-    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.EVA_MIMOControlCodeGen_Y.u[3];
+    motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.rtY.u[0]; 
+    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[1];
+    motor_thrust[static_cast<int>(MotorID::UPRDX)] = (float) mimo_controller.rtY.u[2]; 
+    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[3];
 }
 
 void MIMOController::activate(uint8_t ref_type) {
@@ -114,16 +114,16 @@ void MIMOController::set_reference(uint8_t ref_type, float ref) {
     
 void MIMOController::set_parameters(const json& general_config, const json& params) {
     int i;
-    for (i=0; i<36; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
-    for (i=0; i<12; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.IntegratorGain_Gain[i] = params["IntegratorGain_Gain"].at(i);
-    for (i=0; i<24; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
-    for (i=0; i<24; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
-    for (i=0; i<30; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
-    for (i=0; i<30; i++) mimo_controller.EVA_MIMOControlCodeGen_ConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
+    for (i=0; i<36; i++) mimo_controller.rtConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
+    for (i=0; i<12; i++) mimo_controller.rtConstP.IntegratorGain_Gain[i] = params["IntegratorGain_Gain"].at(i);
+    for (i=0; i<24; i++) mimo_controller.rtConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
+    for (i=0; i<24; i++) mimo_controller.rtConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
+    for (i=0; i<30; i++) mimo_controller.rtConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
+    for (i=0; i<30; i++) mimo_controller.rtConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
 
     double ExtractRPZ_Gain[] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
     for (i = 0; i<18; i++)
-        mimo_controller.EVA_MIMOControlCodeGen_ConstP.ExtractRPZ_Gain[i] = ExtractRPZ_Gain[i];
+        mimo_controller.rtConstP.ExtractRPZ_Gain[i] = ExtractRPZ_Gain[i];
     
     logger.setLogLevel(general_config["controller_loglevel"]);
 }
