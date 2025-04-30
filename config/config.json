@@ -192,7 +192,15 @@
             "numFHeave1": 0.0929771200641589,
             "numFHeave2": -0.0879721343075612,
             "numFPitch2": 0.01645432378158562,
-            "numFPitch3": -0.008470489392742607
+            "numFPitch3": -0.008470489392742607,
+            "minForceZ" : -15,
+            "maxForceZ" :15,
+            "minForceRoll": -2,
+            "maxForceRoll": 2,
+            "minForcePitch": -5,
+            "maxForcePitch": 5,
+            "weight": 171.10864,
+            "buoyancy": 179.5909
         }
     },
     "General": {

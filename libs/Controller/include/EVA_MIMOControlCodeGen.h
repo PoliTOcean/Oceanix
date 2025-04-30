@@ -114,7 +114,6 @@ class EVA_MIMOControlCodeGen final
   EVA_MIMOControlCodeGen::ConstP rtConstP;
 
   // private data and function members
- private:
   // Block states
   DW rtDW;
 };

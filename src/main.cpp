@@ -21,6 +21,7 @@
 #include <json.hpp>
 #include "sensor.hpp"
 #include "MIMO_controller.hpp"
+#include "PP_controller.hpp"
 #include "motors.hpp"
 #include "mqtt_client.hpp"
 #include "nucleo.hpp"
@@ -168,8 +169,8 @@ int main(int argc, char* argv[]){
     Controller* controller = nullptr;
     if (controllerType == "MIMO") {
         controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
-    //} else if (controllerType == "PP") {
-    //    controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
+    } else if (controllerType == "PP") {
+        controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
     } else {
         logger->log(logERROR,"INVALID CONTROLLER TYPE");
     }

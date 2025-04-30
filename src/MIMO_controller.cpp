@@ -42,10 +42,10 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     else {
         gyro = sensor.get_gyro();
         mimo_controller.rtU.y_measurement[0] = (double) sensor.get_depth();
-        mimo_controller.rtU.y_measurement[1] = (double) sensor.get_pitch()*DEGtoRAD;
+        mimo_controller.rtU.y_measurement[1] = (double) gyro[0];
         mimo_controller.rtU.y_measurement[2] = (double) sensor.get_roll()*DEGtoRAD;
-        mimo_controller.rtU.y_measurement[3] = (double) gyro[0];
-        mimo_controller.rtU.y_measurement[4] = (double) gyro[1];
+        mimo_controller.rtU.y_measurement[3] = (double) gyro[1];
+        mimo_controller.rtU.y_measurement[4] = (double) sensor.get_pitch()*DEGtoRAD;
 
         mimo_controller.rtU.z_ref = (double) reference_z;
         mimo_controller.rtU.pitch_ref = reference_pitch; 
@@ -54,9 +54,9 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     }
     
     motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.rtY.u[0]; 
-    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[1];
+    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[1];
     motor_thrust[static_cast<int>(MotorID::UPRDX)] = (float) mimo_controller.rtY.u[2]; 
-    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[3];
+    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[3];
 }
 
 void MIMOController::activate(uint8_t ref_type) {
@@ -153,11 +153,10 @@ json MIMOController::get_status(){
     status["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     status["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
     status["reference_pitch"] = floatToStringWithDecimals(reference_pitch, 3);
-    /*
-    status["error_integral"]["Z"] = floatToStringWithDecimals(control_z.get_error_integral(), 3);
-    status["error_integral"]["ROLL"] = floatToStringWithDecimals(control_roll.get_error_integral(), 3);
-    status["error_integral"]["PITCH"] = floatToStringWithDecimals(control_pitch.get_error_integral(), 3);
-    */
+
+    status["error_integral"]["Z"] = floatToStringWithDecimals(mimo_controller.rtDW.DiscreteTimeIntegrator_DSTATE[0], 3);
+    status["error_integral"]["ROLL"] = floatToStringWithDecimals(mimo_controller.rtDW.DiscreteTimeIntegrator_DSTATE[1], 3);
+    status["error_integral"]["PITCH"] = floatToStringWithDecimals(mimo_controller.rtDW.DiscreteTimeIntegrator_DSTATE[2], 3);
 
     return status;
 }
