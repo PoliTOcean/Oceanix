@@ -1,43 +1,38 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef PP_CONTROLLER_H
+#define PP_CONTROLLER_H
 
 #include <iostream>
 #include <json.hpp>
-#include "FullStateFeedbackControl.hpp"
+#include "controller_abstract.hpp"
 #include "sensor.hpp"
-#include "control_allocation.hpp"
 #include "motors.hpp"
 #include "logger.hpp"
+#include "control_allocation.hpp"
+#include "PolePlacementControl.h"
 
 using json = nlohmann::json;
-
-const uint8_t CONTROL_OFF =     0x00;    //000
-const uint8_t CONTROL_Z =       0x01;    //001
-const uint8_t CONTROL_ROLL =    0x02;    //010
-const uint8_t CONTROL_PITCH =   0x04;    //100
-const uint8_t CONTROL_ALL =     0x07;    //111
 
 /**
  * @class Controller
  * @brief Controls the depth, pitch and roll. When active calculates the thrust for the 4 UP motors
  */
-class Controller {
+class PPController: public Controller {
 private:
     uint8_t state;                      /// controller's current state
-    bool controller_active;         /// controller internal state  
+    bool controller_active;         /// controller internal state
     bool controller_active_old;     /// last controller internal state
     float reference_z;              /// reference depth
-    float reference_roll;           /// reference roll
+    float reference_roll;           /// reference CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH
     float reference_pitch;          /// reference pitch
-    double force_z;                 /// calculated force z axis
-    double force_roll;              /// calculated force roll
-    double force_pitch;             /// calculated force pitch
     bool c_verbose;                   /// verbose mode
+    float force_z;                   /// force on z axis
+    float force_roll;                /// force on roll axis
+    float force_pitch;               /// force on pitch axis
     Logger logger;
     Sensor& sensor;                  /// sensor class
-    ControlSystem control_z;           /// Pointer to ControlSystemZ object
-    ControlSystem control_pitch;           /// Pointer to ControlSystemZ object
-    ControlSystem control_roll;           /// Pointer to ControlSystemZ object
+    ControlSystemZ control_z;
+    ControlSystemPITCH control_pitch;
+    ControlSystemROLL control_roll;
 
 public:
     /**
@@ -46,56 +41,56 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    Controller(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel);
+    PPController(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui
-    * @brief automatically this function activate and disactivate the controller when using the z axis in respect to the current state
+    * @brief automatically this function activate and deactivate the controller when using the z axis in respect to the current state
     */
-    void calculate(float* motor_thrust);
+    void calculate(float* motor_thrust) override;
 
     /**
      * @brief control the state of the controller activating the corresponding section
-     * 
+     *
      * @param ref_type CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH or CONTROL_ALL
      */
-    void activate(uint8_t ref_type);
+    void activate(uint8_t ref_type) override;
 
     /**
-     * @brief totally or partially disactivate the controller (corresponding to parameter)
-     * 
+     * @brief totally or partially deactivate the controller (corresponding to parameter)
+     *
      * @param ref_type CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH or CONTROLL_ALL
      */
-    void disactivate(uint8_t ref_type);
+    void deactivate(uint8_t ref_type) override;
 
     /**
      * @brief change the reference for one axis
-     * 
+     *
      * @param ref_type CONTROL_Z or CONTROL_ROLL or CONTROL_PITCH
      * @param ref reference value
      */
-    void change_reference(uint8_t ref_type, float ref);
+    void set_reference(uint8_t ref_type, float ref) override;
 
     /**
      * @brief Get the reference object
-     * 
+     *
      * @param ref_type CONTROL_Z or CONTROL_ROLL or CONTROL_PITCH
      * @return float the reference value
      */
-    float get_reference(uint8_t ref_type);
+    float get_reference(uint8_t ref_type) override;
 
     /**
      * @brief Update internal parameters from config
      */
-    void update_parameters(const json& general_config, const json& specific_config);
+    void set_parameters(const json& general_config, const json& specific_config) override;
 
 
     /**
      * @brief Get the status in JSON
-     * 
+     *
      * @return json containing the status
      */
-    json get_status();
+    json get_status() override;
 };
 
-#endif // CONTROLLER_H
+#endif // PP_CONTROLLER_H
