@@ -1,8 +1,12 @@
 #include "nucleo.hpp"
 
-Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, bool verbose, bool test_mode)
-    : m_protocol(version, sub_version, address, baudrate, verbose), m_test_mode(test_mode) {
-    
+Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool test_mode)
+    : m_protocol(version, sub_version, address, baudrate, !minimumLoglevel), m_test_mode(test_mode),
+    logger(Logger(NUCLEO_LOG_NAME, minimumLoglevel)) {
+        
+    heartbeat_interval = heartbeat_interval;
+    starting_frequency = starting_frequency;
+
     m_init_mapper();
 }
 
@@ -15,7 +19,35 @@ bool Nucleo::is_connected() {
     if (m_test_mode) {
         return true; // Simulate always connected in test mode
     }
-    return m_protocol.is_connected();
+
+    if(!m_protocol.is_connected()){
+        disconnect();
+        logger.log(logERROR, "The serial port is closed");
+        return false;
+    }
+
+    const auto now = std::chrono::system_clock::now().time_since_epoch();
+    const auto new_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+    packet_t heartbeat_packet = get_heartbeat();
+    bool connected;
+
+    if(heartbeat_packet.first == COMM_STATUS::OK){
+        connected = true;
+        logger.log(logINFO, "Heartbeat received with status: OK");
+    	last_hb_timestamp = new_timestamp;
+    }
+    else if(heartbeat_packet.first != COMM_STATUS::SERIAL_NOT_IN_BUFFER){
+        logger.log(logINFO, "Heartbeat received with a status different from OK");
+    }
+    if((new_timestamp - last_hb_timestamp) > (heartbeat_interval*4)){
+        logger.log(logINFO,"disconnected");
+        connected = false;
+    }
+    else connected = true; 
+        
+    if(connected == false) init(5);
+
+    return connected;
 }
 
 // bool Nucleo::connect() {
@@ -25,12 +57,33 @@ bool Nucleo::is_connected() {
 //     return m_protocol.connect();
 // }
 
-COMM_STATUS Nucleo::init(uint8_t frequency) {
+COMM_STATUS Nucleo::init(int n_tries) {
     if (m_test_mode) {
         return COMM_STATUS::OK; // Simulate successful initialization in test mode
     }
-    m_protocol.connect();
-    return m_protocol.init(frequency);
+
+    COMM_STATUS init_status;
+    if(gpioInitialise()<0) logger.log(logERROR, "FAILED GPIO INIT");
+    for(int i=0; i<n_tries; i++){
+        gpioSetMode(RST_PIN, PI_INPUT);
+        gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        m_protocol.connect();
+        init_status = (m_protocol.init(starting_frequency));
+        if(init_status == COMM_STATUS::OK){
+            const auto now = std::chrono::system_clock::now().time_since_epoch();
+            last_hb_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+            logger.log(logINFO,"INIT SUCCESS");
+            break; //Exits from the for cycle
+        }
+        gpioSetMode(RST_PIN, PI_OUTPUT);
+        gpioWrite(RST_PIN, 0);
+
+        logger.log(logERROR,"INIT FAILED");
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    return init_status;
 }
 
 void Nucleo::disconnect() {

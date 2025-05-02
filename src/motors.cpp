@@ -112,9 +112,10 @@ json Motors::get_status(){
         
         status["motor_thrust"][motor_name] = floatToStringWithDecimals(motor_thrust[i], 2);
         status["pwm"][motor_name] = floatToStringWithDecimals(pwm[i], 2);
-        status["motor_thrust_max_xy"] = floatToStringWithDecimals(thrust_max_xy, 2);
-        status["motor_thrust_max_z"] = floatToStringWithDecimals(thrust_max_z, 2);
     }
+    
+    status["motor_thrust_max_xy"] = floatToStringWithDecimals(thrust_max_xy, 2);
+    status["motor_thrust_max_z"] = floatToStringWithDecimals(thrust_max_z, 2);
     return status;
 }
 

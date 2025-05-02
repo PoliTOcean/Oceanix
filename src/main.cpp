@@ -18,6 +18,7 @@
 #include <chrono>
 #include <iostream>
 #include <pigpio.h>
+#include <thread>
 #include <json.hpp>
 #include "sensor.hpp"
 #include "MIMO_controller.hpp"
@@ -29,7 +30,6 @@
 #include "utils.hpp"
 #include "logger.hpp"
 
-#define RST_PIN 17
 
 using json = nlohmann::json;
 
@@ -90,6 +90,8 @@ uint8_t status_callback=0;
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
 
+std::mutex mtx;
+
 void state_commands(json msg, Timer_data* data);
 
 int main(int argc, char* argv[]){
@@ -142,28 +144,11 @@ int main(int argc, char* argv[]){
     Logger::setMQTTClient(&mqtt_client);
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
-    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_debug"], test_mode); // true to mantain compatibility
+    Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, 0x04, test_mode); // true to mantain compatibility
+    nucleo_connected = nucleo.init(5) == COMM_STATUS::OK;
 
-    if(gpioInitialise()<0)
-        logger->log(logERROR, "FAILED GPIO INIT");
 
-    for(int i=0; i<5; i++){
-        gpioSetMode(RST_PIN, PI_INPUT);
-        gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        nucleo_connected = (nucleo.init(0x04) == COMM_STATUS::OK);
-        if(nucleo_connected){
-            logger->log(logINFO,"NUCLEO INIT SUCCESS");
-            break; //Exits from the for cycle
-        }
-        gpioSetMode(RST_PIN, PI_OUTPUT);
-        gpioWrite(RST_PIN, 0);
-
-        logger->log(logERROR,"NUCLEO INIT FAILED");
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    Sensor sensor = Sensor(general_config["Zspeed_alpha"], general_config["Zspeed_beta"], general_config["imu_loglevel"], general_config["bar02_loglevel"], test_mode); 
+    Sensor sensor = Sensor(general_config, test_mode); 
 
     std::string controllerType = general_config["controller_type"]; // Read from config
     Controller* controller = nullptr;
@@ -185,6 +170,11 @@ int main(int argc, char* argv[]){
     timer_data->mqtt_client = &mqtt_client;
     timer_data->config = &config;
 
+    // Start updating_sensor thread
+    std::thread updating_sensor_thread(sensor.update_thread, &sensor, general_config["debug_interval"]);
+    updating_sensor_thread.detach();
+
+    
     uv_loop_t* loop = uv_default_loop();
 
     uv_timer_init(loop, &timer_motors);
@@ -210,32 +200,50 @@ int main(int argc, char* argv[]){
 
 void timer_motors_callback(uv_timer_t* handle) {
     float* motor_thrust;
-    uint16_t* motor_pwm;
+    uint16_t* motors_pwm;
+    std::ostringstream logMessage;
 
     Timer_data* data = static_cast<Timer_data*>(handle->data);
 
     if(rov_armed){
         motor_thrust = data->motors->calculate_thrust(json_axes);
-        data->sensor->read_sensor();
+        // data->sensor->read_sensor(); -> Deprecated
         data->controller->calculate(motor_thrust);
     }
     else
         motor_thrust = data->motors->calculate_thrust(json_axes_off);
     
-    motor_pwm = data->motors->calculate_pwm();
+    motors_pwm = data->motors->calculate_pwm();
+    data->nucleo->send_pwm(motors_pwm);
 
-    data->nucleo->send_pwm(motor_pwm);
 
-
-    json rov_status_json;
+    json rov_status_json, flat_json;
     rov_status_json.update(data->motors->get_status());
     rov_status_json.update(data->controller->get_status());    
     rov_status_json.update(data->sensor->get_status());
     rov_status_json["AXES"] = json_axes;
     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
 
-    if(!rov_status_json.empty())
-        logger->log(logSTATUS, rov_status_json.dump());
+    if (Logger::transformed_status_file_keys.empty()) {
+        for (const auto& s : Logger::status_file_keys) {
+            std::string modified = s;
+            std::replace(modified.begin(), modified.end(), '.', '/');
+            modified = "/" + modified;
+            Logger::transformed_status_file_keys.push_back(modified);
+        }
+    }
+
+
+    if(!rov_status_json.empty()){
+        flat_json = rov_status_json.flatten();
+
+        logMessage << flat_json[Logger::transformed_status_file_keys[1]];
+        //Starting from 1 because it's the timestamp key and it is generated inside the log method 
+        for(int i=2; i<Logger::transformed_status_file_keys.size(); i++){
+            logMessage << "," << flat_json[Logger::transformed_status_file_keys[i]];
+        }
+        logger->log(logSTATUS, logMessage.str());
+    }
 
     status_callback++;
     if(status_callback==5){
@@ -285,7 +293,7 @@ void timer_com_callback(uv_timer_t* handle){
     }
 
     data->nucleo->update_buffer();
-    data->nucleo->get_heartbeat();
+    nucleo_connected = data->nucleo->is_connected();
 }
 
 // void timer_status_callback(uv_timer_t* handle){
