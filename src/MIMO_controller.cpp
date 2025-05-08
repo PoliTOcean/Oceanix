@@ -33,7 +33,7 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
         reference_z = sensor.get_depth();
         if (c_verbose){
             message  << "control Z active at depth " << reference_z;
-            logger.log(logINFO, "Invalid reference type");
+            logger.log(logINFO, message.str());
         }
     }
 
@@ -42,21 +42,21 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     else {
         gyro = sensor.get_gyro();
         mimo_controller.rtU.y_measurement[0] = (double) sensor.get_depth();
-        mimo_controller.rtU.y_measurement[1] = (double) gyro[0];
+        mimo_controller.rtU.y_measurement[1] = (double) gyro[0]*DEGtoRAD;
         mimo_controller.rtU.y_measurement[2] = (double) sensor.get_roll()*DEGtoRAD;
-        mimo_controller.rtU.y_measurement[3] = (double) gyro[1];
+        mimo_controller.rtU.y_measurement[3] = (double) gyro[1]*DEGtoRAD;
         mimo_controller.rtU.y_measurement[4] = (double) sensor.get_pitch()*DEGtoRAD;
 
         mimo_controller.rtU.z_ref = (double) reference_z;
-        mimo_controller.rtU.pitch_ref = reference_pitch; 
-        mimo_controller.rtU.roll_ref = reference_roll;
+        mimo_controller.rtU.pitch_ref = (double) reference_pitch; 
+        mimo_controller.rtU.roll_ref = (double) reference_roll;
         mimo_controller.step();    
     }
     
-    motor_thrust[static_cast<int>(MotorID::UPRDX)] = (float) mimo_controller.rtY.u[0]; 
-    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[1];
-    motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.rtY.u[2]; 
-    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[3];
+    motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.rtY.u[0]; 
+    motor_thrust[static_cast<int>(MotorID::UPFSX)] = (float) mimo_controller.rtY.u[1];
+    motor_thrust[static_cast<int>(MotorID::UPRDX)] = (float) mimo_controller.rtY.u[2]; 
+    motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[3];
 }
 
 void MIMOController::activate(uint8_t ref_type) {

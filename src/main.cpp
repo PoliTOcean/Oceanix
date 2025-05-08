@@ -171,7 +171,7 @@ int main(int argc, char* argv[]){
     timer_data->config = &config;
 
     // Start updating_sensor thread
-    std::thread updating_sensor_thread(sensor.update_thread, &sensor, general_config["debug_interval"]);
+    std::thread updating_sensor_thread(sensor.update_thread, &sensor, 1);
     updating_sensor_thread.detach();
 
     
@@ -246,10 +246,11 @@ void timer_motors_callback(uv_timer_t* handle) {
     }
 
     status_callback++;
-    if(status_callback==5){
+    if(status_callback==10){
         status_callback=0;
         rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
         rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
+        rov_status_json["work_mode"] = (motors_work_mode) ? "OK" : "OFF";
 
         if(!rov_status_json.empty())
             data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
