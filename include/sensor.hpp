@@ -160,12 +160,12 @@ private:
         float z_speed;
         float* acc;
         float* gyro;
+        float internal_temperature;
     } Imu;
 
     typedef struct bar_values {
         bool state;
         float depth;
-        float internal_temperature;
         float external_temperature;
     } Barometer;
 

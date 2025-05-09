@@ -12,7 +12,6 @@ Sensor::Sensor(const json& general_config, bool test_mode)
     barometer_values = {
         .state = false,
         .depth = 0.00,
-        .internal_temperature = 0.00,
         .external_temperature = 0.00,
     };
 
@@ -23,7 +22,8 @@ Sensor::Sensor(const json& general_config, bool test_mode)
         .yaw = 0.00,
         .z_speed = 0.00,
         .acc = {},
-        .gyro = {}
+        .gyro = {},
+        .internal_temperature = 0.00
     };
 
     std::srand(0);
@@ -60,7 +60,7 @@ json Sensor::get_status() {
     // Barometer related values
     status["bar_state"] = barometer_values.state ? "OK" : "OFF";
     status["depth"] = floatToStringWithDecimals(barometer_values.depth, 3);
-    status["internal_temperature"] = floatToStringWithDecimals(barometer_values.internal_temperature, 3);
+    status["internal_temperature"] = floatToStringWithDecimals(imu_values.internal_temperature, 3);
     status["external_temperature"] = floatToStringWithDecimals(barometer_values.external_temperature, 3);
 
     lock.unlock();
@@ -97,7 +97,7 @@ int Sensor::sensor_status() {
 float Sensor::get_internal_temperature() {
     float value;
     std::unique_lock<std::mutex> lock(write_mtx);
-    value = barometer_values.internal_temperature;
+    value = imu_values.internal_temperature;
     lock.unlock();
     return value;
 }
@@ -326,14 +326,14 @@ void Sensor::write_sensor() {
         .yaw = get_yaw_hardware(),
         .z_speed = get_Zspeed_hardware(),
         .acc = get_acc_hardware(),
-        .gyro = get_gyro_hardware()
+        .gyro = get_gyro_hardware(),
+        .internal_temperature = get_internal_temperature_hardware()
     };
  
     // Barometer related values
     tmp_barometer_values = {
         .state = barometer.get_status() == 0,
         .depth = get_depth_hardware(),
-        .internal_temperature = get_internal_temperature_hardware(),
         .external_temperature = get_external_temperature_hardware(),
     };
     
