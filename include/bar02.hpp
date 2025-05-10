@@ -29,11 +29,6 @@ public:
     int get_status();
 
     /**
-     * @brief Sets the pressure baseline.
-     */
-    void set_pressure_baseline();
-
-    /**
      * @brief Gets the temperature in Celsius.
      * @return Temperature in Celsius.
      */
@@ -49,7 +44,6 @@ public:
 
 private:
     int status;         ///< Status of the sensor.
-    float pressure_baseline; ///< Pressure baseline.
     float temperature;  ///< Temperature in Celsius.
     float depth;        ///< Depth in meters.
     Logger logger;      ///< Logger    

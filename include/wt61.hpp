@@ -71,8 +71,6 @@ public:
 
     void update_parameters(const json& general_config);
 
-    void set_yaw_zero();
-
 private:
     int status;         ///< status of the sensor
     float temperature;  ///< internal temperature in Celsius
@@ -81,9 +79,6 @@ private:
     float yaw;          ///< yaw angle in DEG
     float acc[3];       ///< accelleration (x, y, z) in m/s^2
     float gyro[3];      ///< gyroscope (x, y, z) in DEG/s^2
-    float roll_offset;   ///< roll offset in DEG
-    float pitch_offset;  ///< pitch offset in DEG
-    float yaw_offset;   ///< yaw offset in DEG
 
     Logger logger;
 };

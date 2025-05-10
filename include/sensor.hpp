@@ -138,6 +138,11 @@ private:
 
     bool test_mode;
 
+    float roll_offset;   ///< roll offset in DEG
+    float pitch_offset;  ///< pitch offset in DEG
+    float yaw_offset;   ///< yaw offset in DEG
+    float depth_offset;  ///< depth offset in meters
+
     float simulate_temperature();
     float simulate_depth();
     float simulate_angle();

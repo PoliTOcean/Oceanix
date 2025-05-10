@@ -7,6 +7,10 @@ Sensor::Sensor(const json& general_config, bool test_mode)
     barometer(Bar02(general_config["bar02_loglevel"])),
     alpha(general_config["Zspeed_alpha"]),
     beta(general_config["Zspeed_beta"]),
+    roll_offset(general_config["imu_roll_offset"]), 
+    pitch_offset(general_config["imu_pitch_offset"]),
+    yaw_offset(0),
+    depth_offset(0),
     test_mode(test_mode) {
     
     barometer_values = {
@@ -31,14 +35,13 @@ Sensor::Sensor(const json& general_config, bool test_mode)
 
 // ! [PUBLIC FUNCTIONS]
 
-// Function to set the pressure baseline for depth calculations (you can expand this as needed)
+// Function to set the pressure baseline for depth calculations
 void Sensor::set_pressure_baseline() {
-    if (test_mode) {
-        // Simulate setting pressure baseline in test mode
-        return;
-    }
-    barometer.set_pressure_baseline();
-    imu.set_yaw_zero();
+    yaw_offset = yaw_offset - get_yaw(); //set the yaw to zero when arming rov
+    depth_offset = depth_offset - get_depth();  //set the depth to zero when arming rov
+
+    logMessage << "Depth baseline set to: " << depth_offset << " m";
+    logger.log(logINFO, logMessage.str());
 }
 
 json Sensor::get_status() {
@@ -117,7 +120,7 @@ float Sensor::get_depth() {
     std::unique_lock<std::mutex> lock(write_mtx);
     value = barometer_values.depth;
     lock.unlock();
-    return value;
+    return value+depth_offset;
 }
 
 // Function to get roll from the IMU sensor
@@ -126,7 +129,7 @@ float Sensor::get_roll() {
     std::unique_lock<std::mutex> lock(write_mtx);
     value = imu_values.roll;
     lock.unlock();
-    return value;
+    return value+roll_offset;
 }
 
 // Function to get pitch from the IMU sensor
@@ -135,7 +138,7 @@ float Sensor::get_pitch() {
     std::unique_lock<std::mutex> lock(write_mtx);
     value = imu_values.pitch;
     lock.unlock();
-    return value;
+    return value+pitch_offset;
 }
 
 // Function to get yaw from the IMU sensor
@@ -144,7 +147,7 @@ float Sensor::get_yaw() {
     std::unique_lock<std::mutex> lock(write_mtx);
     value = imu_values.yaw;
     lock.unlock();
-    return value;
+    return value+yaw_offset;
 }
 
 // Function to get acceleration from the IMU sensor
@@ -181,6 +184,8 @@ float Sensor::lowPassFilter(float current_value, float prev_filtered_value) {
 void Sensor::update_parameters(const json& general_config) {
     barometer.update_parameters(general_config);
     imu.update_parameters(general_config);
+    roll_offset = general_config["imu_roll_offset"];
+    pitch_offset = general_config["imu_pitch_offset"];
 }
 
 // ! [PRIVATE FUNCTIONS]
