@@ -29,6 +29,7 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "logger.hpp"
+#include "system_monitor.hpp"
 
 
 using json = nlohmann::json;
@@ -44,6 +45,7 @@ struct Timer_data {
     Nucleo* nucleo;
     MQTTClient* mqtt_client;
     Config* config;
+    SystemMonitor* system_monitor;
 };
 
 const std::string config_path = "../config/config.json";
@@ -162,6 +164,8 @@ int main(int argc, char* argv[]){
 
     Motors motors = Motors(config.get_config(ConfigType::MOTORS), general_config["motors_loglevel"]);
 
+    SystemMonitor system_monitor = SystemMonitor();
+
     Timer_data* timer_data = new Timer_data();
     timer_data->sensor = &sensor;
     timer_data->motors = &motors;
@@ -169,9 +173,10 @@ int main(int argc, char* argv[]){
     timer_data->nucleo = &nucleo;
     timer_data->mqtt_client = &mqtt_client;
     timer_data->config = &config;
+    timer_data->system_monitor = &system_monitor;
 
     // Start updating_sensor thread
-    std::thread updating_sensor_thread(sensor.update_thread, &sensor, 1);
+    std::thread updating_sensor_thread(sensor.update_thread, &sensor, 0);
     updating_sensor_thread.detach();
 
     
@@ -179,7 +184,7 @@ int main(int argc, char* argv[]){
 
     uv_timer_init(loop, &timer_motors);
     timer_motors.data = timer_data;
-    uv_timer_start(&timer_motors, timer_motors_callback, 200, general_config["motor_interval"]); // 10 ms iniziali, 10 ms di intervallo
+    uv_timer_start(&timer_motors, timer_motors_callback, 200, general_config["motor_interval"]); // 200 ms iniziali, 10 ms di intervallo
 
     uv_timer_init(loop, &timer_com);
     timer_com.data = timer_data;
@@ -248,6 +253,9 @@ void timer_motors_callback(uv_timer_t* handle) {
     status_callback++;
     if(status_callback==10){
         status_callback=0;
+
+        data->system_monitor->read_info();
+        rov_status_json.update(data->system_monitor->get_status());
         rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
         rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
         rov_status_json["work_mode"] = (motors_work_mode) ? "OK" : "OFF";

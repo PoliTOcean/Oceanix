@@ -40,8 +40,8 @@ void Sensor::set_pressure_baseline() {
     yaw_offset = yaw_offset - get_yaw(); //set the yaw to zero when arming rov
     depth_offset = depth_offset - get_depth();  //set the depth to zero when arming rov
 
-    logMessage << "Depth baseline set to: " << depth_offset << " m";
-    logger.log(logINFO, logMessage.str());
+    //logMessage << "Depth baseline set to: " << depth_offset << " m";  //TODO: add logger
+    //logger.log(logINFO, logMessage.str()); 
 }
 
 json Sensor::get_status() {
@@ -71,10 +71,10 @@ json Sensor::get_status() {
     return status;
 }
 
-// Function to check the status of both sensors and return a combined status
+// Function to check the status of all sensors and return a combined status
 int Sensor::sensor_status() {
     if (test_mode) {
-        return IMU_OK | BAR_OK; // Simulate both sensors being OK in test mode
+        return IMU_OK | BAR_OK; // Simulate all sensors being OK in test mode
     }
 
     int status = 0;
@@ -190,14 +190,13 @@ void Sensor::update_parameters(const json& general_config) {
 
 // ! [PRIVATE FUNCTIONS]
 
-// Function to read sensor data from both IMU and barometer
+// Function to read sensor data from all sensors
 void Sensor::read_sensor() {
-    if (test_mode) {
-        return;
-    } else {
-        imu.read_sensor();      // Read data from the IMU sensor
-        barometer.read_sensor(); // Read data from the barometer
-    }
+    if (test_mode) 
+        return; // In test mode, we don't read imu and barometer data
+
+    imu.read_sensor();      // Read data from the IMU sensor
+    barometer.read_sensor(); // Read data from the barometer
 }
 
 // Function to get internal temperature from the IMU sensor
@@ -296,7 +295,7 @@ float* Sensor::get_gyro_hardware() {
     return imu.get_gyro();
 }
 
-// Functions to generate simulated sensor data
+// Functions to generate simulated sensor data for IMU/Barometer (Sensor class level)
 float Sensor::simulate_temperature() {
     return static_cast<float>(std::rand()) / RAND_MAX * 30; // Simulate temperature in range [0-30]
 }

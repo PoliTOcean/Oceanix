@@ -12,8 +12,6 @@ Wt61::Wt61(logLevel minimumLoglevel, const json& general_config)
         logger.log(logERROR, "imu init fail");
     else
         logger.log(logINFO, "imu init success");
-
-    yaw_offset = 0;
 }
 
 void Wt61::read_sensor() {
