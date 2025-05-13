@@ -9,6 +9,8 @@ MIMOController::MIMOController(Sensor& sensor, json jsonConfig, logLevel minimum
     logger(Logger(CONTROLLER_LOG_NAME, minimumLoglevel)) 
     {
         set_parameters({ { "controller_loglevel", minimumLoglevel } }, jsonConfig);
+        if (minimumLoglevel == 0)
+            mimo_controller.print_matrices();
 }
 
 void MIMOController::calculate(float* motor_thrust) {  //directly modify the motor_thrust array from motors class
@@ -113,17 +115,63 @@ void MIMOController::set_reference(uint8_t ref_type, float ref) {
 }
     
 void MIMOController::set_parameters(const json& general_config, const json& params) {
-    int i;
-    for (i=0; i<36; i++) mimo_controller.rtConstP.Admatrix_Gain[i] = params["Admatrix_Gain"].at(i);
-    for (i=0; i<12; i++) mimo_controller.rtConstP.IntegratorGain_Gain[i] = params["IntegratorGain_Gain"].at(i);
-    for (i=0; i<24; i++) mimo_controller.rtConstP.StateGain_Gain[i] = params["StateGain_Gain"].at(i);
-    for (i=0; i<24; i++) mimo_controller.rtConstP.Bdmatrix_Gain[i] = params["Bdmatrix_Gain"].at(i);
-    for (i=0; i<30; i++) mimo_controller.rtConstP.Cdmatrix_Gain[i] = params["Cdmatrix_Gain"].at(i);
-    for (i=0; i<30; i++) mimo_controller.rtConstP.Ldmatrix_Gain[i] = params["Ldmatrix_Gain"].at(i);
+    int i, row, col;
+    
+    // JSON stores matrices in row-major order, but our code accesses them in column-major
+    // Need to transpose during loading
+    
+    // Admatrix_Gain: 6x6 matrix
+    for (row = 0; row < 6; row++) {
+        for (col = 0; col < 6; col++) {
+            // JSON index: row*6 + col (row-major)
+            // Memory index: col*6 + row (column-major)
+            mimo_controller.rtConstP.Admatrix_Gain[col*6 + row] = params["Admatrix_Gain"].at(row*6 + col);
+        }
+    }
+    
+    // IntegratorGain_Gain: 4x3 matrix
+    for (row = 0; row < 4; row++) {
+        for (col = 0; col < 3; col++) {
+            mimo_controller.rtConstP.IntegratorGain_Gain[col*4 + row] = params["IntegratorGain_Gain"].at(row*3 + col);
+        }
+    }
+    
+    // StateGain_Gain: 4x6 matrix
+    for (row = 0; row < 4; row++) {
+        for (col = 0; col < 6; col++) {
+            mimo_controller.rtConstP.StateGain_Gain[col*4 + row] = params["StateGain_Gain"].at(row*6 + col);
+        }
+    }
+    
+    // Bdmatrix_Gain: 6x4 matrix
+    for (row = 0; row < 6; row++) {
+        for (col = 0; col < 4; col++) {
+            mimo_controller.rtConstP.Bdmatrix_Gain[col*6 + row] = params["Bdmatrix_Gain"].at(row*4 + col);
+        }
+    }
+    
+    // Cdmatrix_Gain: 5x6 matrix
+    for (row = 0; row < 5; row++) {
+        for (col = 0; col < 6; col++) {
+            mimo_controller.rtConstP.Cdmatrix_Gain[col*5 + row] = params["Cdmatrix_Gain"].at(row*6 + col);
+        }
+    }
+    
+    // Ldmatrix_Gain: 6x5 matrix
+    for (row = 0; row < 6; row++) {
+        for (col = 0; col < 5; col++) {
+            mimo_controller.rtConstP.Ldmatrix_Gain[col*6 + row] = params["Ldmatrix_Gain"].at(row*5 + col);
+        }
+    }
 
+    // ExtractRPZ_Gain: 3x6 matrix - hardcoded column-wise
     double ExtractRPZ_Gain[] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
-    for (i = 0; i<18; i++)
-        mimo_controller.rtConstP.ExtractRPZ_Gain[i] = ExtractRPZ_Gain[i];
+    // This array is already in row-major format (3 rows, 6 cols)
+    for (row = 0; row < 3; row++) {
+        for (col = 0; col < 6; col++) {
+            mimo_controller.rtConstP.ExtractRPZ_Gain[col*3 + row] = ExtractRPZ_Gain[row + col*3];
+        }
+    }
     
     logger.setLogLevel(general_config["controller_loglevel"]);
 }

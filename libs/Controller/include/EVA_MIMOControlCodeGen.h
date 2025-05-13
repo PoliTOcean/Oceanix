@@ -99,8 +99,7 @@ class EVA_MIMOControlCodeGen final
   // External outputs
   ExtY rtY;
 
-  // model initialize function
-  static void initialize();
+  void print_matrices();
 
   // model step function
   void step();

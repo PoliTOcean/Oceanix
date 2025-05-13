@@ -16,6 +16,7 @@
 //
 #include "EVA_MIMOControlCodeGen.h"
 #include "rtwtypes.h"
+#include <iostream>
 
 // Model step function
 void EVA_MIMOControlCodeGen::step()
@@ -198,8 +199,76 @@ void EVA_MIMOControlCodeGen::step()
 }
 
 // Model initialize function
-void EVA_MIMOControlCodeGen::initialize()
+void EVA_MIMOControlCodeGen::print_matrices()
 {
+  // Print all stored matrices for debugging
+  std::cout << "=== EVA_MIMOControlCodeGen Matrices ===" << std::endl;
+  
+  // Print Admatrix_Gain (6x6 matrix)
+  std::cout << "Admatrix_Gain (6x6):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.Admatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Bdmatrix_Gain (6x4 matrix)
+  std::cout << "\nBdmatrix_Gain (6x4):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 4; j++) {
+      std::cout << rtConstP.Bdmatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Cdmatrix_Gain (5x6 matrix)
+  std::cout << "\nCdmatrix_Gain (5x6):" << std::endl;
+  for (int i = 0; i < 5; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.Cdmatrix_Gain[j*5 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Ldmatrix_Gain (6x5 matrix)
+  std::cout << "\nLdmatrix_Gain (6x5):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 5; j++) {
+      std::cout << rtConstP.Ldmatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print StateGain_Gain (4x6 matrix)
+  std::cout << "\nStateGain_Gain (4x6):" << std::endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.StateGain_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print IntegratorGain_Gain (4x3 matrix)
+  std::cout << "\nIntegratorGain_Gain (4x3):" << std::endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 3; j++) {
+      std::cout << rtConstP.IntegratorGain_Gain[j*4 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print ExtractRPZ_Gain (3x6 matrix)
+  std::cout << "\nExtractRPZ_Gain (3x6):" << std::endl;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.ExtractRPZ_Gain[j*3 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "========================================" << std::endl;
+
   // (no initialization code required)
 }
 
