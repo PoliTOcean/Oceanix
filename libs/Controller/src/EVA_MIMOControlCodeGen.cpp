@@ -41,6 +41,7 @@ void EVA_MIMOControlCodeGen::step()
   } else {
     tmp_0 = rtDW.DiscreteTimeIntegrator_DSTATE[0];
   }
+  rtDW.DiscreteTimeIntegrator_DSTATE[0] = tmp_0;
 
   if (rtDW.DiscreteTimeIntegrator_DSTATE[1] > 100.0) {
     tmp_1 = 100.0;
@@ -49,6 +50,7 @@ void EVA_MIMOControlCodeGen::step()
   } else {
     tmp_1 = rtDW.DiscreteTimeIntegrator_DSTATE[1];
   }
+  rtDW.DiscreteTimeIntegrator_DSTATE[1] = tmp_1;
 
   if (rtDW.DiscreteTimeIntegrator_DSTATE[2] > 100.0) {
     tmp_2 = 100.0;
@@ -57,6 +59,7 @@ void EVA_MIMOControlCodeGen::step()
   } else {
     tmp_2 = rtDW.DiscreteTimeIntegrator_DSTATE[2];
   }
+  rtDW.DiscreteTimeIntegrator_DSTATE[2] = tmp_2;
 
   // End of Saturate: '<Root>/Saturation1'
   for (i = 0; i < 4; i++) {
@@ -179,12 +182,19 @@ void EVA_MIMOControlCodeGen::step()
   //   Inport: '<Root>/z_ref'
   //   Sum: '<Root>/Subtract'
 
-  rtDW.DiscreteTimeIntegrator_DSTATE[0] += (rtU.z_ref - rtb_ExtractRPZ[0]) *
-    0.01;
-  rtDW.DiscreteTimeIntegrator_DSTATE[1] += (rtU.pitch_ref - rtb_ExtractRPZ[1]) *
-    0.01;
-  rtDW.DiscreteTimeIntegrator_DSTATE[2] += (rtU.roll_ref - rtb_ExtractRPZ[2]) *
-    0.01;
+  const double MAX_ERROR = 10000.0; // Maximum allowed error in one step
+  
+  double z_error = rtU.z_ref - rtb_ExtractRPZ[0];
+  z_error = (z_error > MAX_ERROR) ? MAX_ERROR : (z_error < -MAX_ERROR ? -MAX_ERROR : z_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[0] += z_error * 0.01;
+
+  double pitch_error = rtU.pitch_ref - rtb_ExtractRPZ[1];
+  pitch_error = (pitch_error > MAX_ERROR) ? MAX_ERROR : (pitch_error < -MAX_ERROR ? -MAX_ERROR : pitch_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[1] += pitch_error * 0.01;
+
+  double roll_error = rtU.roll_ref - rtb_ExtractRPZ[2];
+  roll_error = (roll_error > MAX_ERROR) ? MAX_ERROR : (roll_error < -MAX_ERROR ? -MAX_ERROR : roll_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[2] += roll_error * 0.01;
 }
 
 // Model initialize function
@@ -199,7 +209,15 @@ EVA_MIMOControlCodeGen::EVA_MIMOControlCodeGen():
   rtY(),
   rtDW()
 {
-  // Currently there is no constructor body generated.
+  // Initialize integrator states to zero
+  rtDW.DiscreteTimeIntegrator_DSTATE[0] = 0.0;
+  rtDW.DiscreteTimeIntegrator_DSTATE[1] = 0.0;
+  rtDW.DiscreteTimeIntegrator_DSTATE[2] = 0.0;
+  
+  // Initialize all state variables
+  for (int i = 0; i < 6; i++) {
+    rtDW.UnitDelay_DSTATE[i] = 0.0;
+  }
 }
 
 // Destructor
