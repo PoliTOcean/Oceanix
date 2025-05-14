@@ -19,6 +19,7 @@
 #include <iostream>
 #include <pigpio.h>
 #include <thread>
+#include <csignal>
 #include <json.hpp>
 #include "sensor.hpp"
 #include "MIMO_controller.hpp"
@@ -36,7 +37,6 @@ using json = nlohmann::json;
 
 void timer_motors_callback(uv_timer_t* handle);
 void timer_com_callback(uv_timer_t* handle);
-void timer_status_callback(uv_timer_t* handle);
 
 struct Timer_data {
     Sensor* sensor;
@@ -87,14 +87,19 @@ std::map <std::string, state_commands_map> state_mapper;
 uint8_t rov_armed=0;
 uint8_t nucleo_connected=0;
 uint8_t motors_work_mode=0;
-uint8_t status_callback=0;
+uint8_t motor_status_counter=0;
+uint8_t motor_status_counter_max=0;
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
 
-std::mutex mtx;
-
 void state_commands(json msg, Timer_data* data);
+
+// Signal handler function
+void signal_handler(int signal) {
+    logger->log(logWARNING, "Received signal to terminate: " + std::to_string(signal));
+    uv_stop(uv_default_loop());
+}
 
 int main(int argc, char* argv[]){
     bool test_mode = false;
@@ -109,9 +114,6 @@ int main(int argc, char* argv[]){
 
     uv_timer_t timer_motors;
     uv_timer_t timer_com;
-    uv_timer_t timer_status;
-
-    //Now it defaults to all, but the config should be read from a file in the future
     
     state_mapper["ARM_ROV"] = ARM_ROV;
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
@@ -156,11 +158,14 @@ int main(int argc, char* argv[]){
     Controller* controller = nullptr;
     if (controllerType == "MIMO") {
         controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
+        logger->log(logINFO,"Loaded MIMO controller");
     } else if (controllerType == "PP") {
         controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
+        logger->log(logINFO,"Loaded Pole Placement controller");
     } else {
         logger->log(logERROR,"INVALID CONTROLLER TYPE");
     }
+    controller->activate(CONTROL_OFF);
 
     Motors motors = Motors(config.get_config(ConfigType::MOTORS), general_config["motors_loglevel"]);
 
@@ -175,11 +180,14 @@ int main(int argc, char* argv[]){
     timer_data->config = &config;
     timer_data->system_monitor = &system_monitor;
 
-    // Start updating_sensor thread
-    std::thread updating_sensor_thread(sensor.update_thread, &sensor, 0);
-    updating_sensor_thread.detach();
+    // Set up signal handlers for graceful termination
+    std::signal(SIGINT, signal_handler);   // Ctrl+C
+    std::signal(SIGTERM, signal_handler);  // kill or systemctl stop
 
+    // Start sensor thread and save the handle
+    Sensor::sensor_thread = std::thread(Sensor::update_thread, &sensor, general_config.value("sensor_interval", 10));
     
+
     uv_loop_t* loop = uv_default_loop();
 
     uv_timer_init(loop, &timer_motors);
@@ -190,15 +198,32 @@ int main(int argc, char* argv[]){
     timer_com.data = timer_data;
     uv_timer_start(&timer_com, timer_com_callback, 200, 2);
 
-    // uv_timer_init(loop, &timer_status);
-    // timer_status.data = timer_data;
-    // uv_timer_start(&timer_status, timer_status_callback, general_config["debug_interval"], general_config["debug_interval"]);
-
-    controller->activate(CONTROL_OFF);
+    motor_status_counter_max = (int)general_config["debug_interval"] / (int)general_config["motor_interval"];
     
+    logger->log(logINFO,"Starting main loop...");
+    
+    // Run the event loop once
     uv_run(loop, UV_RUN_DEFAULT);
-
-    Logger::closeLogFiles(); //Not sure this should be placed here
+    
+    // Clean shutdown
+    logger->log(logINFO, "Shutting down gracefully...");
+    
+    // Stop timers
+    uv_timer_stop(&timer_motors);
+    uv_timer_stop(&timer_com);
+    
+    // Stop the sensor thread explicitly
+    sensor.stop_thread_and_wait();
+    
+    // Clean up UV resources
+    uv_loop_close(loop);
+    
+    // Clean up other resources
+    delete controller;  // If you used new to create it
+    delete timer_data;
+    delete logger;
+    
+    Logger::closeLogFiles();
 
     return 0;
 }
@@ -222,7 +247,7 @@ void timer_motors_callback(uv_timer_t* handle) {
     data->nucleo->send_pwm(motors_pwm);
 
 
-    json rov_status_json, flat_json;
+    json rov_status_json;
     rov_status_json.update(data->motors->get_status());
     rov_status_json.update(data->controller->get_status());    
     rov_status_json.update(data->sensor->get_status());
@@ -240,7 +265,7 @@ void timer_motors_callback(uv_timer_t* handle) {
 
 
     if(!rov_status_json.empty()){
-        flat_json = rov_status_json.flatten();
+        json flat_json = rov_status_json.flatten();
 
         logMessage << flat_json[Logger::transformed_status_file_keys[1]];
         //Starting from 1 because it's the timestamp key and it is generated inside the log method 
@@ -250,9 +275,9 @@ void timer_motors_callback(uv_timer_t* handle) {
         logger->log(logSTATUS, logMessage.str());
     }
 
-    status_callback++;
-    if(status_callback==10){
-        status_callback=0;
+    motor_status_counter++;
+    if(motor_status_counter==motor_status_counter_max){
+        motor_status_counter=0;
 
         data->system_monitor->read_info();
         rov_status_json.update(data->system_monitor->get_status());
@@ -304,32 +329,6 @@ void timer_com_callback(uv_timer_t* handle){
     data->nucleo->update_buffer();
     nucleo_connected = data->nucleo->is_connected();
 }
-
-// void timer_status_callback(uv_timer_t* handle){
-//     Timer_data* data = static_cast<Timer_data*>(handle->data);
-//     json rov_status_json;
-
-//     rov_status_json.update(data->motors->get_status());
-//     rov_status_json.update(data->controller->get_status());    
-//     rov_status_json.update(data->sensor->get_status());
-
-//     rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-//     rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
-    
-
-//     if(!rov_status_json.empty())
-//         //logger->log(logSTATUS, rov_status_json.dump());
-//         data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
-        
-//     if(!data->nucleo->is_connected()){
-//         logger->log(logINFO,"NUCLEO disconnected");
-//         nucleo_connected = 0;
-//         if(data->nucleo->init(0x04) == COMM_STATUS::OK){ //We dont track if the init was succesful, we simply check the current connection and initialize the nucleo again.
-//             nucleo_connected = 1;
-//             logger->log(logINFO,"NUCLEO connected");
-//         }
-//     }
-// }
 
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;

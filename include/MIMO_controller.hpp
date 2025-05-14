@@ -23,7 +23,6 @@ private:
     float reference_z;              /// reference depth
     float reference_roll;           /// reference CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH
     float reference_pitch;          /// reference pitch
-    bool c_verbose;                   /// verbose mode
     Logger logger;
     Sensor& sensor;                  /// sensor class
     EVA_MIMOControlCodeGen mimo_controller;

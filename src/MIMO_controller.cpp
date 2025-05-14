@@ -33,10 +33,8 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     
     if(controller_active == true && controller_active_old == false){
         reference_z = sensor.get_depth();
-        if (c_verbose){
-            message  << "control Z active at depth " << reference_z;
-            logger.log(logINFO, message.str());
-        }
+        message  << "control Z active at depth " << reference_z;
+        logger.log(logINFO, message.str());
     }
 
     if (state == CONTROL_OFF)
@@ -85,27 +83,20 @@ void MIMOController::set_reference(uint8_t ref_type, float ref) {
     switch(ref_type) {
         case CONTROL_Z:
             reference_z = ref;
-            if(c_verbose){
-                message << "reference_z changed to: " << reference_z << std::endl;
-                logger.log(logINFO, message.str());
-            }
+            message << "reference_z changed to: " << reference_z << std::endl;
+            logger.log(logINFO, message.str());
             break;
 
         case CONTROL_ROLL:
             reference_roll = ref;
-
-            if(c_verbose){
-                message << "reference_roll changed to: " << reference_roll << std::endl;
-                logger.log(logINFO, message.str());
-            }
+            message << "reference_roll changed to: " << reference_roll << std::endl;
+            logger.log(logINFO, message.str());
             break;
 
         case CONTROL_PITCH:
             reference_pitch = ref;
-            if(c_verbose){
-                message << "reference_pitch changed to: " << reference_pitch << std::endl;
-                logger.log(logINFO, message.str());
-            }
+            message << "reference_pitch changed to: " << reference_pitch << std::endl;
+            logger.log(logINFO, message.str());
             break;
 
         default:

@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
+#include <atomic>
 #include <cstdlib>
 #include <json.hpp>
 #include "wt61.hpp"
@@ -24,6 +25,7 @@ class Sensor {
 public:
     Wt61 imu;           ///< Imu object
     Bar02 barometer;    ///< Barometer object
+    static std::thread sensor_thread;
     
     /**
      * @brief Construct a new Sensor object containing IMU and barometer
@@ -123,6 +125,12 @@ public:
      */
     static void update_thread(Sensor *sensor, uint64_t timeout);
 
+    /**
+     * @brief Stop the thread
+     * 
+     */
+    void stop_thread_and_wait();
+
 private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)
@@ -154,6 +162,9 @@ private:
      * 
      */
     void read_sensor();
+    
+    // Static members for thread management
+    static std::atomic<bool> thread_running;
     
     static std::mutex write_mtx;
 

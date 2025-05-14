@@ -1,6 +1,9 @@
 #include "sensor.hpp"
 
+// Initialize static members
 std::mutex Sensor::write_mtx;
+std::atomic<bool> Sensor::thread_running{true};
+std::thread Sensor::sensor_thread;
 
 Sensor::Sensor(const json& general_config, bool test_mode) 
     : imu(Wt61(general_config["imu_loglevel"], general_config)), 
@@ -46,28 +49,23 @@ void Sensor::set_pressure_baseline() {
 
 json Sensor::get_status() {
     json status;
-
-    std::unique_lock<std::mutex> lock(write_mtx);
-    
     // IMU related values
-    status["imu_state"] = imu_values.state ? "OK" : "OFF";
-    status["roll"] = floatToStringWithDecimals(imu_values.roll, 3);
-    status["pitch"] = floatToStringWithDecimals(imu_values.pitch, 3);
-    status["yaw"] = floatToStringWithDecimals(imu_values.yaw, 3);
-    status["Zspeed"] = floatToStringWithDecimals(imu_values.z_speed, 3);
-    status["Zacc"] = floatToStringWithDecimals(imu_values.acc[2], 3);
-    status["angular_x"] = floatToStringWithDecimals(imu_values.gyro[0], 3);
-    status["angular_y"] = floatToStringWithDecimals(imu_values.gyro[1], 3);
-    status["angular_z"] = floatToStringWithDecimals(imu_values.gyro[2], 3);
+    status["imu_state"] = (sensor_status() & IMU_OK) ? "OK" : "OFF";
+    status["roll"] = floatToStringWithDecimals(get_roll(), 3);
+    status["pitch"] = floatToStringWithDecimals(get_pitch(), 3);
+    status["yaw"] = floatToStringWithDecimals(get_yaw(), 3);
+    status["Zspeed"] = floatToStringWithDecimals(get_Zspeed(), 3);
+    status["Zacc"] = floatToStringWithDecimals(get_acc()[2], 3);
+    status["angular_x"] = floatToStringWithDecimals(get_gyro()[0], 3);
+    status["angular_y"] = floatToStringWithDecimals(get_gyro()[1], 3);
+    status["angular_z"] = floatToStringWithDecimals(get_gyro()[2], 3);
 
     // Barometer related values
-    status["bar_state"] = barometer_values.state ? "OK" : "OFF";
-    status["depth"] = floatToStringWithDecimals(barometer_values.depth, 3);
-    status["internal_temperature"] = floatToStringWithDecimals(imu_values.internal_temperature, 3);
-    status["external_temperature"] = floatToStringWithDecimals(barometer_values.external_temperature, 3);
-
-    lock.unlock();
-
+    status["bar_state"] = (sensor_status() & BAR_OK) ? "OK" : "OFF";
+    status["depth"] = floatToStringWithDecimals(get_depth(), 3);
+    status["internal_temperature"] = floatToStringWithDecimals(get_internal_temperature(), 3);
+    status["external_temperature"] = floatToStringWithDecimals(get_external_temperature(), 3);
+    
     return status;
 }
 
@@ -78,20 +76,22 @@ int Sensor::sensor_status() {
     }
 
     int status = 0;
+    std::unique_lock<std::mutex> lock(write_mtx);
     
     // Check IMU status
-    if (imu.get_status() == 0) {
+    if (imu_values.state == 0) {
         status |= IMU_OK;  // IMU is OK
     } else {
         status |= IMU_ERROR;  // IMU error
     }
 
     // Check Barometer status
-    if (barometer.get_status() == 0) {
+    if (barometer_values.state == 0) {
         status |= BAR_OK;  // Barometer is OK
     } else {
         status |= BAR_ERROR;  // Barometer error
     }
+    lock.unlock();
 
     return status;
 }
@@ -352,12 +352,21 @@ void Sensor::write_sensor() {
 }
 
 void Sensor::update_thread(Sensor *sensor, uint64_t timeout) {
-    while (1) {
-        
+    while (thread_running) {  // Check termination flag
         sensor->read_sensor();
-
         sensor->write_sensor();
+        
+        // Use a shorter sleep to be more responsive to termination
+        for (int i = 0; i < 10 && thread_running; i++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(timeout / 10));
+        }
+    }
+}
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
+void Sensor::stop_thread_and_wait() {
+    thread_running = false;  // Signal thread to stop
+    
+    if (sensor_thread.joinable()) {
+        sensor_thread.join();  // Wait for thread to finish
     }
 }
