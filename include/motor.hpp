@@ -40,7 +40,7 @@ public:
      * @param correction The new correction coefficient.
      * @param new_pwm_zero The new pwm_zero value.
      */
-    void change_parameters(float correction, uint16_t new_pwm_zero);
+    void change_parameters(float correction, uint16_t new_pwm_zero, float max_slew_rate);
     
     /**
      * @brief Change the thrust max of the motor

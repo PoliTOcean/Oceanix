@@ -122,7 +122,7 @@ json Motors::get_status(){
 void Motors::update_parameters(const json& general_config, const json& specific_config) {
     std::string motorNames[] = {"FDX", "FSX", "RDX", "RSX", "UPFDX", "UPFSX", "UPRDX", "UPRSX"};
     for (int i=0; i<8; i++)
-        motors[i].change_parameters((float) specific_config[motorNames[i]+"_coeff"], (uint16_t) specific_config[motorNames[i]+"_pwm_zero"]);
+        motors[i].change_parameters((float) specific_config[motorNames[i]+"_coeff"], (uint16_t) specific_config[motorNames[i]+"_pwm_zero"], (float) specific_config["thrust_slew_rate_max"]);
 
     set_thrust_max(specific_config["thrust_max_xy"], specific_config["thrust_max_z"]);
 
