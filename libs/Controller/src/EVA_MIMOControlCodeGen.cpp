@@ -33,34 +33,10 @@ void EVA_MIMOControlCodeGen::step()
   int32_T i_0;
 
   // Saturate: '<Root>/Saturation1' incorporates:
-  //   DiscreteIntegrator: '<Root>/Discrete-Time Integrator'
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[0] > 100.0) {
-    tmp_0 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[0] < -100.0) {
-    tmp_0 = -100.0;
-  } else {
-    tmp_0 = rtDW.DiscreteTimeIntegrator_DSTATE[0];
-  }
-  rtDW.DiscreteTimeIntegrator_DSTATE[0] = tmp_0;
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[1] > 100.0) {
-    tmp_1 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[1] < -100.0) {
-    tmp_1 = -100.0;
-  } else {
-    tmp_1 = rtDW.DiscreteTimeIntegrator_DSTATE[1];
-  }
-  rtDW.DiscreteTimeIntegrator_DSTATE[1] = tmp_1;
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[2] > 100.0) {
-    tmp_2 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[2] < -100.0) {
-    tmp_2 = -100.0;
-  } else {
-    tmp_2 = rtDW.DiscreteTimeIntegrator_DSTATE[2];
-  }
-  rtDW.DiscreteTimeIntegrator_DSTATE[2] = tmp_2;
+  //   DiscreteIntegrator: '<Root>/Discrete-Time Integrator' (moved to the end of step)
+  tmp_0 = rtDW.DiscreteTimeIntegrator_DSTATE[0];
+  tmp_1 = rtDW.DiscreteTimeIntegrator_DSTATE[1];
+  tmp_2 = rtDW.DiscreteTimeIntegrator_DSTATE[2];
 
   // End of Saturate: '<Root>/Saturation1'
   for (i = 0; i < 4; i++) {
@@ -183,7 +159,7 @@ void EVA_MIMOControlCodeGen::step()
   //   Inport: '<Root>/z_ref'
   //   Sum: '<Root>/Subtract'
 
-  const double MAX_ERROR = 10000.0; // Maximum allowed error in one step
+  const double MAX_ERROR = 1000.0; // Maximum allowed error in one step
   
   double z_error = rtU.z_ref - rtb_ExtractRPZ[0];
   z_error = (z_error > MAX_ERROR) ? MAX_ERROR : (z_error < -MAX_ERROR ? -MAX_ERROR : z_error);
@@ -196,6 +172,22 @@ void EVA_MIMOControlCodeGen::step()
   double roll_error = rtU.roll_ref - rtb_ExtractRPZ[2];
   roll_error = (roll_error > MAX_ERROR) ? MAX_ERROR : (roll_error < -MAX_ERROR ? -MAX_ERROR : roll_error);
   rtDW.DiscreteTimeIntegrator_DSTATE[2] += roll_error * 0.01;
+
+  // Saturate integrator output
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[0] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[0] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[0] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[0] = -100.0;
+
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[1] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[1] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[1] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[1] = -100.0;
+
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[2] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[2] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[2] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[2] = -100.0;
 }
 
 // Model initialize function
