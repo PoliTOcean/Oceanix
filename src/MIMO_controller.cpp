@@ -37,8 +37,14 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
         logger.log(logINFO, message.str());
     }
 
-    if (state == CONTROL_OFF)
+    if (state == CONTROL_OFF){
+        double motor_commands[4] = {0.0, 0.0, 0.0, 0.0};
+        for (int i = 0; i < 4; i++) {
+            motor_commands[i] = motor_thrust[static_cast<int>(MotorID::UPFDX) + i];
+        }
+        mimo_controller.update_observer(motor_commands);
         return;
+    }
     else {
         gyro = sensor.get_gyro();
         mimo_controller.rtU.y_measurement[0] = (double) sensor.get_depth();
@@ -48,9 +54,9 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
         mimo_controller.rtU.y_measurement[4] = (double) sensor.get_pitch()*DEGtoRAD;
 
         mimo_controller.rtU.z_ref = (double) reference_z;
-        mimo_controller.rtU.pitch_ref = (double) reference_pitch; 
+        mimo_controller.rtU.pitch_ref = (double) reference_pitch;
         mimo_controller.rtU.roll_ref = (double) reference_roll;
-        mimo_controller.step();    
+        mimo_controller.step();
     }
     
     motor_thrust[static_cast<int>(MotorID::UPFDX)] = (float) mimo_controller.rtY.u[0]; 
@@ -188,6 +194,10 @@ json MIMOController::get_status(){
     status["force_roll"] = floatToStringWithDecimals(force_roll, 3);
     status["force_pitch"] = floatToStringWithDecimals(force_pitch, 3);
     */
+
+    status["obs_states"]["z"] = floatToStringWithDecimals(mimo_controller.obs_states.z, 3);
+    status["obs_states"]["roll"] = floatToStringWithDecimals(mimo_controller.obs_states.roll, 3);
+    status["obs_states"]["pitch"] = floatToStringWithDecimals(mimo_controller.obs_states.pitch, 3);
 
     status["reference_z"] = floatToStringWithDecimals(reference_z, 3);
     status["reference_roll"] = floatToStringWithDecimals(reference_roll, 3);
