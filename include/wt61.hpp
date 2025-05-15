@@ -12,7 +12,7 @@ public:
      * @brief Construct a new imu Wt61 object
      * 
      */
-    Wt61(logLevel minimumLoglevel, const json& general_config);
+    Wt61(logLevel minimumLoglevel, const json& general_config, bool test_mode = false);
 
     /**
      * @brief call for updating the measure
@@ -70,6 +70,13 @@ public:
     float* get_gyro();
 
     void update_parameters(const json& general_config);
+    
+    /**
+     * @brief Update simulation time (only used in test mode)
+     * 
+     * @param dt Time increment in seconds
+     */
+    void update_simulation_time(float dt);
 
 private:
     int status;         ///< status of the sensor
@@ -79,8 +86,16 @@ private:
     float yaw;          ///< yaw angle in DEG
     float acc[3];       ///< accelleration (x, y, z) in m/s^2
     float gyro[3];      ///< gyroscope (x, y, z) in DEG/s^2
+    bool test_mode;     ///< Flag to indicate test mode
+    float simulation_time; ///< Time counter for simulations (seconds)
 
     Logger logger;
+    
+    // Simulation methods
+    float simulate_temperature();
+    float simulate_angle(int angle_type);
+    float simulate_acceleration(int axis);
+    float simulate_gyro(int axis);
 };
 
 #endif // WT61_H

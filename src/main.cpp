@@ -185,7 +185,7 @@ int main(int argc, char* argv[]){
     std::signal(SIGTERM, signal_handler);  // kill or systemctl stop
 
     // Start sensor thread and save the handle
-    Sensor::sensor_thread = std::thread(Sensor::update_thread, &sensor, general_config.value("sensor_interval", 10));
+    Sensor::sensor_thread = std::thread(Sensor::update_thread, &sensor, 1);
     
 
     uv_loop_t* loop = uv_default_loop();

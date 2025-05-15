@@ -143,19 +143,11 @@ private:
     float alpha;  // Complementary filter constant  1-> only accelerometer
     float beta;    // Low-pass filter coefficient (adjust as needed)
     float dt = 0.03;  //30 millis
-
-    bool test_mode;
-
+    
     float roll_offset;   ///< roll offset in DEG
     float pitch_offset;  ///< pitch offset in DEG
     float yaw_offset;   ///< yaw offset in DEG
     float depth_offset;  ///< depth offset in meters
-
-    float simulate_temperature();
-    float simulate_depth();
-    float simulate_angle();
-    float simulate_acceleration();
-    float simulate_gyro();
 
     /**
      * @brief read all sensors, should be called at 100 Hz
@@ -198,71 +190,7 @@ private:
      */
     void write_sensor();
 
-
-    /**
-     * @brief get sensor status
-     * 
-     * @return int status can be compared to the constants values
-     */
-    int sensor_status_hadware();
-
-    /**
-     * @brief Get the internal temperature value
-     * 
-     * @return float temperature in C°
-     */
-    float get_internal_temperature_hardware();
-
-    /**
-     * @brief Get the external temperature value
-     * 
-     * @return float temperature in C°
-     */
-    float get_external_temperature_hardware();
-
-    /**
-     * @brief Get the depth
-     * 
-     * @return float depth in meters
-     */
-    float get_depth_hardware();
-
-    /**
-     * @brief Get the roll
-     * 
-     * @return float roll in DEG
-     */
-    float get_roll_hardware();
-
-    /**
-     * @brief Get the pitch object
-     * 
-     * @return float pitch in DEG
-     */
-    float get_pitch_hardware();
-
-    /**
-     * @brief Get the yaw object
-     * 
-     * @return float yaw in DEG
-     */
-    float get_yaw_hardware();
-
-    /**
-     * @brief Get the acc array (x, y, z)
-     * 
-     * @return float* array with the 3 axes accelleration in m/s^2
-     */
-    float* get_acc_hardware();
-
-    /**
-     * @brief Get the gyro array (x, y, z)
-     * 
-     * @return float* array with the 3 axes gyroscope in DEG/s^2
-     */
-    float* get_gyro_hardware();
-
-
     float get_Zspeed_hardware();
 };
+
 #endif // SENSOR_H

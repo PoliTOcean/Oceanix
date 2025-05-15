@@ -6,15 +6,14 @@ std::atomic<bool> Sensor::thread_running{true};
 std::thread Sensor::sensor_thread;
 
 Sensor::Sensor(const json& general_config, bool test_mode) 
-    : imu(Wt61(general_config["imu_loglevel"], general_config)), 
-    barometer(Bar02(general_config["bar02_loglevel"])),
+    : imu(Wt61(general_config["imu_loglevel"], general_config, test_mode)), 
+    barometer(Bar02(general_config["bar02_loglevel"], test_mode)),
     alpha(general_config["Zspeed_alpha"]),
     beta(general_config["Zspeed_beta"]),
     roll_offset(general_config["imu_roll_offset"]), 
     pitch_offset(general_config["imu_pitch_offset"]),
     yaw_offset(0),
-    depth_offset(0),
-    test_mode(test_mode) {
+    depth_offset(0) {
     
     barometer_values = {
         .state = false,
@@ -71,10 +70,6 @@ json Sensor::get_status() {
 
 // Function to check the status of all sensors and return a combined status
 int Sensor::sensor_status() {
-    if (test_mode) {
-        return IMU_OK | BAR_OK; // Simulate all sensors being OK in test mode
-    }
-
     int status = 0;
     std::unique_lock<std::mutex> lock(write_mtx);
     
@@ -192,78 +187,19 @@ void Sensor::update_parameters(const json& general_config) {
 
 // Function to read sensor data from all sensors
 void Sensor::read_sensor() {
-    if (test_mode) 
-        return; // In test mode, we don't read imu and barometer data
-
     imu.read_sensor();      // Read data from the IMU sensor
     barometer.read_sensor(); // Read data from the barometer
 }
 
-// Function to get internal temperature from the IMU sensor
-float Sensor::get_internal_temperature_hardware() {
-    if (test_mode) {
-        return simulate_temperature(); // Simulate temperature in test mode
-    }
-    return imu.get_temperature();
-}
-
-// Function to get external temperature from the barometer
-float Sensor::get_external_temperature_hardware() {
-    if (test_mode) {
-        return simulate_temperature(); // Simulate temperature in test mode
-    }
-    return barometer.get_temperature();
-}
-
-// Function to get depth (from the barometer)
-float Sensor::get_depth_hardware() {
-    if (test_mode) {
-        return simulate_depth(); // Simulate depth in test mode
-    }
-    float depth = barometer.get_depth();
-    float x = 0.134;
-    float y = -0.105;
-    float offset = 0;
-    
-    offset += sin(get_pitch_hardware()*DEGtoRAD) * x;
-    offset -= sin(get_roll_hardware()*DEGtoRAD) * y;
-    
-    return depth + offset;
-}
-
-// Function to get roll from the IMU sensor
-float Sensor::get_roll_hardware() {
-    if (test_mode) {
-        return simulate_angle(); // Simulate roll in test mode
-    }
-    return imu.get_roll();
-}
-
-// Function to get pitch from the IMU sensor
-float Sensor::get_pitch_hardware() {
-    if (test_mode) {
-        return simulate_angle(); // Simulate pitch in test mode
-    }
-    return imu.get_pitch();
-}
-
-// Function to get yaw from the IMU sensor
-float Sensor::get_yaw_hardware() {
-    if (test_mode) {
-        return simulate_angle(); // Simulate yaw in test mode
-    }
-    return imu.get_yaw();
-}
-
 float Sensor::get_Zspeed_hardware() {
-    float accel_z = get_acc_hardware()[2] + 9.80;
+    float accel_z = imu.get_acc()[2] + 9.80;
 
-    prev_depth=filtered_depth;
-    prev_speed=fused_speed;
+    prev_depth = filtered_depth;
+    prev_speed = fused_speed;
 
     // Step 1: Apply low-pass filter to acceleration and depth
     filtered_accel = lowPassFilter(accel_z, filtered_accel);
-    filtered_depth = lowPassFilter(get_depth_hardware(), filtered_depth);
+    filtered_depth = lowPassFilter(barometer.get_depth(), filtered_depth);
 
     // Step 2: Speed estimate from depth differentiation
     float speed_from_depth = (filtered_depth - prev_depth) / dt;
@@ -277,89 +213,59 @@ float Sensor::get_Zspeed_hardware() {
     return fused_speed;
 }
 
-// Function to get acceleration from the IMU sensor
-float* Sensor::get_acc_hardware() {
-    if (test_mode) {
-        static float acc[3] = {simulate_acceleration(), simulate_acceleration(), simulate_acceleration()};
-        return acc;
-    }
-    return imu.get_acc();
-}
-
-// Function to get gyroscope data from the IMU sensor
-float* Sensor::get_gyro_hardware() {
-    if (test_mode) {
-        static float gyro[3] = {simulate_gyro(), simulate_gyro(), simulate_gyro()};
-        return gyro;
-    }
-    return imu.get_gyro();
-}
-
-// Functions to generate simulated sensor data for IMU/Barometer (Sensor class level)
-float Sensor::simulate_temperature() {
-    return static_cast<float>(std::rand()) / RAND_MAX * 30; // Simulate temperature in range [0-30]
-}
-
-float Sensor::simulate_depth() {
-    return static_cast<float>(std::rand()) / RAND_MAX * 5; // Simulate depth in range [0-5]
-}
-
-float Sensor::simulate_angle() {
-    return static_cast<float>(std::rand()) / RAND_MAX * 20; // Simulate angle in range [0-20]
-}
-
-float Sensor::simulate_acceleration() {
-    return static_cast<float>((std::rand()) / RAND_MAX * 4) - 2; // Simulate acceleration in range [-2, 2]
-}
-
-float Sensor::simulate_gyro() {
-    return static_cast<float>((std::rand()) / RAND_MAX * 20) - 10; // Simulate gyro data in range [-10, 10]
-}
-
+// Simplify write_sensor function by calling sensor methods directly
 void Sensor::write_sensor() {
     Imu tmp_imu_values;
     Barometer tmp_barometer_values;
 
-    // First, get values from sensors
+    // Get Z speed (needs calculations from both sensors)
+    float z_speed = get_Zspeed_hardware();
 
-    // IMU related values
-    tmp_imu_values= {
+    // Now set all values directly from sensors
+    tmp_imu_values = {
         .state = imu.get_status() == 0,
-        .roll = get_roll_hardware(),
-        .pitch = get_pitch_hardware(),
-        .yaw = get_yaw_hardware(),
-        .z_speed = get_Zspeed_hardware(),
-        .acc = get_acc_hardware(),
-        .gyro = get_gyro_hardware(),
-        .internal_temperature = get_internal_temperature_hardware()
+        .roll = imu.get_roll(),
+        .pitch = imu.get_pitch(),
+        .yaw = imu.get_yaw(),
+        .z_speed = z_speed,
+        .acc = imu.get_acc(),
+        .gyro = imu.get_gyro(),
+        .internal_temperature = imu.get_temperature()
     };
- 
+    
+    // Calculate correction for depth based on orientation
+    float x = 0.134;
+    float y = -0.105;
+    float depth_offset_correction = 0;
+    
+    depth_offset_correction += sin(imu.get_pitch()*DEGtoRAD) * x;
+    depth_offset_correction -= sin(imu.get_roll()*DEGtoRAD) * y;
+    
     // Barometer related values
     tmp_barometer_values = {
         .state = barometer.get_status() == 0,
-        .depth = get_depth_hardware(),
-        .external_temperature = get_external_temperature_hardware(),
+        .depth = barometer.get_depth() + depth_offset_correction,
+        .external_temperature = barometer.get_temperature(),
     };
     
-    // Copy values in the shared struct, minimize mutex time overhead;
-
+    // Copy values to the shared structs with mutex protection
     std::unique_lock<std::mutex> lock(write_mtx);
-
     barometer_values = tmp_barometer_values;
     imu_values = tmp_imu_values;
-
     lock.unlock();
 }
 
 void Sensor::update_thread(Sensor *sensor, uint64_t timeout) {
     while (thread_running) {  // Check termination flag
+        //update simulation time in the sensor classes
+        float dt = 0.001f; // 1ms update
+        sensor->imu.update_simulation_time(dt);
+        sensor->barometer.update_simulation_time(dt);
+        
         sensor->read_sensor();
         sensor->write_sensor();
-        
-        // Use a shorter sleep to be more responsive to termination
-        for (int i = 0; i < 10 && thread_running; i++) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(timeout / 10));
-        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
     }
 }
 
