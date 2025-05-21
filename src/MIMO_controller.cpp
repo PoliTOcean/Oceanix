@@ -18,6 +18,7 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     
     float total_power=0;
     float* gyro;
+    double motor_commands[4] = {0.0, 0.0, 0.0, 0.0};
 
     for(int i=4; i<8; i++)
         total_power += motor_thrust[i];
@@ -28,6 +29,10 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
         controller_active = true;
     else{
         controller_active = false;
+        for (int i = 0; i < 4; i++) {
+            motor_commands[i] = motor_thrust[static_cast<int>(MotorID::UPFDX) + i];
+        }
+        mimo_controller.update_observer(motor_commands);
         return;
     }
     
@@ -38,7 +43,6 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     }
 
     if (state == CONTROL_OFF){
-        double motor_commands[4] = {0.0, 0.0, 0.0, 0.0};
         for (int i = 0; i < 4; i++) {
             motor_commands[i] = motor_thrust[static_cast<int>(MotorID::UPFDX) + i];
         }

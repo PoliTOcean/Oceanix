@@ -8,7 +8,8 @@
 #include "motors.hpp"
 #include "logger.hpp"
 #include "control_allocation.hpp"
-#include "PolePlacementControl.h"
+#include "PolePlacementControl.h" // For ControlSystemZ
+#include "PIDController.hpp"      // Include the new PIDController header
 
 using json = nlohmann::json;
 
@@ -22,8 +23,8 @@ private:
     bool controller_active;         /// controller internal state
     bool controller_active_old;     /// last controller internal state
     float reference_z;              /// reference depth
-    float reference_roll;           /// reference CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH
-    float reference_pitch;          /// reference pitch
+    float reference_roll;           /// reference roll (degrees)
+    float reference_pitch;          /// reference pitch (degrees)
     bool c_verbose;                   /// verbose mode
     float force_z;                   /// force on z axis
     float force_roll;                /// force on roll axis
@@ -31,8 +32,9 @@ private:
     Logger logger;
     Sensor& sensor;                  /// sensor class
     ControlSystemZ control_z;
-    ControlSystemPITCH control_pitch;
-    ControlSystemROLL control_roll;
+    PIDController pid_pitch_controller_; // New PID for pitch
+    PIDController pid_roll_controller_;  // New PID for roll
+    double dt_;                         // Control loop delta-time in seconds
 
 public:
     /**
@@ -41,7 +43,7 @@ public:
      * @param jsonConfig Pointer to the json object with the configuration.
      * @param verbose if true [INFO] are printed
      */
-    PPController(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel);
+    PPController(Sensor& sensor, json jsonConfig, logLevel minimumLoglevel, float dt);
 
     /**
     * @brief the variable state is controlled from external methods, changes following inputs from the gui

@@ -22,7 +22,28 @@ ControlSystemZ::ControlSystemZ(double minForce, double maxForce, double minError
     cZ_inf(cZ_inf)
 
 {
+    reset();   
+}
 
+void ControlSystemZ::set_parameters(double minForce_new, double maxForce_new, double weight_new, double buoyancy_new, double denFHeave2_new, double numFHeave1_new, double numFHeave2_new, double denCHeave2_new, double denCHeave3_new, double numCHeave2_new, double numCHeave3_new, double cZ_inf_new)
+{
+    this->minForce = minForce_new;
+    this->maxForce = maxForce_new;
+    this->weight = weight_new;
+    this->buoyancy = buoyancy_new;
+    this->denFHeave2 = denFHeave2_new;
+    this->numFHeave1 = numFHeave1_new;
+    this->numFHeave2 = numFHeave2_new;
+    this->denCHeave2 = denCHeave2_new;
+    this->denCHeave3 = denCHeave3_new;
+    this->numCHeave2 = numCHeave2_new;
+    this->numCHeave3 = numCHeave3_new;
+    this->cZ_inf = cZ_inf_new;
+    reset();
+}
+
+void ControlSystemZ::reset()
+{
     this->oldDOF2Reference= 0.0;
     this->old2DOF2Reference= 0.0;
     this->oldReference= 0.0;
@@ -30,9 +51,9 @@ ControlSystemZ::ControlSystemZ(double minForce, double maxForce, double minError
     this->oldAntiWindUpSignal= 0.0;
     this->old2AntiWindUpSignal= 0.0;
     this->oldForce= 0.0;
-    this->old2Force= 0.0;       
-    
+    this->old2Force= 0.0;  
 }
+
 
 ControlSystemPITCH::ControlSystemPITCH(double minForce, double maxForce, double minError, double weight, double buoyancy, double denFPitch2, double denFPitch3, double numFPitch2, double numFPitch3, double denCPitch2, double denCPitch3, double numCPitch2, double numCPitch3, double cPITCH_inf):
     
@@ -53,7 +74,25 @@ ControlSystemPITCH::ControlSystemPITCH(double minForce, double maxForce, double 
 
    
 {
+    reset();
+}
 
+void ControlSystemPITCH::set_parameters(double denFPitch2_new, double denFPitch3_new, double numFPitch2_new, double numFPitch3_new, double denCPitch2_new, double denCPitch3_new, double numCPitch2_new, double numCPitch3_new, double cPITCH_inf_new)
+{
+    this->denFPitch2 = denFPitch2_new;
+    this->denFPitch3 = denFPitch3_new;
+    this->numFPitch2 = numFPitch2_new;
+    this->numFPitch3 = numFPitch3_new;
+    this->denCPitch2 = denCPitch2_new;
+    this->denCPitch3 = denCPitch3_new;
+    this->numCPitch2 = numCPitch2_new;
+    this->numCPitch3 = numCPitch3_new;
+    this->cPITCH_inf = cPITCH_inf_new;
+    reset();
+}
+
+void ControlSystemPITCH::reset()
+{
     this->oldDOF2Reference= 0.0;
     this->old2DOF2Reference= 0.0;
     this->oldReference= 0.0;
@@ -62,8 +101,8 @@ ControlSystemPITCH::ControlSystemPITCH(double minForce, double maxForce, double 
     this->old2AntiWindUpSignal= 0.0;
     this->oldForce= 0.0;
     this->old2Force= 0.0;  
-
 }
+
 
 ControlSystemROLL::ControlSystemROLL(double minForce, double maxForce, double minError, double weight, double buoyancy, double denCRoll2, double denCRoll3, double numCRoll2, double numCRoll3, double cROLL_inf):
     
@@ -79,7 +118,21 @@ ControlSystemROLL::ControlSystemROLL(double minForce, double maxForce, double mi
     cROLL_inf(cROLL_inf)
    
 {
+    reset();    
+}
 
+void ControlSystemROLL::set_parameters(double denCRoll2_new, double denCRoll3_new, double numCRoll2_new, double numCRoll3_new, double cROLL_inf_new)
+{
+    this->denCRoll2 = denCRoll2_new;
+    this->denCRoll3 = denCRoll3_new;
+    this->numCRoll2 = numCRoll2_new;
+    this->numCRoll3 = numCRoll3_new;
+    this->cROLL_inf = cROLL_inf_new;
+    reset();
+}
+
+void ControlSystemROLL::reset()
+{
     this->oldDOF2Reference= 0.0;
     this->old2DOF2Reference= 0.0;
     this->oldReference= 0.0;
@@ -88,7 +141,6 @@ ControlSystemROLL::ControlSystemROLL(double minForce, double maxForce, double mi
     this->old2AntiWindUpSignal= 0.0;
     this->oldForce= 0.0;
     this->old2Force= 0.0;       
-    
 }
 
 

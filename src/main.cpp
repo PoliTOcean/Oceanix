@@ -160,7 +160,7 @@ int main(int argc, char* argv[]){
         controller = new MIMOController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
         logger->log(logINFO,"Loaded MIMO controller");
     } else if (controllerType == "PP") {
-        controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"]);
+        controller = new PPController(sensor, config.get_config(ConfigType::CONTROLLER)[controllerType], general_config["controller_loglevel"], general_config["motor_interval"]);
         logger->log(logINFO,"Loaded Pole Placement controller");
     } else {
         logger->log(logERROR,"INVALID CONTROLLER TYPE");
