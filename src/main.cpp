@@ -71,6 +71,10 @@ json json_axes = {
 typedef enum {
     ARM_ROV,
     CHANGE_CONTROLLER_STATUS,
+    CHANGE_CONTROLLER_PROFILE,
+    CHANGE_PITCH_STATUS,
+    CHANGE_ROLL_STATUS,
+    CHANGE_DEPTH_STATUS,
     PITCH_REFERENCE_UPDATE,
     ROLL_REFERENCE_UPDATE,
     DEPTH_REFERENCE_UPDATE,
@@ -117,6 +121,10 @@ int main(int argc, char* argv[]){
     
     state_mapper["ARM_ROV"] = ARM_ROV;
     state_mapper["CHANGE_CONTROLLER_STATUS"] = CHANGE_CONTROLLER_STATUS;
+    state_mapper["CHANGE_CONTROLLER_PROFILE"] = CHANGE_CONTROLLER_PROFILE;
+    state_mapper["CHANGE_PITCH_STATUS"] = CHANGE_PITCH_STATUS;
+    state_mapper["CHANGE_ROLL_STATUS"] = CHANGE_ROLL_STATUS;
+    state_mapper["CHANGE_DEPTH_STATUS"] = CHANGE_DEPTH_STATUS;
     state_mapper["PITCH_REFERENCE_UPDATE"] = PITCH_REFERENCE_UPDATE;
     state_mapper["ROLL_REFERENCE_UPDATE"] = ROLL_REFERENCE_UPDATE;
     state_mapper["DEPTH_REFERENCE_UPDATE"] = DEPTH_REFERENCE_UPDATE;
@@ -307,8 +315,8 @@ void timer_com_callback(uv_timer_t* handle){
             data->nucleo->send_arm(msg.second.begin().key());
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
-            logMessage << "config message: " << msg.second.dump();
-            logger->log(logINFO, logMessage.str());
+            //logMessage << "config message: " << msg.second.dump();
+            //logger->log(logINFO, logMessage.str());
             
             data->config->change_config(msg.second);
             data->config->write_base_config();
@@ -333,6 +341,7 @@ void timer_com_callback(uv_timer_t* handle){
 void state_commands(json msg, Timer_data* data){
     state_commands_map cmd = NONE;
     float current_ref=0;
+    uint8_t profile;
     std::ostringstream logMessage;
     json conf;
     try{
@@ -357,13 +366,93 @@ void state_commands(json msg, Timer_data* data){
                 break;
             case CHANGE_CONTROLLER_STATUS:
                 controller_state = !controller_state;
-                if(controller_state)
+                if(controller_state){
                     data->controller->activate(general_config["controller_profile"]);
-                else
+                    logger->log(logINFO, "Controller ACTIVATED with profile: " + std::to_string((int)general_config["controller_profile"]));
+                }
+                else{
                     data->controller->deactivate(CONTROL_ALL);
+                    logger->log(logINFO, "Controller DEACTIVATED");
+                }
+                break;
+            case CHANGE_CONTROLLER_PROFILE:
+                profile = (uint8_t)msg["CHANGE_CONTROLLER_PROFILE"];
+                general_config["controller_profile"] = profile;
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Controller profile changed to: " << std::to_string(profile);
+                logger->log(logINFO, logMessage.str());
+                if(controller_state){
+                    // Deactivate axes that are in CONTROL_ALL but not in the new profile
+                    data->controller->deactivate(CONTROL_ALL & (~profile));
+                    // Activate all axes specified in the new profile
+                    data->controller->activate(profile);
+                }
+                break;
+            case CHANGE_PITCH_STATUS:
+                {
+                    uint8_t current_profile_val = general_config["controller_profile"];
+                    bool pitch_is_active = (current_profile_val & CONTROL_PITCH);
+
+                    if (pitch_is_active) {
+                        general_config["controller_profile"] = current_profile_val & ~CONTROL_PITCH;
+                        if (controller_state) {
+                            data->controller->deactivate(CONTROL_PITCH);
+                        }
+                        logger->log(logINFO, "Pitch control DEACTIVATED");
+                    } else {
+                        general_config["controller_profile"] = current_profile_val | CONTROL_PITCH;
+                        if (controller_state) {
+                            data->controller->activate(CONTROL_PITCH);
+                        }
+                        logger->log(logINFO, "Pitch control ACTIVATED");
+                    }
+                }
+                break;
+            case CHANGE_ROLL_STATUS:
+                {
+                    uint8_t current_profile_val = general_config["controller_profile"];
+                    bool roll_is_active = (current_profile_val & CONTROL_ROLL);
+
+                    if (roll_is_active) {
+                        general_config["controller_profile"] = current_profile_val & ~CONTROL_ROLL;
+                        if (controller_state) {
+                            data->controller->deactivate(CONTROL_ROLL);
+                        }
+                        logger->log(logINFO, "Roll control DEACTIVATED");
+                    } else {
+                        general_config["controller_profile"] = current_profile_val | CONTROL_ROLL;
+                        if (controller_state) {
+                            data->controller->activate(CONTROL_ROLL);
+                        }
+                        logger->log(logINFO, "Roll control ACTIVATED");
+                    }
+                }
+                break;
+            case CHANGE_DEPTH_STATUS:
+                {
+                    uint8_t current_profile_val = general_config["controller_profile"];
+                    bool depth_is_active = (current_profile_val & CONTROL_Z);
+
+                    if (depth_is_active) {
+                        general_config["controller_profile"] = current_profile_val & ~CONTROL_Z;
+                        if (controller_state) {
+                            data->controller->deactivate(CONTROL_Z);
+                        }
+                        logger->log(logINFO, "Depth control DEACTIVATED");
+                    } else {
+                        general_config["controller_profile"] = current_profile_val | CONTROL_Z;
+                        if (controller_state) {
+                            data->controller->activate(CONTROL_Z);
+                        }
+                        logger->log(logINFO, "Depth control ACTIVATED");
+                    }
+                }
                 break;
             case PITCH_REFERENCE_UPDATE:
                 data->controller->set_reference(CONTROL_PITCH, msg["PITCH_REFERENCE_UPDATE"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Pitch reference updated to: " << msg["PITCH_REFERENCE_UPDATE"].dump();
+                logger->log(logINFO, logMessage.str());
                 break;
             case ROLL_REFERENCE_UPDATE:
                 data->controller->set_reference(CONTROL_ROLL, msg["ROLL_REFERENCE_UPDATE"]);
@@ -389,15 +478,18 @@ void state_commands(json msg, Timer_data* data){
             case REQUEST_CONFIG:
                 conf = data->config->get_config(ConfigType::ALL);
                 data->mqtt_client->send_msg(conf.dump(), Topic::CONFIG);
+                logger->log(logINFO, "Configuration requested and sent.");
                 break;
             case WORK_MODE:
                 motors_work_mode =! motors_work_mode;
 
                 if(motors_work_mode){
                     data->motors->set_thrust_max(motors_config["thrust_max_xy_work"], motors_config["thrust_max_z_work"]);
+                    logger->log(logINFO, "Work mode ACTIVATED. Max thrust set to work values.");
                 }
                 else{
                     data->motors->set_thrust_max(motors_config["thrust_max_xy"], motors_config["thrust_max_z"]);
+                    logger->log(logINFO, "Work mode DEACTIVATED. Max thrust set to default values.");
                 }
                 break;
             case NONE:

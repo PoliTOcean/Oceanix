@@ -196,7 +196,7 @@
             "output_max_roll": 1.5,
             "output_min_pitch": -3.0,
             "output_min_roll": -1.5,
-            "weight": 190
+            "weight": 190.0
         }
     },
     "General": {

@@ -139,7 +139,7 @@ void Motors::set_thrust_max(float new_thrust_max_xy, float new_thrust_max_z){
         for(int i=0; i<4; i++)
             motors[i].set_thrust_max(thrust_max_xy);
 
-        logMessage << "new motor thrust max for xy: " << thrust_max_xy << std::endl;
+        logMessage << "new motor thrust max for xy: " << thrust_max_xy;
         logger.log(logINFO, logMessage.str());
     }
     
@@ -149,7 +149,7 @@ void Motors::set_thrust_max(float new_thrust_max_xy, float new_thrust_max_z){
         for(int i=4; i<8; i++)
             motors[i].set_thrust_max(thrust_max_z);
         
-        logMessage << "new motor thrust max for z: " << thrust_max_z << std::endl;
+        logMessage << ", z: " << thrust_max_z;
         logger.log(logINFO, logMessage.str());
     }
 }
