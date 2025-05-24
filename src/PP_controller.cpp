@@ -67,14 +67,14 @@ void PPController::calculate(float* motor_thrust) {  //directly modify the motor
         force_z = control_z.calculateZ(reference_z, sensor.get_depth());
     
     if(state & CONTROL_ROLL && controller_active) {
-        force_roll = pid_roll_controller_.calculate(reference_roll * DEGtoRAD, sensor.get_roll() * DEGtoRAD, dt_);
+        force_roll = pid_roll_controller_.calculate_with_measured_derivative(reference_roll * DEGtoRAD, sensor.get_roll() * DEGtoRAD, sensor.get_gyro()[0] * DEGtoRAD, dt_);
     } else {
         pid_roll_controller_.reset(); 
         force_roll = 0;
     }
 
     if(state & CONTROL_PITCH && controller_active) {
-        force_pitch = pid_pitch_controller_.calculate(reference_pitch * DEGtoRAD, sensor.get_pitch() * DEGtoRAD, dt_);
+        force_pitch = pid_pitch_controller_.calculate_with_measured_derivative(reference_pitch * DEGtoRAD, sensor.get_pitch() * DEGtoRAD, sensor.get_gyro()[1] * DEGtoRAD, dt_);
     } else {
         pid_pitch_controller_.reset(); 
         force_pitch = 0;

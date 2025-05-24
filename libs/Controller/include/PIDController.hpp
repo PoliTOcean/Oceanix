@@ -16,6 +16,8 @@ public:
                         double integral_min, double integral_max);
 
     double calculate(double setpoint, double current_value, double dt);
+    double calculate_with_measured_derivative(double setpoint, double current_value, 
+                                             double measured_derivative, double dt);
     void reset();
 
     double get_integral_term() const;

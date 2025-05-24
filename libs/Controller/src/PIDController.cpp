@@ -61,6 +61,37 @@ double PIDController::calculate(double setpoint, double current_value, double dt
     return std::max(output_min_, std::min(output, output_max_));
 }
 
+double PIDController::calculate_with_measured_derivative(double setpoint, double current_value, 
+                                                        double measured_derivative, double dt) {
+    if (dt <= 0.0 || std::isinf(dt) || std::isnan(dt)) {
+        // Invalid dt, return 0 or handle error appropriately
+        return 0.0;
+    }
+
+    double error = setpoint - current_value;
+
+    // Proportional term
+    double p_term = kp_ * error;
+
+    // Integral term (with anti-windup)
+    integral_term_ += ki_ * error * dt;
+    integral_term_ = std::max(integral_min_, std::min(integral_term_, integral_max_));
+
+    // Derivative term uses measured derivative directly
+    // Note the negative sign - we want to dampen the motion
+    double d_term = -kd_ * measured_derivative;
+
+    // Total output
+    double output = p_term + integral_term_ + d_term;
+
+    // Store error for next iteration (for consistency, though not used for derivative)
+    prev_error_ = error;
+    first_calculation_ = false; // Set to false after first call
+
+    // Clamp output to limits
+    return std::max(output_min_, std::min(output, output_max_));
+}
+
 void PIDController::reset() {
     integral_term_ = 0.0;
     prev_error_ = 0.0;

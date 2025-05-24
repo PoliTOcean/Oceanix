@@ -52,10 +52,10 @@ const float Array_PWM_Relative_12V_Kgf [MAX_ROWS] = {1100, 1104, 1108, 1112, 111
 // Indices represent the row and column indexes of the TCM
 #define a53 0.270321738048842
 #define a54 1.845433061072183
-#define a55 -1.123595505617978
+#define a55 -1.4                //-1.123595505617978
 #define a63 0.275856793399395
 #define a64 -1.844603839296819
-#define a65 -1.123595505617978 
+#define a65 -1.4                //-1.123595505617978
 #define a73 0.224143206600606
 #define a74 1.844603839296820
 #define a75 1.123595505617978
