@@ -7,10 +7,7 @@
 #include "json.hpp"
 #include "nucleo_protocol.hpp"
 #include "nucleo.hpp"
-#include <pigpio.h>
 #include "logger.hpp"
-
-#define RST_PIN 17
 
 const int motorN = 8;
 const int arm_package_size = 1;

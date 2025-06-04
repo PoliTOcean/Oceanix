@@ -17,7 +17,6 @@
 #include <uv.h>
 #include <chrono>
 #include <iostream>
-#include <pigpio.h>
 #include <thread>
 #include <csignal>
 #include <json.hpp>

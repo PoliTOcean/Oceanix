@@ -63,11 +63,7 @@ COMM_STATUS Nucleo::init(int n_tries) {
     }
 
     COMM_STATUS init_status;
-    if(gpioInitialise()<0) logger.log(logERROR, "FAILED GPIO INIT");
     for(int i=0; i<n_tries; i++){
-        gpioSetMode(RST_PIN, PI_INPUT);
-        gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         m_protocol.connect();
         init_status = (m_protocol.init(starting_frequency));
         if(init_status == COMM_STATUS::OK){
@@ -76,11 +72,8 @@ COMM_STATUS Nucleo::init(int n_tries) {
             logger.log(logINFO,"INIT SUCCESS");
             break; //Exits from the for cycle
         }
-        gpioSetMode(RST_PIN, PI_OUTPUT);
-        gpioWrite(RST_PIN, 0);
-
         logger.log(logERROR,"INIT FAILED");
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     return init_status;

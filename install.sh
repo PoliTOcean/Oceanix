@@ -62,15 +62,6 @@ else
     echo "libuv is already installed."
 fi
 
-# Check for pigpio
-if ! dpkg -s pigpio >/dev/null 2>&1; then
-    echo "pigpio is not correctly installed. Installing pigpio..."
-    sudo apt-get update
-    sudo apt-get install -y pigpio pigpiod libpigpio-dev
-else
-    echo "pigpio is already installed."
-fi
-
 # Check for Eclipse Paho MQTT C and C++ libraries
 if ! ls /usr/local/lib | grep -q "libpaho-mqtt3as\|libpaho-mqttpp3"; then
     echo "Eclipse Paho MQTT libraries are not installed. Installing Eclipse Paho MQTT libraries..."
