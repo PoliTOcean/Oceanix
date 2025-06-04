@@ -58,3 +58,32 @@ OutputValues compute_thrust(double Fz, double Fr, double Fp)  // Compute the PWM
 
     return result;
 }
+
+
+OutputValues compute_thrust_vertical(double Fz, double Fr, double Fp)  // Compute the PWM signal from Forces that comes from the Controller 
+{
+    OutputValues result;
+
+    // Computation of thrust forces
+    result.T5 = a55 * Fp;
+    result.T6 = a65 * Fp;
+    result.T7 = a75 * Fp;
+    result.T8 = a85 * Fp;
+
+    result.T1 = 0.7 * Fz;
+    result.T2 = 0.7 * Fz;
+    result.T3 = -0.7 * Fz;
+    result.T4 = -0.7 * Fz;
+
+    // Conversion into Kgf
+    result.T1=result.T1/9.8;
+    result.T2=result.T2/9.8;
+    result.T3=result.T3/9.8;
+    result.T4=result.T4/9.8;
+    result.T5=result.T5/9.8;
+    result.T6=result.T6/9.8;
+    result.T7=result.T7/9.8;
+    result.T8=result.T8/9.8;
+
+    return result;
+}

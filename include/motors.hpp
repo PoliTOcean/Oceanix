@@ -44,11 +44,20 @@ public:
     Motors(json config, logLevel minimumLoglevel);
 
     /**
-    * @brief calculate thrust of all the motors
+    * @brief calculate thrust of all the motors based on ROV's frame of reference
     * @param json from the 4 movement axes
     * @return pointer to motor_thrust array
     */
     float* calculate_thrust(json axes);
+
+    /**
+    * @brief calculate thrust of all the motors based on a global/horizontal frame of reference (vertical mode)
+    * @param json from the 4 movement axes
+    * @param roll_rad current ROV roll in radians
+    * @param pitch_rad current ROV pitch in radians
+    * @return pointer to motor_thrust array
+    */
+    float* calculate_thrust_vertical(json axes, float roll_rad, float pitch_rad);
 
     /**
      * @brief generate pwm value from internal motor_thrust

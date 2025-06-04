@@ -51,6 +51,8 @@ public:
     */
     void calculate(float* motor_thrust) override;
 
+    void calculate_vertical_mode(float* motor_thrust, json axes);
+
     /**
      * @brief control the state of the controller activating the corresponding section
      *

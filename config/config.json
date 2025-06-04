@@ -243,6 +243,6 @@
         "thrust_max_xy_work": 0.8,
         "thrust_max_z": 1.8,
         "thrust_max_z_work": 1.0,
-        "thrust_slew_rate_max": 0.6
+        "thrust_slew_rate_max": 0.5
     }
 }

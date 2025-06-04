@@ -84,15 +84,16 @@ typedef enum {
     THRUST_MAX_OFFSET,
     REQUEST_CONFIG,
     WORK_MODE,
+    VERTICAL_MODE_TOGGLE,
     NONE
 } state_commands_map;
 std::map <std::string, state_commands_map> state_mapper;
 
 uint8_t rov_armed=0;
-uint8_t nucleo_connected=0;
 uint8_t motors_work_mode=0;
 uint8_t motor_status_counter=0;
 uint8_t motor_status_counter_max=0;
+uint8_t vertical_mode=0;
 
 uint8_t controller_state=CONTROL_OFF;
 Logger *logger;
@@ -134,6 +135,7 @@ int main(int argc, char* argv[]){
     state_mapper["THRUST_MAX_OFFSET"] = THRUST_MAX_OFFSET;
     state_mapper["REQUEST_CONFIG"] = REQUEST_CONFIG;
     state_mapper["WORK_MODE"] = WORK_MODE;
+    state_mapper["VERTICAL_MODE_TOGGLE"] = VERTICAL_MODE_TOGGLE;
     state_mapper["NONE"] = NONE;
 
     Logger::configLogTypeCout(true);
@@ -157,7 +159,7 @@ int main(int argc, char* argv[]){
 
     logger = new Logger(MAIN_LOG_NAME, general_config["main_loglevel"]);
     Nucleo nucleo = Nucleo(0, 115200, 0x01, 0x00, general_config["nucleo_loglevel"], 2, 0x04, test_mode); // true to mantain compatibility
-    nucleo_connected = nucleo.init(5) == COMM_STATUS::OK;
+    nucleo.init(5);
 
 
     Sensor sensor = Sensor(general_config, test_mode); 
@@ -244,9 +246,18 @@ void timer_motors_callback(uv_timer_t* handle) {
     Timer_data* data = static_cast<Timer_data*>(handle->data);
 
     if(rov_armed){
-        motor_thrust = data->motors->calculate_thrust(json_axes);
-        // data->sensor->read_sensor(); -> Deprecated
-        data->controller->calculate(motor_thrust);
+        if (vertical_mode) {
+            float current_roll_rad = data->sensor->get_roll() * DEGtoRAD;
+            float current_pitch_rad = data->sensor->get_pitch() * DEGtoRAD;
+            current_pitch_rad = data->controller->get_reference(CONTROL_PITCH) * DEGtoRAD;
+            motor_thrust = data->motors->calculate_thrust_vertical(json_axes, current_roll_rad, current_pitch_rad);
+        } else {
+            motor_thrust = data->motors->calculate_thrust(json_axes);
+        }
+        if (vertical_mode>0)
+            data->controller->calculate_vertical_mode(motor_thrust, json_axes);
+        else
+            data->controller->calculate(motor_thrust);
     }
     else
         motor_thrust = data->motors->calculate_thrust(json_axes_off);
@@ -290,8 +301,9 @@ void timer_motors_callback(uv_timer_t* handle) {
         data->system_monitor->read_info();
         rov_status_json.update(data->system_monitor->get_status());
         rov_status_json["rov_armed"] = (rov_armed) ? "OK" : "OFF";
-        rov_status_json["nucleo_connected"] = (nucleo_connected) ? "OK" : "OFF";
+        rov_status_json["nucleo_connected"] = (data->nucleo->is_connected()) ? "OK" : "OFF";
         rov_status_json["work_mode"] = (motors_work_mode) ? "OK" : "OFF";
+        rov_status_json["vertical_mode"] = vertical_mode;
 
         if(!rov_status_json.empty())
             data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);
@@ -311,13 +323,13 @@ void timer_com_callback(uv_timer_t* handle){
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::COMMANDS))
             state_commands(msg.second, data);
         
-        else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM))
+        else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM)){
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
             data->nucleo->send_arm(msg.second.begin().key());
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
-            //logMessage << "config message: " << msg.second.dump();
-            //logger->log(logINFO, logMessage.str());
-            
             data->config->change_config(msg.second);
             data->config->write_base_config();
             general_config = data->config->get_config(ConfigType::GENERAL);
@@ -335,7 +347,6 @@ void timer_com_callback(uv_timer_t* handle){
     }
 
     data->nucleo->update_buffer();
-    nucleo_connected = data->nucleo->is_connected();
 }
 
 void state_commands(json msg, Timer_data* data){
@@ -456,24 +467,42 @@ void state_commands(json msg, Timer_data* data){
                 break;
             case ROLL_REFERENCE_UPDATE:
                 data->controller->set_reference(CONTROL_ROLL, msg["ROLL_REFERENCE_UPDATE"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Roll reference updated to: " << msg["ROLL_REFERENCE_UPDATE"].dump();
+                logger->log(logINFO, logMessage.str());
                 break;
             case DEPTH_REFERENCE_UPDATE:
                 data->controller->set_reference(CONTROL_Z, msg["DEPTH_REFERENCE_UPDATE"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Depth reference updated to: " << msg["DEPTH_REFERENCE_UPDATE"].dump();
+                logger->log(logINFO, logMessage.str());
                 break;
             case PITCH_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_PITCH);
                 data->controller->set_reference(CONTROL_PITCH, current_ref + (float)msg["PITCH_REFERENCE_OFFSET"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Pitch reference offset by: " << msg["PITCH_REFERENCE_OFFSET"].dump() << ". New reference: " << data->controller->get_reference(CONTROL_PITCH);
+                logger->log(logINFO, logMessage.str());
                 break;
             case ROLL_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_ROLL);
                 data->controller->set_reference(CONTROL_ROLL, current_ref + (float)msg["ROLL_REFERENCE_OFFSET"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Roll reference offset by: " << msg["ROLL_REFERENCE_OFFSET"].dump() << ". New reference: " << data->controller->get_reference(CONTROL_ROLL);
+                logger->log(logINFO, logMessage.str());
                 break;
             case DEPTH_REFERENCE_OFFSET:
                 current_ref = data->controller->get_reference(CONTROL_Z);
                 data->controller->set_reference(CONTROL_Z, current_ref + (float)msg["DEPTH_REFERENCE_OFFSET"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Depth reference offset by: " << msg["DEPTH_REFERENCE_OFFSET"].dump() << ". New reference: " << data->controller->get_reference(CONTROL_Z);
+                logger->log(logINFO, logMessage.str());
                 break;
             case THRUST_MAX_OFFSET:
                 data->motors->offset_thrust_max(msg["THRUST_MAX_OFFSET"]);
+                logMessage.str(""); logMessage.clear();
+                logMessage << "Max thrust offset by: " << msg["THRUST_MAX_OFFSET"].dump();
+                logger->log(logINFO, logMessage.str());
                 break;
             case REQUEST_CONFIG:
                 conf = data->config->get_config(ConfigType::ALL);
@@ -490,6 +519,22 @@ void state_commands(json msg, Timer_data* data){
                 else{
                     data->motors->set_thrust_max(motors_config["thrust_max_xy"], motors_config["thrust_max_z"]);
                     logger->log(logINFO, "Work mode DEACTIVATED. Max thrust set to default values.");
+                }
+                break;
+            case VERTICAL_MODE_TOGGLE:
+                vertical_mode++;
+                vertical_mode %= 3;
+                if(vertical_mode==1){
+                    logger->log(logINFO, "Vertical mode UP ACTIVATED.");
+                    data->controller->set_reference(CONTROL_PITCH, 90.0);
+                }
+                else if(vertical_mode==2){
+                    logger->log(logINFO, "Vertical mode DOWN ACTIVATED.");
+                    data->controller->set_reference(CONTROL_PITCH, -90.0);
+                }
+                else{
+                    logger->log(logINFO, "Vertical mode DEACTIVATED.");
+                    data->controller->set_reference(CONTROL_PITCH, 0.0);
                 }
                 break;
             case NONE:

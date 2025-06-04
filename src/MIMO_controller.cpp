@@ -69,6 +69,10 @@ void MIMOController::calculate(float* motor_thrust) {  //directly modify the mot
     motor_thrust[static_cast<int>(MotorID::UPRSX)] = (float) mimo_controller.rtY.u[3];
 }
 
+void MIMOController::calculate_vertical_mode(float* motor_thrust, json axes) {
+    return;
+}
+
 void MIMOController::activate(uint8_t ref_type) {
     // Check that ref_type has at maximum the first 3 bits set
     if ((ref_type & CONTROL_ALL) == ref_type)  

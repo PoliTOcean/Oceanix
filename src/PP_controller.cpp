@@ -88,6 +88,72 @@ void PPController::calculate(float* motor_thrust) {  //directly modify the motor
     motor_thrust[static_cast<int>(MotorID::UPRSX)] = thrust.T8;
 }
 
+void PPController::calculate_vertical_mode(float* motor_thrust, json axes) {  //directly modify the motor_thrust array from motors class
+    std::ostringstream message;
+    
+    force_z=0;
+    force_roll=0;
+    force_pitch=0;
+    
+    controller_active_old = controller_active;
+
+    if(std::abs((float)axes["Z"])<1000 && state!=CONTROL_OFF && sensor.get_depth()>0.1) 
+        controller_active=true;
+    else{
+        controller_active=false;
+        //pid_roll_controller_.reset();
+        pid_pitch_controller_.reset();
+        return;
+    }
+    
+    if(controller_active==true && controller_active_old==false){
+        reference_z=sensor.get_depth();
+        //pid_roll_controller_.reset(); // Reset PID state
+        pid_pitch_controller_.reset(); // Reset PID state
+
+        if(c_verbose){ 
+            message.str(""); 
+            message  << "control Z vertical mode active at depth " << reference_z;
+            logger.log(logINFO, message.str()); 
+        }
+    }
+
+    if(state == CONTROL_OFF)
+        return;
+
+    if(state & CONTROL_Z && controller_active)
+        force_z = control_z.calculateZ(reference_z, sensor.get_depth());
+    
+    if(state & CONTROL_ROLL && controller_active) {
+        //force_roll = pid_roll_controller_.calculate_with_measured_derivative(reference_roll * DEGtoRAD, sensor.get_roll() * DEGtoRAD, sensor.get_gyro()[0] * DEGtoRAD, dt_);
+        force_roll = 0;
+    } else {
+        pid_roll_controller_.reset(); 
+        force_roll = 0;
+    }
+
+    if(state & CONTROL_PITCH && controller_active) {
+        force_pitch = pid_pitch_controller_.calculate_with_measured_derivative(reference_pitch * DEGtoRAD, sensor.get_pitch() * DEGtoRAD, sensor.get_gyro()[1] * DEGtoRAD, dt_);
+    } else {
+        pid_pitch_controller_.reset(); 
+        force_pitch = 0;
+    }
+
+    if(sensor.get_pitch()<0.0f)
+        force_z = -force_z; // Invert force_z if pitch is negative to maintain vertical thrust direction
+    
+    OutputValues thrust = compute_thrust_vertical(force_z, force_roll, force_pitch);
+
+    motor_thrust[static_cast<int>(MotorID::FDX)] += thrust.T1;
+    motor_thrust[static_cast<int>(MotorID::FSX)] += thrust.T2;
+    motor_thrust[static_cast<int>(MotorID::RDX)] += thrust.T3;
+    motor_thrust[static_cast<int>(MotorID::RSX)] += thrust.T4;
+    motor_thrust[static_cast<int>(MotorID::UPFDX)] += thrust.T5;
+    motor_thrust[static_cast<int>(MotorID::UPFSX)] += thrust.T6;
+    motor_thrust[static_cast<int>(MotorID::UPRDX)] += thrust.T7;
+    motor_thrust[static_cast<int>(MotorID::UPRSX)] += thrust.T8;
+}
+
 void PPController::activate(uint8_t ref_type) {
     if((ref_type & CONTROL_ALL) == ref_type)  // Check that ref_type has at maximum the first 3 bits set
         state |= ref_type;
