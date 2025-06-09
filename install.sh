@@ -115,6 +115,9 @@ if ! command_exists mosquitto; then
     cat <<EOF | sudo tee /etc/mosquitto/conf.d/oceanix.conf
 listener 1883 0.0.0.0  # Allow all IPv4 connections
 allow_anonymous true   # Allow unauthenticated clients (for testing)
+listener 9000 0.0.0.0
+protocol websockets
+connection_messages true
 EOF
     
     sudo service mosquitto start

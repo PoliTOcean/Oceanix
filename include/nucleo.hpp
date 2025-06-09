@@ -22,6 +22,7 @@ class Nucleo {
         COMM_STATUS init(int n_tries);
         std::pair<COMM_STATUS, std::optional<std::vector<uint8_t>>> get_heartbeat(); // use auto
         void update_buffer();
+        bool is_torque_on();
 
         ssize_t send_pwm(uint16_t* pwm_values);
         ssize_t send_arm(std::string arm_values);
@@ -30,6 +31,7 @@ class Nucleo {
         Protocol m_protocol;
         uint16_t m_arm_value[arm_package_size];
         bool m_test_mode;
+        bool m_torque_state;
         int64_t last_hb_timestamp;
         int64_t heartbeat_interval;
         int64_t starting_frequency;

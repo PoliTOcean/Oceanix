@@ -303,6 +303,7 @@ void timer_motors_callback(uv_timer_t* handle) {
         rov_status_json["nucleo_connected"] = (data->nucleo->is_connected()) ? "OK" : "OFF";
         rov_status_json["work_mode"] = (motors_work_mode) ? "OK" : "OFF";
         rov_status_json["vertical_mode"] = vertical_mode;
+        rov_status_json["torque_mode"] = (data->nucleo->is_torque_on()) ? "OK" : "OFF";
 
         if(!rov_status_json.empty())
             data->mqtt_client->send_msg(rov_status_json.dump(), Topic::STATUS);

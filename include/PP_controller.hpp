@@ -51,6 +51,11 @@ public:
     */
     void calculate(float* motor_thrust) override;
 
+    /**
+    * @brief the variable state is controlled from external methods, changes following inputs from the gui
+    * @brief automatically this function activate and deactivate the controller when using the z axis in respect to the current state
+    * @brief this function is used when the ROV is in vertical mode, so it calculates the thrust for all 8 motors (different control allocation)
+    */
     void calculate_vertical_mode(float* motor_thrust, json axes);
 
     /**
