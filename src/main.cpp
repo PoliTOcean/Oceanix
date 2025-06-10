@@ -248,7 +248,6 @@ void timer_motors_callback(uv_timer_t* handle) {
         if (vertical_mode) {
             float current_roll_rad = data->sensor->get_roll() * DEGtoRAD;
             float current_pitch_rad = data->sensor->get_pitch() * DEGtoRAD;
-            current_pitch_rad = data->controller->get_reference(CONTROL_PITCH) * DEGtoRAD;
             motor_thrust = data->motors->calculate_thrust_vertical(json_axes, current_roll_rad, current_pitch_rad);
         } else {
             motor_thrust = data->motors->calculate_thrust(json_axes);

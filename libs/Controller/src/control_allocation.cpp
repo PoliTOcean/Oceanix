@@ -70,10 +70,10 @@ OutputValues compute_thrust_vertical(double Fz, double Fr, double Fp)  // Comput
     result.T7 = a75 * Fp;
     result.T8 = a85 * Fp;
 
-    result.T1 = 0.7 * Fz;
-    result.T2 = 0.7 * Fz;
-    result.T3 = -0.7 * Fz;
-    result.T4 = -0.7 * Fz;
+    result.T1 = -1.0 * Fz;
+    result.T2 = -1.0 * Fz;
+    result.T3 = 1.0 * Fz;
+    result.T4 = 1.0 * Fz;
 
     // Conversion into Kgf
     result.T1=result.T1/9.8;
