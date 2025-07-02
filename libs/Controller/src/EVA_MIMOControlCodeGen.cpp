@@ -16,6 +16,7 @@
 //
 #include "EVA_MIMOControlCodeGen.h"
 #include "rtwtypes.h"
+#include <iostream>
 
 // Model step function
 void EVA_MIMOControlCodeGen::step()
@@ -32,31 +33,10 @@ void EVA_MIMOControlCodeGen::step()
   int32_T i_0;
 
   // Saturate: '<Root>/Saturation1' incorporates:
-  //   DiscreteIntegrator: '<Root>/Discrete-Time Integrator'
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[0] > 100.0) {
-    tmp_0 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[0] < -100.0) {
-    tmp_0 = -100.0;
-  } else {
-    tmp_0 = rtDW.DiscreteTimeIntegrator_DSTATE[0];
-  }
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[1] > 100.0) {
-    tmp_1 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[1] < -100.0) {
-    tmp_1 = -100.0;
-  } else {
-    tmp_1 = rtDW.DiscreteTimeIntegrator_DSTATE[1];
-  }
-
-  if (rtDW.DiscreteTimeIntegrator_DSTATE[2] > 100.0) {
-    tmp_2 = 100.0;
-  } else if (rtDW.DiscreteTimeIntegrator_DSTATE[2] < -100.0) {
-    tmp_2 = -100.0;
-  } else {
-    tmp_2 = rtDW.DiscreteTimeIntegrator_DSTATE[2];
-  }
+  //   DiscreteIntegrator: '<Root>/Discrete-Time Integrator' (moved to the end of step)
+  tmp_0 = rtDW.DiscreteTimeIntegrator_DSTATE[0];
+  tmp_1 = rtDW.DiscreteTimeIntegrator_DSTATE[1];
+  tmp_2 = rtDW.DiscreteTimeIntegrator_DSTATE[2];
 
   // End of Saturate: '<Root>/Saturation1'
   for (i = 0; i < 4; i++) {
@@ -116,6 +96,9 @@ void EVA_MIMOControlCodeGen::step()
 
     rtb_ExtractRPZ[i] = rtb_Add_0;
   }
+  obs_states.z = rtb_ExtractRPZ[0];
+  obs_states.pitch = rtb_ExtractRPZ[1];
+  obs_states.roll = rtb_ExtractRPZ[2];
 
   // End of Gain: '<Root>/ExtractRPZ'
 
@@ -179,17 +162,175 @@ void EVA_MIMOControlCodeGen::step()
   //   Inport: '<Root>/z_ref'
   //   Sum: '<Root>/Subtract'
 
-  rtDW.DiscreteTimeIntegrator_DSTATE[0] += (rtU.z_ref - rtb_ExtractRPZ[0]) *
-    0.01;
-  rtDW.DiscreteTimeIntegrator_DSTATE[1] += (rtU.pitch_ref - rtb_ExtractRPZ[1]) *
-    0.01;
-  rtDW.DiscreteTimeIntegrator_DSTATE[2] += (rtU.roll_ref - rtb_ExtractRPZ[2]) *
-    0.01;
+  const double MAX_ERROR = 1000.0; // Maximum allowed error in one step
+  
+  double z_error = rtU.z_ref - rtb_ExtractRPZ[0];
+  z_error = (z_error > MAX_ERROR) ? MAX_ERROR : (z_error < -MAX_ERROR ? -MAX_ERROR : z_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[0] += z_error * 0.01;
+
+  double pitch_error = rtU.pitch_ref - rtb_ExtractRPZ[1];
+  pitch_error = (pitch_error > MAX_ERROR) ? MAX_ERROR : (pitch_error < -MAX_ERROR ? -MAX_ERROR : pitch_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[1] += pitch_error * 0.01;
+
+  double roll_error = rtU.roll_ref - rtb_ExtractRPZ[2];
+  roll_error = (roll_error > MAX_ERROR) ? MAX_ERROR : (roll_error < -MAX_ERROR ? -MAX_ERROR : roll_error);
+  rtDW.DiscreteTimeIntegrator_DSTATE[2] += roll_error * 0.01;
+
+  // Saturate integrator output
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[0] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[0] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[0] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[0] = -100.0;
+
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[1] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[1] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[1] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[1] = -100.0;
+
+  if (rtDW.DiscreteTimeIntegrator_DSTATE[2] > 100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[2] = 100.0;
+  else if (rtDW.DiscreteTimeIntegrator_DSTATE[2] < -100.0)
+    rtDW.DiscreteTimeIntegrator_DSTATE[2] = -100.0;
 }
 
-// Model initialize function
-void EVA_MIMOControlCodeGen::initialize()
+void EVA_MIMOControlCodeGen::update_observer(const double motor_commands[4])
 {
+  real_T rtb_Ldmatrix[6];
+  real_T tmp[5];
+  real_T rtb_Add_0;
+  real_T tmp_0;
+  int32_T i;
+  int32_T i_0;
+
+  // Observer update - can be called even when controller is not active
+  
+  // Gain: '<S1>/Dd matrix' incorporates the motor commands
+  for (i = 0; i < 5; i++) {
+    rtb_Ldmatrix[i] = ((0.0 * motor_commands[0] + 0.0 * motor_commands[1]) + 
+                       0.0 * motor_commands[2]) + 0.0 * motor_commands[3];
+  }
+
+  // Observer update process - this is extracted from the step() function
+  // Sum: '<S1>/Sum2'
+  for (i = 0; i < 5; i++) {
+    rtb_Add_0 = 0.0;
+    for (i_0 = 0; i_0 < 6; i_0++) {
+      rtb_Add_0 += rtConstP.Cdmatrix_Gain[5 * i_0 + i] * rtDW.UnitDelay_DSTATE[i_0];
+    }
+
+    tmp[i] = rtU.y_measurement[i] - (rtb_Ldmatrix[i] + rtb_Add_0);
+  }
+
+  for (i = 0; i < 6; i++) {
+    // Gain: '<S1>/Ld matrix'
+    rtb_Add_0 = 0.0;
+    for (i_0 = 0; i_0 < 5; i_0++) {
+      rtb_Add_0 += rtConstP.Ldmatrix_Gain[6 * i_0 + i] * tmp[i_0];
+    }
+
+    // State update
+    tmp_0 = 0.0;
+    for (i_0 = 0; i_0 < 6; i_0++) {
+      tmp_0 += rtConstP.Admatrix_Gain[6 * i_0 + i] * rtDW.UnitDelay_DSTATE[i_0];
+    }
+
+    rtb_Ldmatrix[i] = ((((rtConstP.Bdmatrix_Gain[i + 6] * motor_commands[1] +
+                          rtConstP.Bdmatrix_Gain[i] * motor_commands[0]) +
+                         rtConstP.Bdmatrix_Gain[i + 12] * motor_commands[2]) +
+                        rtConstP.Bdmatrix_Gain[i + 18] * motor_commands[3]) + rtb_Add_0) + tmp_0;
+  }
+
+  // Update observer states
+  for (i = 0; i < 6; i++) {
+    rtDW.UnitDelay_DSTATE[i] = rtb_Ldmatrix[i];
+  }
+
+  // Update observed outputs for use elsewhere in the system
+  for (i = 0; i < 3; i++) {
+    rtb_Add_0 = 0.0;
+    for (i_0 = 0; i_0 < 6; i_0++) {
+      rtb_Add_0 += rtConstP.ExtractRPZ_Gain[3 * i_0 + i] * rtDW.UnitDelay_DSTATE[i_0];
+    }
+    
+    // Store the extracted RPZ values
+    if (i == 0) obs_states.z = rtb_Add_0;
+    else if (i == 1) obs_states.pitch = rtb_Add_0;
+    else obs_states.roll = rtb_Add_0;
+  }
+}
+
+
+// Model initialize function
+void EVA_MIMOControlCodeGen::print_matrices()
+{
+  // Print all stored matrices for debugging
+  std::cout << "=== EVA_MIMOControlCodeGen Matrices ===" << std::endl;
+  
+  // Print Admatrix_Gain (6x6 matrix)
+  std::cout << "Admatrix_Gain (6x6):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.Admatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Bdmatrix_Gain (6x4 matrix)
+  std::cout << "\nBdmatrix_Gain (6x4):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 4; j++) {
+      std::cout << rtConstP.Bdmatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Cdmatrix_Gain (5x6 matrix)
+  std::cout << "\nCdmatrix_Gain (5x6):" << std::endl;
+  for (int i = 0; i < 5; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.Cdmatrix_Gain[j*5 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print Ldmatrix_Gain (6x5 matrix)
+  std::cout << "\nLdmatrix_Gain (6x5):" << std::endl;
+  for (int i = 0; i < 6; i++) {
+    for (int j = 0; j < 5; j++) {
+      std::cout << rtConstP.Ldmatrix_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print StateGain_Gain (4x6 matrix)
+  std::cout << "\nStateGain_Gain (4x6):" << std::endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.StateGain_Gain[j*6 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print IntegratorGain_Gain (4x3 matrix)
+  std::cout << "\nIntegratorGain_Gain (4x3):" << std::endl;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 3; j++) {
+      std::cout << rtConstP.IntegratorGain_Gain[j*4 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  // Print ExtractRPZ_Gain (3x6 matrix)
+  std::cout << "\nExtractRPZ_Gain (3x6):" << std::endl;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 6; j++) {
+      std::cout << rtConstP.ExtractRPZ_Gain[j*3 + i] << "\t";
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "========================================" << std::endl;
+
   // (no initialization code required)
 }
 
@@ -199,7 +340,15 @@ EVA_MIMOControlCodeGen::EVA_MIMOControlCodeGen():
   rtY(),
   rtDW()
 {
-  // Currently there is no constructor body generated.
+  // Initialize integrator states to zero
+  rtDW.DiscreteTimeIntegrator_DSTATE[0] = 0.0;
+  rtDW.DiscreteTimeIntegrator_DSTATE[1] = 0.0;
+  rtDW.DiscreteTimeIntegrator_DSTATE[2] = 0.0;
+  
+  // Initialize all state variables
+  for (int i = 0; i < 6; i++) {
+    rtDW.UnitDelay_DSTATE[i] = 0.0;
+  }
 }
 
 // Destructor

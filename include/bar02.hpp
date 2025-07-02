@@ -15,7 +15,7 @@ public:
     /**
      * @brief Constructor for Bar02 class.
      */
-    Bar02(logLevel minimumLogLevel);
+    Bar02(logLevel minimumLogLevel, bool test_mode = false);
 
     /**
      * @brief Reads data from the sensor.
@@ -27,11 +27,6 @@ public:
      * @return Status of the sensor.
      */
     int get_status();
-
-    /**
-     * @brief Sets the pressure baseline.
-     */
-    void set_pressure_baseline();
 
     /**
      * @brief Gets the temperature in Celsius.
@@ -46,13 +41,26 @@ public:
     float get_depth();
 
     void update_parameters(const json& general_config);
+    
+    /**
+     * @brief Update simulation time (only used in test mode)
+     * 
+     * @param dt Time increment in seconds
+     */
+    void update_simulation_time(float dt);
 
 private:
     int status;         ///< Status of the sensor.
-    float pressure_baseline; ///< Pressure baseline.
     float temperature;  ///< Temperature in Celsius.
     float depth;        ///< Depth in meters.
-    Logger logger;      ///< Logger    
+    bool test_mode;     ///< Flag to indicate test mode
+    float simulation_time; ///< Time counter for simulations (seconds)
+    
+    Logger logger;      ///< Logger
+    
+    // Simulation methods
+    float simulate_temperature();
+    float simulate_depth();
 };
 
 #endif // BAR02_H

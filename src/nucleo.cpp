@@ -1,12 +1,8 @@
 #include "nucleo.hpp"
 
 Nucleo::Nucleo(uint8_t address, int baudrate, uint8_t version, uint8_t sub_version, logLevel minimumLoglevel, int64_t heartbeat_interval, int64_t starting_frequency, bool test_mode)
-    : m_protocol(version, sub_version, address, baudrate, !minimumLoglevel), m_test_mode(test_mode),
+    : m_protocol(version, sub_version, address, baudrate, !minimumLoglevel), m_test_mode(test_mode), m_torque_state(false), last_hb_timestamp(0), heartbeat_interval(heartbeat_interval), starting_frequency(starting_frequency),
     logger(Logger(NUCLEO_LOG_NAME, minimumLoglevel)) {
-        
-    heartbeat_interval = heartbeat_interval;
-    starting_frequency = starting_frequency;
-
     m_init_mapper();
 }
 
@@ -63,11 +59,7 @@ COMM_STATUS Nucleo::init(int n_tries) {
     }
 
     COMM_STATUS init_status;
-    if(gpioInitialise()<0) logger.log(logERROR, "FAILED GPIO INIT");
     for(int i=0; i<n_tries; i++){
-        gpioSetMode(RST_PIN, PI_INPUT);
-        gpioSetPullUpDown(RST_PIN, PI_PUD_UP);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         m_protocol.connect();
         init_status = (m_protocol.init(starting_frequency));
         if(init_status == COMM_STATUS::OK){
@@ -76,11 +68,8 @@ COMM_STATUS Nucleo::init(int n_tries) {
             logger.log(logINFO,"INIT SUCCESS");
             break; //Exits from the for cycle
         }
-        gpioSetMode(RST_PIN, PI_OUTPUT);
-        gpioWrite(RST_PIN, 0);
-
         logger.log(logERROR,"INIT FAILED");
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     return init_status;
@@ -120,12 +109,40 @@ ssize_t Nucleo::send_pwm(uint16_t* pwm_values) {
 }
 
 ssize_t Nucleo::send_arm(std::string arm_value) {
+    // check for commans not in the mapper
+    if (arm_value == "TORQUE_WRIST_TOGGLE")
+        arm_value = m_torque_state ? "TORQUE_WRIST_OFF" : "TORQUE_WRIST_ON";
+
+    // Check if the arm_value is valid
+    if (m_arm_value_mapper.find(arm_value) == m_arm_value_mapper.end()) {
+        logger.log(logERROR, "Invalid arm value: " + arm_value);
+        return -1; // Invalid arm value
+    }
+    // Check if torque commands are being used
+    if (arm_value == "TORQUE_WRIST_ON") {
+        m_torque_state = true;
+        // If torque is turned on, we need to send a command to close the nipper
+        m_arm_value[0] = m_arm_value_mapper["CLOSE_NIPPER"];
+        m_protocol.send_packet(1, m_arm_value, arm_package_size);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    } else if (arm_value == "TORQUE_WRIST_OFF") {
+        m_torque_state = false;
+        // If torque is turned off, we need to send a command to stop the nipper
+        m_arm_value[0] = m_arm_value_mapper["STOP_NIPPER"];
+        m_protocol.send_packet(1, m_arm_value, arm_package_size);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+
     if (m_test_mode) {
-        // Simulate sending arm command in test mode
         return arm_package_size;
     }
+
     m_arm_value[0] = m_arm_value_mapper[arm_value];
     return m_protocol.send_packet(1, m_arm_value, arm_package_size);
+}
+
+bool Nucleo::is_torque_on() {
+    return m_torque_state;
 }
 
 void Nucleo::m_init_mapper() {

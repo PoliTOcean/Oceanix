@@ -81,6 +81,12 @@ class EVA_MIMOControlCodeGen final
     real_T u[4];                       // '<Root>/u'
   };
 
+  struct ObsStates {
+    real_T z;
+    real_T roll;
+    real_T pitch;
+  };
+
   // Copy Constructor
   EVA_MIMOControlCodeGen(EVA_MIMOControlCodeGen const&) = delete;
 
@@ -99,11 +105,14 @@ class EVA_MIMOControlCodeGen final
   // External outputs
   ExtY rtY;
 
-  // model initialize function
-  static void initialize();
+  ObsStates obs_states;
+
+  void print_matrices();
 
   // model step function
   void step();
+
+  void update_observer(const double motor_commands[4]);
 
   // Constructor
   EVA_MIMOControlCodeGen();

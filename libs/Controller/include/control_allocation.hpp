@@ -52,10 +52,10 @@ const float Array_PWM_Relative_12V_Kgf [MAX_ROWS] = {1100, 1104, 1108, 1112, 111
 // Indices represent the row and column indexes of the TCM
 #define a53 0.270321738048842
 #define a54 1.845433061072183
-#define a55 -1.123595505617978
+#define a55 -1.4                //-1.123595505617978
 #define a63 0.275856793399395
 #define a64 -1.844603839296819
-#define a65 -1.123595505617978 
+#define a65 -1.4                //-1.123595505617978
 #define a73 0.224143206600606
 #define a74 1.844603839296820
 #define a75 1.123595505617978
@@ -64,10 +64,11 @@ const float Array_PWM_Relative_12V_Kgf [MAX_ROWS] = {1100, 1104, 1108, 1112, 111
 #define a85 1.123595505617978
 
 struct OutputValues {
-    double T5, T6, T7, T8; // Vertical thrusters (that are the ones that affect z roll and pitch)
+    double T1, T2, T3, T4, T5, T6, T7, T8; // Vertical thrusters (that are the ones that affect z roll and pitch)
 };
 
 OutputValues compute_thrust(double Fz, double Fr, double Fp); // Convert Force along z and moments around roll and pitch into thrust forces
+OutputValues compute_thrust_vertical(double Fz, double Fr, double Fp);
 uint16_t lookup_table(float Force_12V_Kgf);
 
 #endif

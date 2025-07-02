@@ -17,6 +17,7 @@ public:
     virtual float get_reference(uint8_t ref_type) = 0;
     virtual void set_parameters(const json& general_config, const json& specific_config) = 0;
     virtual void calculate(float* motor_thrust) = 0;
+    virtual void calculate_vertical_mode(float* motor_thrust, json axes) = 0;
     virtual json get_status() = 0;
     virtual void activate(uint8_t ref_type) = 0;
     virtual void deactivate(uint8_t ref_type) = 0;

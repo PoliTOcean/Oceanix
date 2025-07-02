@@ -20,13 +20,17 @@ Each topic below defines the permissible keys and values, as well as the directi
      - `Y`: Integer from -32678 to 32678
      - `Z`: Integer from -32678 to 32678
      - `YAW`: Integer from -32678 to 32678
+     - `PITCH`: Integer from -32678 to 32678
+     - `ROLL`: Integer from -32678 to 32678
    - **Example Message**:
      ```json
      {
        "X": 0,
        "Y": 0,
        "Z": 0,
-       "YAW": 0
+       "YAW": 0,
+       "ROLL" : 0,
+       "PITCH" : 0
      }
      ```
 
@@ -47,6 +51,7 @@ Each topic below defines the permissible keys and values, as well as the directi
       - `DEPTH_REFERENCE_OFFSET`: Offsets the current depth reference value.
       - `THRUST_MAX_OFFSET`: Offsets the maximum thrust value.
       - `WORK_MODE`: Enables and disables motors work mode, setting motors thrust_max_xy and thrust_max_z to 2.9 and 2.0 or reverting them to the default values.
+      - `REQUEST_CONFIG`: Request current configuration, is sent on config/ topic
     - **Example Message**:
       ```json
       {
@@ -86,6 +91,8 @@ Each topic below defines the permissible keys and values, as well as the directi
      - **Heartbeat**: Essential information required for GUI functionality.
     - **Keys**:
       - `rov_armed` : `["OK", "OFF"]`
+      - `nucleo_connected` : `["OK", "OFF"]`
+      - `work_mode` : `["OK", "OFF"]`
       - `controller_state`
         - `DEPTH` : `["ACTIVE", "READY", "OFF"]`
         - `ROLL` : `["ACTIVE", "READY", "OFF"]`
@@ -131,20 +138,29 @@ Each topic below defines the permissible keys and values, as well as the directi
      }
      ```
 
-5. ### **config/** (temporary not available)
+5. ### **config/**
    - **Direction**: GUI ⇔ Oceanix
    - **Description**: Used to synchronize configuration data between GUI and Oceanix.
    - **Keys**:
      - `config_variable`: The name of the configuration variable.
      - `value`: The current or updated value of the configuration variable.
    - **Behavior**:
-     - At startup, Oceanix sends the current configuration to the GUI.
-     - The GUI can send updates to modify the configuration.
+     - when the command is received `REQUEST_CONFIG` Oceanix sends the current configuration to the GUI.
+     - The GUI can send updates to modify the configuration and send it back to Oceanix on this topic.
+     - When a configuration is received before writing it's validity is checked.
    - **Example Message**:
      ```json
      {
        "controller_profile" : 1 
      }
+     ```
+
+6. ### **log/**
+   - **Direction**: GUI → Oceanix
+   - **Description**: Send log message from Oceanix. The log level can be changed in the config.
+   - **Example Message**:
+     ```
+       1746649287972[CONFIG ][INFO ]Reading config file\n
      ```
 ---
 

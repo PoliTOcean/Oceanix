@@ -23,7 +23,6 @@ private:
     float reference_z;              /// reference depth
     float reference_roll;           /// reference CONTROL_Z | CONTROL_ROLL | CONTROL_PITCH
     float reference_pitch;          /// reference pitch
-    bool c_verbose;                   /// verbose mode
     Logger logger;
     Sensor& sensor;                  /// sensor class
     EVA_MIMOControlCodeGen mimo_controller;
@@ -42,6 +41,9 @@ public:
     * @brief automatically this function activate and deactivate the controller when using the z axis in respect to the current state
     */
     void calculate(float* motor_thrust) override;
+
+
+    void calculate_vertical_mode(float* motor_thrust, json axes);
 
     /**
      * @brief control the state of the controller activating the corresponding section

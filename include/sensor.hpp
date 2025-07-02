@@ -5,6 +5,7 @@
 #include <thread>
 #include <mutex>
 #include <cmath>
+#include <atomic>
 #include <cstdlib>
 #include <json.hpp>
 #include "wt61.hpp"
@@ -24,6 +25,7 @@ class Sensor {
 public:
     Wt61 imu;           ///< Imu object
     Bar02 barometer;    ///< Barometer object
+    static std::thread sensor_thread;
     
     /**
      * @brief Construct a new Sensor object containing IMU and barometer
@@ -123,6 +125,12 @@ public:
      */
     static void update_thread(Sensor *sensor, uint64_t timeout);
 
+    /**
+     * @brief Stop the thread
+     * 
+     */
+    void stop_thread_and_wait();
+
 private:
     float prev_depth = 0;    // Previous depth (m)
     float prev_speed = 0;     // Initial speed (m/s)
@@ -135,20 +143,20 @@ private:
     float alpha;  // Complementary filter constant  1-> only accelerometer
     float beta;    // Low-pass filter coefficient (adjust as needed)
     float dt = 0.03;  //30 millis
-
-    bool test_mode;
-
-    float simulate_temperature();
-    float simulate_depth();
-    float simulate_angle();
-    float simulate_acceleration();
-    float simulate_gyro();
+    
+    float roll_offset;   ///< roll offset in DEG
+    float pitch_offset;  ///< pitch offset in DEG
+    float yaw_offset;   ///< yaw offset in DEG
+    float depth_offset;  ///< depth offset in meters
 
     /**
      * @brief read all sensors, should be called at 100 Hz
      * 
      */
     void read_sensor();
+    
+    // Static members for thread management
+    static std::atomic<bool> thread_running;
     
     static std::mutex write_mtx;
 
@@ -160,12 +168,12 @@ private:
         float z_speed;
         float* acc;
         float* gyro;
+        float internal_temperature;
     } Imu;
 
     typedef struct bar_values {
         bool state;
         float depth;
-        float internal_temperature;
         float external_temperature;
     } Barometer;
 
@@ -182,71 +190,7 @@ private:
      */
     void write_sensor();
 
-
-    /**
-     * @brief get sensor status
-     * 
-     * @return int status can be compared to the constants values
-     */
-    int sensor_status_hadware();
-
-    /**
-     * @brief Get the internal temperature value
-     * 
-     * @return float temperature in C°
-     */
-    float get_internal_temperature_hardware();
-
-    /**
-     * @brief Get the external temperature value
-     * 
-     * @return float temperature in C°
-     */
-    float get_external_temperature_hardware();
-
-    /**
-     * @brief Get the depth
-     * 
-     * @return float depth in meters
-     */
-    float get_depth_hardware();
-
-    /**
-     * @brief Get the roll
-     * 
-     * @return float roll in DEG
-     */
-    float get_roll_hardware();
-
-    /**
-     * @brief Get the pitch object
-     * 
-     * @return float pitch in DEG
-     */
-    float get_pitch_hardware();
-
-    /**
-     * @brief Get the yaw object
-     * 
-     * @return float yaw in DEG
-     */
-    float get_yaw_hardware();
-
-    /**
-     * @brief Get the acc array (x, y, z)
-     * 
-     * @return float* array with the 3 axes accelleration in m/s^2
-     */
-    float* get_acc_hardware();
-
-    /**
-     * @brief Get the gyro array (x, y, z)
-     * 
-     * @return float* array with the 3 axes gyroscope in DEG/s^2
-     */
-    float* get_gyro_hardware();
-
-
     float get_Zspeed_hardware();
 };
+
 #endif // SENSOR_H

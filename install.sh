@@ -62,20 +62,8 @@ else
     echo "libuv is already installed."
 fi
 
-if ! dpkg -s pigpio >/dev/null 2>&1; then
-    echo "pigpio is not installed. Installing libuv..."
-    wget https://github.com/joan2937/pigpio/archive/master.zip
-    unzip master.zip
-    cd pigpio-master
-    make
-    sudo make install
-    cd ..
-else
-    echo "pigpio is already installed."
-fi
-
 # Check for Eclipse Paho MQTT C and C++ libraries
-if ! dpkg -s libpaho-mqtt-dev libpaho-mqttpp-dev >/dev/null 2>&1; then
+if ! ls /usr/local/lib | grep -q "libpaho-mqtt3as\|libpaho-mqttpp3"; then
     echo "Eclipse Paho MQTT libraries are not installed. Installing Eclipse Paho MQTT libraries..."
     sudo git clone https://github.com/eclipse/paho.mqtt.cpp.git
     sudo git clone https://github.com/eclipse/paho.mqtt.c.git
@@ -121,6 +109,17 @@ if ! command_exists mosquitto; then
     sudo apt-get update
     sudo apt install mosquitto mosquitto-clients -y
     sudo cp ../.devcontainer/mosquitto /etc/init.d
+
+    # Add mosquitto.conf
+    echo "Adding mosquitto.conf..."
+    cat <<EOF | sudo tee /etc/mosquitto/conf.d/oceanix.conf
+listener 1883 0.0.0.0  # Allow all IPv4 connections
+allow_anonymous true   # Allow unauthenticated clients (for testing)
+listener 9000 0.0.0.0
+protocol websockets
+connection_messages true
+EOF
+    
     sudo service mosquitto start
 else
     echo "mosquitto is already installed."
