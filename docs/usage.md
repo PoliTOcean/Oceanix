@@ -1,22 +1,45 @@
 # Usage
 
-To start the program, follow these steps:
+This guide explains how to run Oceanix, use its different modes, and interpret logs.
+
+## Running Oceanix
 
 1. Open your terminal.
-2. Navigate to the directory where the program is located:
+2. Navigate to the build directory:
     ```sh
     cd Oceanix/build
     ```
-3. Run the program using the following command:
+3. Run the main program:
     ```sh
-    ./Oceanix
+    ./oceanix
     ```
-4. Use to test the program without sensor and nucleo connected
+4. To run in test mode (simulation, no hardware required):
     ```sh
-    ./Oceanix test
+    ./oceanix test
     ```
-Make sure you have all the necessary dependencies installed before running the program.
 
-If you are using Codespace use
+## Command-Line Options
 
-    source Oceanix_test_mode.sh
+- `./oceanix` — Run with hardware (default mode)
+- `./oceanix test` — Run in simulation/test mode (no hardware required)
+
+## Log Files
+
+Log files are created in the `log/` directory. Each run generates a new log file with a timestamp. Check these files for errors, warnings, and system status.
+In `status/` directory a detailed log about the state of the ROV is written every time new thrust values are sent to the motors. Very useful for analyzing all the sensors afterwards. Can be enabled with a value = 0 in the config: `main_loglevel/`.
+
+## Using in Devcontainer or Codespaces
+
+If you are using a devcontainer or GitHub Codespaces, the environment is pre-configured. To enable test mode in Codespaces:
+
+```sh
+source Oceanix_test_mode.sh
+```
+
+## Troubleshooting
+
+- **Program does not start:** Check that all dependencies are installed and the build completed successfully.
+- **No hardware detected:** Use test mode or check your serial connections and permissions.
+- **MQTT not working:** Verify broker address and network connectivity.
+
+For more details, see [../README.md](../README.md) and [installation.md](installation.md).
