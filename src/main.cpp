@@ -323,9 +323,13 @@ void timer_com_callback(uv_timer_t* handle){
             state_commands(msg.second, data);
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::ARM)){
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
-            data->nucleo->send_arm(msg.second.begin().key());
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            if(rov_armed){
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                data->nucleo->send_arm(msg.second.begin().key());
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            else
+                logger->log(logWARNING, "Arm command ignored: ROV is not armed");
         }
         
         else if(data->mqtt_client->is_msg_type(msg.first, Topic::CONFIG)){
