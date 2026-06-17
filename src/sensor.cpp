@@ -186,9 +186,13 @@ void Sensor::update_parameters(const json& general_config) {
 // ! [PRIVATE FUNCTIONS]
 
 // Function to read sensor data from all sensors
-void Sensor::read_sensor() {
+void Sensor::read_sensor(bool read_barometer) {
     imu.read_sensor();      // Read data from the IMU sensor
-    barometer.read_sensor(); // Read data from the barometer
+    // The MS5837 barometer has a ~20ms conversion time, so it must not be
+    // polled at the IMU rate: hammering it over I2C stalls the bus
+    // (SDA stuck low -> controller timeout). It is read at a lower rate.
+    if (read_barometer)
+        barometer.read_sensor(); // Read data from the barometer
 }
 
 float Sensor::get_Zspeed_hardware() {
@@ -256,15 +260,23 @@ void Sensor::write_sensor() {
 }
 
 void Sensor::update_thread(Sensor *sensor, uint64_t timeout) {
+    // Read the barometer once every BAROMETER_PERIOD thread cycles (~20 Hz with a
+    // 1 ms cycle), since the MS5837 conversion time is ~20 ms and polling it
+    // every cycle saturates and stalls the I2C bus.
+    const uint64_t BAROMETER_PERIOD = 50;
+    uint64_t cycle = 0;
+
     while (thread_running) {  // Check termination flag
         //update simulation time in the sensor classes
         float dt = 0.001f; // 1ms update
         sensor->imu.update_simulation_time(dt);
         sensor->barometer.update_simulation_time(dt);
-        
-        sensor->read_sensor();
+
+        bool read_barometer = (cycle % BAROMETER_PERIOD == 0);
+        sensor->read_sensor(read_barometer);
         sensor->write_sensor();
 
+        cycle++;
         std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
     }
 }

@@ -150,10 +150,13 @@ private:
     float depth_offset;  ///< depth offset in meters
 
     /**
-     * @brief read all sensors, should be called at 100 Hz
-     * 
+     * @brief read sensors. The IMU is always read; the barometer is read only
+     *        when read_barometer is true, since the MS5837 must be polled at a
+     *        much lower rate (~20 Hz) to avoid stalling the I2C bus.
+     *
+     * @param read_barometer whether to perform an I2C read of the barometer
      */
-    void read_sensor();
+    void read_sensor(bool read_barometer = true);
     
     // Static members for thread management
     static std::atomic<bool> thread_running;
