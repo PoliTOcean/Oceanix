@@ -225,7 +225,10 @@ std::vector<std::vector<uint8_t>> Serial::get_byte_vectors(uint8_t terminal, uin
 
 
 ssize_t Serial::send_byte_array(std::vector<uint8_t> bytes) {
-    tcflush(m_fd, TCOFLUSH);
+    // NOTE: do NOT tcflush(TCOFLUSH) here. Flushing the output queue before
+    // each write can discard bytes of a packet still being transmitted (e.g.
+    // the INIT handshake or a PWM frame), causing truncated packets the Nucleo
+    // never receives -> INIT FAILED / dropped commands.
     ssize_t written_byte = write(m_fd, bytes.data(), bytes.size());
     if (m_verbose) {
         std::cout << "[SERIAL] SENT: " << std::endl;

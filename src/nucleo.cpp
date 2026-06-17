@@ -118,15 +118,22 @@ ssize_t Nucleo::send_arm(std::string arm_value) {
         logger.log(logERROR, "Invalid arm value: " + arm_value);
         return -1; // Invalid arm value
     }
-    // Check if torque commands are being used
+    // Check if torque commands are being used. The Nucleo firmware handles the
+    // torque codes 6/7 explicitly (case 6 = enable wrist+claw torque, case 7 =
+    // disable), so they must be sent. First close/stop the nipper, then send the
+    // torque code itself below.
     if (arm_value == "TORQUE_WRIST_ON") {
         m_torque_state = true;
         // If torque is turned on, we need to send a command to close the nipper
-        arm_value = "CLOSE_NIPPER";
+        m_arm_value[0] = m_arm_value_mapper["CLOSE_NIPPER"];
+        m_protocol.send_packet(1, m_arm_value, arm_package_size);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     } else if (arm_value == "TORQUE_WRIST_OFF") {
         m_torque_state = false;
         // If torque is turned off, we need to send a command to stop the nipper
-        arm_value = "STOP_NIPPER";
+        m_arm_value[0] = m_arm_value_mapper["STOP_NIPPER"];
+        m_protocol.send_packet(1, m_arm_value, arm_package_size);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
     if (m_test_mode) {
