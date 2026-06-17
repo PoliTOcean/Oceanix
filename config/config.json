@@ -208,7 +208,7 @@
         "controller_type": "PP",
         "debug_interval": 100,
         "imu_loglevel": 0,
-        "imu_pitch_offset": -1.4,
+        "imu_pitch_offset": 1.4,
         "imu_roll_offset": -1.6,
         "logFileDir": "log/",
         "logTypeCOUT": true,
