@@ -122,15 +122,11 @@ ssize_t Nucleo::send_arm(std::string arm_value) {
     if (arm_value == "TORQUE_WRIST_ON") {
         m_torque_state = true;
         // If torque is turned on, we need to send a command to close the nipper
-        m_arm_value[0] = m_arm_value_mapper["CLOSE_NIPPER"];
-        m_protocol.send_packet(1, m_arm_value, arm_package_size);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        arm_value = "CLOSE_NIPPER";
     } else if (arm_value == "TORQUE_WRIST_OFF") {
         m_torque_state = false;
         // If torque is turned off, we need to send a command to stop the nipper
-        m_arm_value[0] = m_arm_value_mapper["STOP_NIPPER"];
-        m_protocol.send_packet(1, m_arm_value, arm_package_size);
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        arm_value = "STOP_NIPPER";
     }
 
     if (m_test_mode) {
